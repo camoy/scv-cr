@@ -1,9 +1,11 @@
 #lang racket
 
 (require racket/cmdline)
+(provide intercept-require-contracts
+         intercept-provide-contracts)
 
-(define tr-provide-contracts (make-parameter (void)))
-(define tr-require-contracts (make-parameter (void)))
+(define require-contracts (make-parameter (box #f)))
+(define provide-contracts (make-parameter (box #f)))
 (define in-place (make-parameter #f))
 
 (module+ main
@@ -21,11 +23,24 @@
   (for-each explicit-contracts tr-targets))
 
 (define (explicit-contracts target)
-  (define provide-hash (make-hash))
-  (define require-hash (make-hash))
-  (parameterize ([tr-provide-contracts provide-hash]
-                 [tr-require-contracts require-hash])
+  (define require-hash (box '()))
+  (define provide-hash (box '()))
+  (parameterize ([require-contracts require-hash]
+                 [provide-contracts provide-hash])
     target))
+
+(define ((intercept-contracts parameter) stx)
+  (displayln stx)
+  (let* ([contracts-box (parameter)]
+         [contracts-list (unbox contracts-box)])
+    (when contracts-list
+      (set-box! contracts-box
+                (cons stx contracts-list)))))
+
+(define-values
+  (intercept-require-contracts intercept-provide-contracts)
+  (values (intercept-contracts require-contracts)
+          (intercept-contracts provide-contracts)))
 
 (define (command-parse argv)
   (command-line
