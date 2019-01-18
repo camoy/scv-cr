@@ -1,8 +1,14 @@
 #lang racket
 
 (require racket/cmdline)
-
 (define in-place (make-parameter #f))
+
+(module+ main
+  (define targets (command-parse (current-command-line-arguments)))
+  (unless (files-exist? targets)
+    (define unknown-file (findf (negate file-exists?) targets))
+    (raise-user-error 'explicit-contracts "could not find ~s" unknown-file))
+  targets)
 
 (define (command-parse argv)
   (command-line
@@ -14,5 +20,6 @@
    #:args targets
    targets))
 
-(module+ main
-  (command-parse (current-command-line-arguments)))
+(define (files-exist? files)
+  (andmap file-exists? files))
+
