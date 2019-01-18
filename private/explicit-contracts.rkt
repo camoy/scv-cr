@@ -4,11 +4,17 @@
 (define in-place (make-parameter #f))
 
 (module+ main
-  (define targets (command-parse (current-command-line-arguments)))
-  (unless (files-exist? targets)
-    (define unknown-file (findf (negate file-exists?) targets))
+  (define targets
+    (command-parse (current-command-line-arguments)))
+  
+  (unless (andmap file-exists? targets)
+    (define unknown-file
+      (findf (negate file-exists?) targets))
     (raise-user-error 'explicit-contracts "could not find ~s" unknown-file))
-  targets)
+
+  (define tr-targets
+    (filter typed-module? targets))
+
 
 (define (command-parse argv)
   (command-line
@@ -20,6 +26,5 @@
    #:args targets
    targets))
 
-(define (files-exist? files)
-  (andmap file-exists? files))
-
+(define (typed-module? module-path)
+  (module-declared? `(submod ,module-path #%type-decl) #t))
