@@ -28,8 +28,9 @@
   (define provide-contracts
     (send provide-contracts-store process))
   (define new-target
-    (inject-contracts target provide-contracts))
-  (pretty-print (syntax->datum new-target)))
+    (inject-contracts target provide-contracts (in-place)))
+  (unless (in-place)
+    (pretty-print (syntax->datum new-target))))
 
 (define (explicit-contracts target)
   (dynamic-wind
