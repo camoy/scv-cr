@@ -32,7 +32,7 @@
       (define is-tr (load-module target))
       (when is-tr
         (for ([store all-stores])
-          (displayln (send store get-data)))))
+          (displayln (send store show)))))
     (λ ()
       (for ([store all-stores])
         (send store reset-data)))))
