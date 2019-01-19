@@ -11,7 +11,7 @@
     (define/public (process)
       (map (compose begin-cases
                     (curry datum->syntax #'_))
-           (get-data)))))
+           (reverse (get-data))))))
 
 (define (begin-cases stx)
   (syntax-parse stx #:datum-literals (begin
@@ -32,7 +32,7 @@
 (define (contract-case stx)
   (syntax-parse stx #:datum-literals (define-module-boundary-contract)
                 [(define-module-boundary-contract x y contract _ ...)
-                 #'(define-module-boundary-contract x y contract)]))
+                 #'(provide (contract-out [x contract]))]))
 
 (define provide-contracts-store
   (new provide-contracts-singleton%))

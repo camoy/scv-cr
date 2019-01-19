@@ -6,7 +6,9 @@
 
 (provide inject-contracts module->string)
 
-(define dependencies #'((require racket/contract)))
+(define dependencies #'((require racket/contract
+                                 typed-racket/utils/struct-type-c
+                                 typed-racket/utils/simple-result-arrow)))
 
 ;; See https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ
 (define (file->module filename)
