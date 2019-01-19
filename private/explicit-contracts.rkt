@@ -4,6 +4,7 @@
          tr-contract/private/store/require-mapping
          tr-contract/private/store/require-contracts
          tr-contract/private/store/provide-contracts
+         tr-contract/private/inject
          (for-syntax racket/syntax))
 
 (define in-place (make-parameter #f))
@@ -23,6 +24,13 @@
 
   (for-each explicit-contracts targets))
 
+(define (process-contracts target)
+  (define provide-contracts
+    (send provide-contracts-store process))
+  (define new-target
+    (inject-contracts target provide-contracts))
+  (pretty-print (syntax->datum new-target)))
+
 (define (explicit-contracts target)
   (dynamic-wind
     (λ ()
@@ -30,10 +38,7 @@
         (send store init-data)))
     (λ ()
       (define is-tr (load-module target))
-      (when is-tr
-        #;(displayln (send provide-contracts-store process))
-        (for ([store all-stores])
-          (displayln (send store show)))))
+      (when is-tr (process-contracts target)))
     (λ ()
       (for ([store all-stores])
         (send store reset-data)))))

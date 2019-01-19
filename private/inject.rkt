@@ -45,11 +45,13 @@
                      (#%module-begin
                       #,@(transformer #'(forms ...))))]))
 
-(define (inject-contracts filename contracts)
+(define (inject-contracts filename contracts [in-place #f])
   (define transformers
     (list (inject-syntax contracts)
           strip-provides))
   (define stx (file->module filename))
   (define transformed-stx
     (apply-transformers-to-module stx transformers))
-  (module->file transformed-stx filename))
+  (when in-place
+    (module->file transformed-stx filename))
+  transformed-stx)
