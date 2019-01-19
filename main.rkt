@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require tr-contract/private/explicit-contracts)
+(require tr-contract/private/stores)
 (provide
  require-mapping-store
  require-contracts-store
