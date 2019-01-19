@@ -31,7 +31,8 @@
     (λ ()
       (define is-tr (load-module target))
       (when is-tr
-        (for ([store all-stores])
+        (displayln (send provide-contracts-store process))
+        #;(for ([store all-stores])
           (displayln (send store show)))))
     (λ ()
       (for ([store all-stores])
