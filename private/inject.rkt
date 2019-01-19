@@ -4,7 +4,7 @@
          syntax/parse
          racket/syntax)
 
-(provide inject-contracts)
+(provide inject-contracts module->string)
 
 ;; See https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ
 (define (file->module filename)

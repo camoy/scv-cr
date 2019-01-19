@@ -30,7 +30,7 @@
   (define new-target
     (inject-contracts target provide-contracts (in-place)))
   (unless (in-place)
-    (pretty-print (syntax->datum new-target))))
+    (displayln (module->string new-target))))
 
 (define (explicit-contracts target)
   (dynamic-wind
