@@ -15,8 +15,13 @@
           '()))
 
     (define/public (set-data data)
-      (with-output-to-file current-filename #:exists 'replace
-        (λ () (write (serialize data)))))
+      (when (file-exists? current-filename)
+        (with-output-to-file current-filename #:exists 'replace
+          (λ () (write (serialize data))))))
+
+    (define/public (init-data)
+      (with-output-to-file current-filename
+        (λ () (write (serialize '())))))
 
     (define/public (reset-data)
       (when (file-exists? current-filename)

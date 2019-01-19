@@ -18,18 +18,18 @@
   (for-each explicit-contracts targets))
 
 (define (explicit-contracts target)
-  (define (reset-contract-data)
-    (for ([store all-stores])
-      (send store reset-data)))
-
   (dynamic-wind
-    reset-contract-data
+    (λ ()
+      (for ([store all-stores])
+        (send store init-data)))
     (λ ()
       (define is-tr (load-module target))
       (when is-tr
         (for ([store all-stores])
           (displayln (send store get-data)))))
-    reset-contract-data))
+    (λ ()
+      (for ([store all-stores])
+        (send store reset-data)))))
 
 (define (command-parse argv)
   (command-line
