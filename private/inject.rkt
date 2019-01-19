@@ -6,6 +6,8 @@
 
 (provide inject-contracts module->string)
 
+(define dependencies #'((require racket/contract)))
+
 ;; See https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ
 (define (file->module filename)
   (define port (open-input-file filename))
@@ -51,7 +53,8 @@
 
 (define (inject-contracts filename contracts [in-place #f])
   (define transformers
-    (list (inject-syntax contracts)
+    (list (inject-syntax dependencies)
+          (inject-syntax contracts)
           strip-provides))
   (define stx (file->module filename))
   (define transformed-stx
