@@ -1,11 +1,10 @@
 #lang racket
 
 (require racket/cmdline
-         racket/serialize)
+         racket/serialize
+         (for-syntax racket/syntax))
 
-(provide intercept-require-contracts
-         intercept-provide-contracts)
-
+(define require-mapping-file "_require-mappings.dat")
 (define require-contracts-file "_require-contracts.dat")
 (define provide-contracts-file "_provide-contracts.dat")
 (define in-place (make-parameter #f))
@@ -34,8 +33,9 @@
     reset-contract-data
     (λ ()
       (typed-module? target)
-      (displayln (get-provide-contracts))
-      (displayln (get-require-contracts)))
+      (displayln (get-require-mapping))
+      (displayln (get-require-contracts))
+      (displayln (get-provide-contracts)))
     reset-contract-data))
 
 (define ((intercept-contracts getter setter) stx)
@@ -53,20 +53,21 @@
   (with-output-to-file filename #:exists 'replace
     (λ () (write (serialize data)))))
 
-(define-values
-  (get-require-contracts get-provide-contracts)
-  (values (file->data require-contracts-file)
-          (file->data provide-contracts-file)))
+(define-syntax (generate-data-handlers stx)
+  (syntax-case stx ()
+    [(_ handler filename)
+     (with-syntax ([getter-id (format-id #'handler "get-~a" #'handler)]
+                   [setter-id (format-id #'handler "set-~a" #'handler)]
+                   [intercept-id (format-id #'handler "intercept-~a" #'handler)])
+       #`(begin
+           (define getter-id (file->data filename))
+           (define setter-id (data->file filename))
+           (define intercept-id (intercept-contracts getter-id setter-id))
+           (provide intercept-id)))]))
 
-(define-values
-  (set-require-contracts set-provide-contracts)
-  (values (data->file require-contracts-file)
-          (data->file provide-contracts-file)))
-
-(define-values
-  (intercept-require-contracts intercept-provide-contracts)
-  (values (intercept-contracts get-require-contracts set-require-contracts)
-          (intercept-contracts get-provide-contracts set-provide-contracts)))
+(generate-data-handlers require-mapping require-mapping-file)
+(generate-data-handlers require-contracts require-contracts-file)
+(generate-data-handlers provide-contracts provide-contracts-file)
 
 (define (command-parse argv)
   (command-line
