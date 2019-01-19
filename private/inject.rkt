@@ -3,15 +3,17 @@
 (require syntax/modread
          syntax/parse)
 
+(provide inject-contracts)
+
 ;; See https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ
-(define (file->syntax filename)
+(define (file->module filename)
   (define port (open-input-file filename))
   (with-module-reading-parameterization
     (λ ()
       (syntax->datum (parameterize ([current-namespace (make-base-namespace)])
                        (read-syntax (object-name port) port))))))
 
-(define (syntax-module->string stx)
+(define (module->string stx)
   (syntax-parse stx #:datum-literals (module #%module-begin)
                 [(module _ lang (#%module-begin forms ...))
                  (string-join
@@ -20,5 +22,34 @@
                              (syntax->datum #'(forms ...))))
                   "\n")]))
 
-#;(define (inject-contracts filename)
-  ...)
+(define (module->file stx filename)
+  (with-output-to-file filename #:exists 'replace
+    (λ () (displayln (module->string stx)))))
+
+(define ((inject-syntax new-forms) stx)
+  #`(#,@new-forms #,@stx))
+
+(define (strip-provides stx)
+  (define (provide-form? stx)
+    (syntax-parse stx #:datum-literals (provide)
+                  [(provide _ ...) #t]
+                  [_ #f]))
+  (datum->syntax stx (filter (negate provide-form?)
+                             (syntax-e stx))))
+
+(define (apply-transformers-to-module stx transformers)
+  (define transformer (apply compose transformers))
+  (syntax-parse stx #:datum-literals (module #%module-begin)
+                [(module name lang (#%module-begin forms ...))
+                 #`(module name lang
+                     (#%module-begin
+                      #,@(transformer #'(forms ...))))]))
+
+(define (inject-contracts filename contracts)
+  (define transformers
+    (list (inject-syntax contracts)
+          strip-provides))
+  (define stx (file->module filename))
+  (define transformed-stx
+    (apply-transformers-to-module stx transformers))
+  (module->file transformed-stx filename))
