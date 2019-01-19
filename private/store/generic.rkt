@@ -31,19 +31,7 @@
         (delete-file current-filename)))
 
     (define/public (show)
-      (define to-replace '("(define"
-                           "(provide"))
-      (define replace-with '("\n  (define"
-                             "\n  (provide"))
-      (define (pretty stx)
-        (string-append
-         (foldl (λ (x y s) (string-replace s x y))
-                (format "~a" stx)
-                to-replace
-                replace-with)
-         "\n"))
-      (apply string-append
-             (map pretty (get-data))))
+      (pretty-format (get-data)))
 
     (define/public (intercept stx)
       (set-data (cons (syntax->datum stx)
