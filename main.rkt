@@ -2,6 +2,6 @@
 
 (require tr-contract/private/explicit-contracts)
 (provide
- intercept-require-mapping
- intercept-require-contracts
- intercept-provide-contracts)
+ require-mapping-store
+ require-contracts-store
+ provide-contracts-store)
