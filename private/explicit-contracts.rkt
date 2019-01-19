@@ -1,10 +1,16 @@
 #lang racket
 
 (require racket/cmdline
-         tr-contract/private/stores
+         tr-contract/private/store/require-mapping
+         tr-contract/private/store/require-contracts
+         tr-contract/private/store/provide-contracts
          (for-syntax racket/syntax))
 
 (define in-place (make-parameter #f))
+(define all-stores
+  (list require-mapping-store
+        require-contracts-store
+        provide-contracts-store))
 
 (module+ main
   (define targets

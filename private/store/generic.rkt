@@ -2,6 +2,8 @@
 
 (require racket/serialize)
 
+(provide store%)
+
 (define store%
   (class object%
     (init filename)
@@ -31,19 +33,3 @@
       (set-data (cons (syntax->datum stx)
                       (get-data)))
       stx)))
-
-(define require-mapping-store
-  (new store% [filename "_require-mappings.dat"]))
-(define require-contracts-store
-  (new store% [filename "_require-contracts.dat"]))
-(define provide-contracts-store
-  (new store% [filename "_provide-contracts.dat"]))
-(define all-stores
-  (list require-mapping-store
-        require-contracts-store
-        provide-contracts-store))
-
-(provide require-mapping-store
-         require-contracts-store
-         provide-contracts-store
-         all-stores)
