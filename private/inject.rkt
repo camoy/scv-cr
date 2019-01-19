@@ -1,7 +1,8 @@
 #lang racket
 
 (require syntax/modread
-         syntax/parse)
+         syntax/parse
+         racket/syntax)
 
 (provide inject-contracts)
 
@@ -37,11 +38,14 @@
   (datum->syntax stx (filter (negate provide-form?)
                              (syntax-e stx))))
 
+(define (make-no-check lang)
+  (format-id lang "~a/no-check" (syntax-e lang)))
+
 (define (apply-transformers-to-module stx transformers)
   (define transformer (apply compose transformers))
   (syntax-parse stx #:datum-literals (module #%module-begin)
                 [(module name lang (#%module-begin forms ...))
-                 #`(module name lang
+                 #`(module name #,(make-no-check #'lang)
                      (#%module-begin
                       #,@(transformer #'(forms ...))))]))
 
