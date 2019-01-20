@@ -8,10 +8,10 @@
 (define provide-contracts-singleton%
   (class store% (super-new [filename "_provide-contracts.dat"])
     (inherit get-data)
-    (define/public (process)
+    (define/public (process target)
       (map (compose begin-cases
                     (curry datum->syntax #'_))
-           (reverse (get-data))))))
+           (reverse (get-data target))))))
 
 (define (begin-cases stx)
   (syntax-parse stx #:datum-literals (begin

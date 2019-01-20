@@ -26,11 +26,12 @@
 
 (define (process-contracts target)
   (define provide-contracts
-    (send provide-contracts-store process))
+    (send provide-contracts-store process target))
   (define new-target
-    (inject-contracts target provide-contracts (in-place)))
-  (unless (in-place)
-    (displayln (module->string new-target))))
+    (inject-contracts target provide-contracts))
+  (if (in-place)
+      (module->file new-target target)
+      (displayln (module->string new-target))))
 
 (define (explicit-contracts target)
   (dynamic-wind

@@ -4,7 +4,9 @@
          syntax/parse
          racket/syntax)
 
-(provide inject-contracts module->string)
+(provide inject-contracts
+         module->string
+         module->file)
 
 (define dependencies #'((require racket/contract
                                  typed-racket/utils/struct-type-c
@@ -53,7 +55,7 @@
                      (#%module-begin
                       #,@(transformer #'(forms ...))))]))
 
-(define (inject-contracts filename contracts [in-place #f])
+(define (inject-contracts filename contracts)
   (define transformers
     (list (inject-syntax dependencies)
           (inject-syntax contracts)
@@ -61,6 +63,4 @@
   (define stx (file->module filename))
   (define transformed-stx
     (apply-transformers-to-module stx transformers))
-  (when in-place
-    (module->file transformed-stx filename))
   transformed-stx)
