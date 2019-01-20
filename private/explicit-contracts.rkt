@@ -1,6 +1,7 @@
 #lang racket
 
 (require racket/cmdline
+         racket/hash
          tr-contract/private/store/require-mapping
          tr-contract/private/store/require-contracts
          tr-contract/private/store/provide-contracts
@@ -12,6 +13,10 @@
   (list require-mapping-store
         require-contracts-store
         provide-contracts-store))
+(define all-hashes
+  (list (make-hash)
+        (make-hash)
+        (make-hash)))
 
 (module+ main
   (define targets
@@ -22,7 +27,18 @@
       (findf (negate file-exists?) targets))
     (raise-user-error 'explicit-contracts "could not find ~s" unknown-file))
 
-  (for-each explicit-contracts targets))
+  (define tr-modules
+    (filter explicit-contracts targets))
+
+  (for ([store-hash all-hashes]
+        [store all-stores])
+    (send store set-hash store-hash))
+
+  (for ([target tr-modules])
+    (process-contracts target))
+
+  (for ([store all-stores])
+    (send store reset-data)))
 
 (define (process-contracts target)
   (define provide-contracts
@@ -39,10 +55,11 @@
       (for ([store all-stores])
         (send store init-data)))
     (λ ()
-      (define is-tr (load-module target))
-      (when is-tr (process-contracts target)))
+      (load-module target))
     (λ ()
-      (for ([store all-stores])
+      (for ([store-hash all-hashes]
+            [store all-stores])
+        (hash-union! store-hash (send store get-hash))
         (send store reset-data)))))
 
 (define (command-parse argv)
