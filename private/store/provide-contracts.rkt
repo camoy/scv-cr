@@ -15,6 +15,7 @@
 
 (define (begin-cases stx)
   (syntax-parse stx #:datum-literals (begin
+                                       define
                                        define-values
                                        define-module-boundary-contract)
                 [(begin (define a b) ...
@@ -27,8 +28,19 @@
                           #,(contract-case
                              #'(define-module-boundary-contract e ...)))]))
 
-(define define-case values)
-(define define-values-case values)
+(define (munge-contract id stx)
+  stx)
+
+(define (define-case stx)
+  (syntax-parse stx #:datum-literals (define)
+    [(define id contract)
+     #`(define id #,(munge-contract #'id #'contract))]))
+
+(define (define-values-case stx)
+  (syntax-parse stx #:datum-literals (define-values)
+    [(define-values (id) contract)
+     #`(define-values (id) #,(munge-contract #'id #'contract))]))
+
 (define (contract-case stx)
   (syntax-parse stx #:datum-literals (define-module-boundary-contract)
                 [(define-module-boundary-contract x y contract _ ...)
