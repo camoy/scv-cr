@@ -25,7 +25,7 @@
                 [(module _ lang (#%module-begin forms ...))
                  (string-join
                   (cons (format "#lang ~a" (syntax->datum #'lang))
-                        (map (λ (s) (pretty-format s #:mode 'display))
+                        (map (λ (s) (substring (pretty-format s) 1))
                              (syntax->datum #'(forms ...))))
                   "\n")]))
 
@@ -44,6 +44,18 @@
   (datum->syntax stx (filter (negate provide-form?)
                              (syntax-e stx))))
 
+(define (remove-require-typed stxs)
+  (define (remove-or-keep stx)
+    (syntax-parse stx #:datum-literals (require
+                                        require-typed-check
+                                        require/typed/check)
+                  [(require require-typed-check) '()]
+                  [(require/typed/check mod _ ...)
+                   (list #'(require mod))]
+                  [x (list #'x)]))
+  (datum->syntax stxs (append-map remove-or-keep
+                                  (syntax-e stxs))))
+
 (define (make-no-check lang)
   (format-id lang "~a/no-check" (syntax-e lang)))
 
@@ -59,6 +71,7 @@
   (define transformers
     (list (inject-syntax dependencies)
           (inject-syntax contracts)
+          remove-require-typed
           strip-provides))
   (define stx (file->module filename))
   (define transformed-stx
