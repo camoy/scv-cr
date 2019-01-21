@@ -8,7 +8,8 @@
          module->string
          module->file)
 
-(define dependencies #'((require racket/contract
+(define dependencies #'((require (except-in racket/contract ->)
+                                 (prefix-in t: typed-racket/types/numeric-predicates)
                                  typed-racket/utils/struct-type-c
                                  typed-racket/utils/simple-result-arrow)))
 
