@@ -28,18 +28,25 @@
                           #,(contract-case
                              #'(define-module-boundary-contract e ...)))]))
 
-(define (munge-contract id stx)
-  stx)
+(define ((munge-contract id) stx)
+  (syntax-parse stx #:datum-literals (lambda equal? quote)
+    [(lambda ((~literal x)) (equal? (~literal x) (quote y)))
+     #:when (void? (syntax-e #'y))
+     #'void?]
+    [(f args ...)
+     #`(f #,@(map (munge-contract id)
+                  (syntax->list #'(args ...))))]
+    [other #'other]))
 
 (define (define-case stx)
   (syntax-parse stx #:datum-literals (define)
     [(define id contract)
-     #`(define id #,(munge-contract #'id #'contract))]))
+     #`(define id #,((munge-contract #'id) #'contract))]))
 
 (define (define-values-case stx)
   (syntax-parse stx #:datum-literals (define-values)
     [(define-values (id) contract)
-     #`(define-values (id) #,(munge-contract #'id #'contract))]))
+     #`(define-values (id) #,((munge-contract #'id) #'contract))]))
 
 (define (contract-case stx)
   (syntax-parse stx #:datum-literals (define-module-boundary-contract)
