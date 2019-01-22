@@ -4,6 +4,7 @@
          racket/hash
          tr-contract/private/store/require-mapping
          tr-contract/private/store/require-contracts
+         tr-contract/private/store/provide-structs
          tr-contract/private/store/provide-contracts
          tr-contract/private/inject
          (for-syntax racket/syntax))
@@ -12,9 +13,11 @@
 (define all-stores
   (list require-mapping-store
         require-contracts-store
+        provide-structs-store
         provide-contracts-store))
 (define all-hashes
   (list (make-hash)
+        (make-hash)
         (make-hash)
         (make-hash)))
 
@@ -45,6 +48,7 @@
     (send provide-contracts-store process target))
   (define new-target
     (inject-contracts target provide-contracts))
+  (displayln (send provide-structs-store show target))
   (if (in-place)
       (module->file new-target target)
       (displayln (module->string new-target))))
