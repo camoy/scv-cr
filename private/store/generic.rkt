@@ -12,8 +12,10 @@
     (super-new)
 
     (define/public (get-data target)
+      (define normalized-path
+        (simplify-path (path->complete-path target)))
       (hash-ref (get-hash)
-                (path->complete-path target)
+                normalized-path
                 '()))
 
     (define/public (get-hash)
