@@ -29,7 +29,7 @@
       (λ ()
         (map (λ (store)
                (send store delete)
-               (send store process))
+               (send store finalize))
              all-stores))))
 
   (for-each process-contracts tr-modules)

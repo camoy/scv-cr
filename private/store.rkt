@@ -38,6 +38,12 @@
           (hash-set! data* target record*)
           (set data*)))
       stx)
+    
+    (define/public (finalize)
+      (define (process-pair k v)
+        (hash-set! data k (process v)))
+      (hash-for-each data process-pair))
 
-    (define/public (process) (void))
+    (define/public (process record)
+      record)
     ))

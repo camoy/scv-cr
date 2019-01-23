@@ -14,10 +14,8 @@
     (super-new [path "_provide-struct.dat"])
     (inherit-field data)
 
-    (define/override (process)
-      (define (process-pair k v)
-        (hash-set! data k (map syntax->struct-data v)))
-      (hash-for-each data  process-pair))
+    (define/override (process record)
+      (map syntax->struct-data record))
 
     ))
 
