@@ -3,7 +3,7 @@
 (require racket/cmdline
          racket/hash
          tr-contract/private/inject
-         tr-contract/private/store
+         tr-contract/private/store/all
          (for-syntax racket/syntax))
 
 (define in-place (make-parameter #f))
@@ -21,11 +21,19 @@
 
   (define tr-modules
     (dynamic-wind
-      (λ () (map persistent-init persistent-all))
-      (λ () (filter extract-contracts targets))
-      (λ () (map persistent-delete persistent-all))))
+      (λ ()
+        (map (λ (store) (send store make)) all-stores))
+      (λ ()
+        (filter extract-contracts targets))
+      (λ ()
+        (map (λ (store)
+               (send store delete)
+               (send store process))
+             all-stores))))
 
-  (displayln store-all)
+  (map (λ (store) (pretty-print (get-field data store)))
+       all-stores)
+  
   )
 
 #;(define (process-contracts target)
@@ -39,7 +47,7 @@
 
 (define (extract-contracts target)
   (load-module target)
-  (map store-load store-all))
+  (map (λ (store) (send store load)) all-stores))
 
 (define (command-parse argv)
   (command-line
