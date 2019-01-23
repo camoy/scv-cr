@@ -6,7 +6,14 @@
 
 (define require-mapping-singleton%
   (class store%
-    (super-new [path "_require-mapping.dat"])))
+    (super-new [path "_require-mapping.dat"])
+    #;(define lifted->lib (make-hash))
+    (define/override (process record)
+      (define lifted->id (make-hash))
+      (for ([lst record])
+        (match lst
+          [(list lifted id lib) (hash-set! lifted->id lifted id)]))
+      lifted->id)))
 
 (define require-mapping
   (new require-mapping-singleton%))

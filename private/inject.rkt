@@ -55,7 +55,7 @@
                                         require/typed/check)
                   [(require require-typed-check) '()]
                   [(require/typed/check mod _ ...)
-                   (list #'(require mod))]
+                   (list #'(require (prefix-in untyped: mod)))]
                   [x (list #'x)]))
   (datum->syntax stxs (append-map remove-or-keep
                                   (syntax-e stxs))))
