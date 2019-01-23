@@ -73,7 +73,8 @@
 (define (inject-contracts target)
   (define contracts
     (hash-ref (get-field data provide-contract)
-              (simplify-path (path->complete-path target))))
+              (simplify-path (path->complete-path target))
+              '()))
   (define transformers
     (list (inject-syntax dependencies)
           (inject-syntax contracts)
