@@ -3,7 +3,8 @@
 (require tr-contract/private/store
          syntax/parse)
 
-(provide provide-struct)
+(provide provide-struct
+         [struct-out struct-data])
 
 (struct struct-data (name super-struct fields
                      descriptor constructor predicate
@@ -22,11 +23,11 @@
       (ormap
        (λ (datum)
          (cond
-           [(equal? id (struct-data-descriptor datum)) 'descriptor]
-           [(equal? id (struct-data-constructor datum)) 'constructor]
-           [(equal? id (struct-data-predicate datum)) 'predicate]
-           [(member id (struct-data-getters datum)) 'getter]
-           [(member id (struct-data-setters datum)) 'setter]
+           [(equal? id (struct-data-descriptor datum)) (cons 'descriptor datum)]
+           [(equal? id (struct-data-constructor datum)) (cons 'constructor datum)]
+           [(equal? id (struct-data-predicate datum)) (cons 'predicate datum)]
+           [(member id (struct-data-getters datum)) (cons 'getter datum)]
+           [(member id (struct-data-setters datum)) (cons 'setter datum)]
            [else #f]))
        (current-record)))
 

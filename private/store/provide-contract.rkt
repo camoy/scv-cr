@@ -22,12 +22,16 @@
                 [(begin (define a b) ...
                         (define-values (c) d) ...
                         (define-module-boundary-contract e ...))
-                 #`(begin #,@(map define-case
-                                  (syntax-e #'((define a b) ...)))
-                          #,@(map define-values-case
-                                  (syntax-e #'((define-values (c) d) ...)))
-                          #,(contract-case
-                             #'(define-module-boundary-contract e ...)))]))
+                 (define all-define
+                   (map define-case (syntax-e #'((define a b) ...))))
+                 (define all-define-values
+                   (map define-values-case (syntax-e #'((define-values (c) d) ...))))
+                 (define the-contract
+                   (contract-case #'(define-module-boundary-contract e ...)
+                                  all-define-values))
+                 #`(begin #,@all-define
+                          #,@all-define-values
+                          #,the-contract)]))
 
 (define (define-case stx)
   (syntax-parse stx #:datum-literals (define)
@@ -39,13 +43,31 @@
     [(define-values (id) contract)
      #`(define-values (id) #,((munge-contract #'id) #'contract))]))
 
-(define (contract-case stx)
+(define (contract-case stx contract-def)
   (syntax-parse
       stx #:datum-literals (define-module-boundary-contract)
       [(define-module-boundary-contract x y contract _ ...)
-       (if (send provide-struct struct-function? (syntax->datum #'x))
-           #'(void)
-           #'(provide (contract-out [x contract])))]))
+       (define name
+         (syntax->datum #'x))
+       (define info
+         (send provide-struct struct-function? name))
+       (cond
+         [(and info (equal? (car info) 'constructor))
+          (make-struct-out (cdr info) contract-def)]
+         [info #'(void)]
+         [else #'(provide (contract-out [x contract]))])]))
+
+(define (make-struct-out info contract-def)
+  (syntax-parse
+      contract-def #:datum-literals (->*)
+      [((define-values (_) (->* (fld-type ...) () (values _ ...))))
+       (define fld-pairs
+         (for/list ([fld-name (struct-data-fields info)]
+                    [fld-type (syntax->datum #'(fld-type ...))])
+           #`(#,fld-name #,fld-type)))
+       #`(provide (contract-out
+                   [struct #,(struct-data-name info)
+                     #,fld-pairs]))]))
 
 (define ((munge-contract id) stx)
   (syntax-parse stx #:datum-literals (lambda equal? quote)
