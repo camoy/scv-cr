@@ -15,10 +15,10 @@
  (all-defined-out))
 
 (define store->path
-  (hash provide-struct-store "_provide-struct-store.dat"
-        provide-contract-store "_provide-contract-store.dat"
-        require-mapping-store "_require-mapping-store.dat"
-        require-contract-store "_require-contract-store.dat"))
+  (hasheq provide-struct-store "_provide-struct-store.dat"
+          provide-contract-store "_provide-contract-store.dat"
+          require-mapping-store "_require-mapping-store.dat"
+          require-contract-store "_require-contract-store.dat"))
 
 (define-values (store-all persistent-all)
   (values (hash-keys store->path)
