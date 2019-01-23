@@ -22,7 +22,8 @@
   (define tr-modules
     (dynamic-wind
       (λ ()
-        (map (λ (store) (send store make)) all-stores))
+        (map (λ (store) (send store make))
+             all-stores))
       (λ ()
         (filter extract-contracts targets))
       (λ ()
@@ -31,16 +32,12 @@
                (send store process))
              all-stores))))
 
-  (map (λ (store) (pretty-print (get-field data store)))
-       all-stores)
-  
+  (for-each process-contracts tr-modules)
   )
 
-#;(define (process-contracts target)
-  (define provide-contracts
-    (send provide-contracts-store process target))
+(define (process-contracts target)
   (define new-target
-    (inject-contracts target provide-contracts))
+    (inject-contracts target))
   (if (in-place)
       (module->file new-target target)
       (displayln (module->string new-target))))

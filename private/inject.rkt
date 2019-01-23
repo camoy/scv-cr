@@ -2,7 +2,8 @@
 
 (require syntax/modread
          syntax/parse
-         racket/syntax)
+         racket/syntax
+         tr-contract/private/store/all)
 
 (provide inject-contracts
          module->string
@@ -69,13 +70,16 @@
                      (#%module-begin
                       #,@(transformer #'(forms ...))))]))
 
-(define (inject-contracts filename contracts)
+(define (inject-contracts target)
+  (define contracts
+    (hash-ref (get-field data provide-contract)
+              (simplify-path (path->complete-path target))))
   (define transformers
     (list (inject-syntax dependencies)
           (inject-syntax contracts)
           remove-require-typed
           strip-provides))
-  (define stx (file->module filename))
+  (define stx (file->module target))
   (define transformed-stx
     (apply-transformers-to-module stx transformers))
   transformed-stx)
