@@ -12,11 +12,24 @@
 (define provide-struct-singleton%
   (class store%
     (super-new [path "_provide-struct.dat"])
+    (inherit current-record)
     (inherit-field data)
 
     (define/override (process record)
       (map syntax->struct-data record))
 
+    (define/public (struct-function? id)
+      (ormap
+       (λ (datum)
+         (define functions
+           (flatten (map (λ (f) (f datum))
+                         (list struct-data-descriptor
+                               struct-data-constructor
+                               struct-data-predicate
+                               struct-data-getters
+                               struct-data-setters))))
+         (member id functions))
+       (current-record)))
     ))
 
 (define (syntax->struct-data stx)

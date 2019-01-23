@@ -51,4 +51,8 @@
 
     (define/public (process record)
       record)
+
+    (define/public (current-record)
+      (hash-ref data (current-target)))
+
     ))

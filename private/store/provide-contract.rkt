@@ -1,6 +1,7 @@
 #lang racket
 
 (require tr-contract/private/store
+         tr-contract/private/store/provide-struct
          syntax/parse)
 
 (provide provide-contract)
