@@ -3,6 +3,7 @@
 (require syntax/modread
          syntax/parse
          racket/syntax
+         tr-contract/private/store
          tr-contract/private/store/all)
 
 (provide inject-contracts
@@ -71,19 +72,15 @@
                       #,@(transformer #'(forms ...))))]))
 
 (define (inject-contracts target)
-  (define contracts
-    (hash-ref (get-field data provide-contract)
-              (simplify-path (path->complete-path target))
-              '()))
-  (define transformers
-    (list (inject-syntax dependencies)
-          (inject-syntax contracts)
-          remove-require-typed
-          strip-provides))
-  (define stx (file->module target))
-  (define transformed-stx
-    (apply-transformers-to-module stx transformers))
-  transformed-stx)
+  (let* ([contracts (hash-ref (get-field data provide-contract)
+                              (simplify-path (path->complete-path target))
+                              '())]
+         [transformers (list (inject-syntax dependencies)
+                             (inject-syntax contracts)
+                             remove-require-typed
+                             strip-provides)]
+         [stx (file->module target)])
+    (apply-transformers-to-module stx transformers)))
 
 ;; References
 ;; [1] https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ

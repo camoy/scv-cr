@@ -4,6 +4,7 @@
          racket/hash
          tr-contract/private/inject
          tr-contract/private/store/all
+         tr-contract/private/store
          (for-syntax racket/syntax))
 
 (define in-place (make-parameter #f))

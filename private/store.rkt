@@ -3,7 +3,11 @@
 (require racket/serialize
          racket/hash)
 
-(provide store%)
+(provide store%
+         current-target)
+
+(define current-target
+  (make-parameter (void)))
 
 (define store%
   (class object%
@@ -41,7 +45,8 @@
     
     (define/public (finalize)
       (define (process-pair k v)
-        (hash-set! data k (process v)))
+        (parameterize ([current-target k])
+          (hash-set! data k (process v))))
       (hash-for-each data process-pair))
 
     (define/public (process record)
