@@ -8,12 +8,13 @@
          module->string
          module->file)
 
-(define dependencies #'((require (except-in racket/contract ->)
-                                 (prefix-in t: typed-racket/types/numeric-predicates)
-                                 typed-racket/utils/struct-type-c
-                                 typed-racket/utils/simple-result-arrow)))
+(define dependencies
+  #'((require (except-in racket/contract ->)
+              (prefix-in t: typed-racket/types/numeric-predicates)
+              typed-racket/utils/struct-type-c
+              typed-racket/utils/simple-result-arrow)))
 
-;; See https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ
+;; This came from [1].
 (define (file->module filename)
   (define port (open-input-file filename))
   (with-module-reading-parameterization
@@ -78,3 +79,6 @@
   (define transformed-stx
     (apply-transformers-to-module stx transformers))
   transformed-stx)
+
+;; References
+;; [1] https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ

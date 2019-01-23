@@ -2,24 +2,11 @@
 
 (require racket/cmdline
          racket/hash
-         tr-contract/private/store/require-mapping
-         tr-contract/private/store/require-contracts
-         tr-contract/private/store/provide-structs
-         tr-contract/private/store/provide-contracts
          tr-contract/private/inject
+         tr-contract/private/store
          (for-syntax racket/syntax))
 
 (define in-place (make-parameter #f))
-(define all-stores
-  (list require-mapping-store
-        require-contracts-store
-        provide-structs-store
-        provide-contracts-store))
-(define all-hashes
-  (list (make-hash)
-        (make-hash)
-        (make-hash)
-        (make-hash)))
 
 (module+ main
   (define targets
@@ -28,43 +15,31 @@
   (unless (andmap file-exists? targets)
     (define unknown-file
       (findf (negate file-exists?) targets))
-    (raise-user-error 'explicit-contracts "could not find ~s" unknown-file))
+    (raise-user-error 'explicit-contracts
+                      "could not find ~s"
+                      unknown-file))
 
   (define tr-modules
-    (filter explicit-contracts targets))
+    (dynamic-wind
+      (λ () (map persistent-init persistent-all))
+      (λ () (filter extract-contracts targets))
+      (λ () (map persistent-delete persistent-all))))
 
-  (for ([store-hash all-hashes]
-        [store all-stores])
-    (send store set-hash store-hash))
+  (displayln store-all)
+  )
 
-  (for ([target tr-modules])
-    (process-contracts target))
-
-  (for ([store all-stores])
-    (send store reset-data)))
-
-(define (process-contracts target)
+#;(define (process-contracts target)
   (define provide-contracts
     (send provide-contracts-store process target))
   (define new-target
     (inject-contracts target provide-contracts))
-  (displayln (send provide-structs-store show target))
   (if (in-place)
       (module->file new-target target)
       (displayln (module->string new-target))))
 
-(define (explicit-contracts target)
-  (dynamic-wind
-    (λ ()
-      (for ([store all-stores])
-        (send store init-data)))
-    (λ ()
-      (load-module target))
-    (λ ()
-      (for ([store-hash all-hashes]
-            [store all-stores])
-        (hash-union! store-hash (send store get-hash))
-        (send store reset-data)))))
+(define (extract-contracts target)
+  (load-module target)
+  (map store-load store-all))
 
 (define (command-parse argv)
   (command-line
