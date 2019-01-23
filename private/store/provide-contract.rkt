@@ -29,16 +29,6 @@
                           #,(contract-case
                              #'(define-module-boundary-contract e ...)))]))
 
-(define ((munge-contract id) stx)
-  (syntax-parse stx #:datum-literals (lambda equal? quote)
-    [(lambda ((~literal x)) (equal? (~literal x) (quote y)))
-     #:when (void? (syntax-e #'y))
-     #'void?]
-    [(f args ...)
-     #`(f #,@(map (munge-contract id)
-                  (syntax->list #'(args ...))))]
-    [other #'other]))
-
 (define (define-case stx)
   (syntax-parse stx #:datum-literals (define)
     [(define id contract)
@@ -50,9 +40,22 @@
      #`(define-values (id) #,((munge-contract #'id) #'contract))]))
 
 (define (contract-case stx)
-  (syntax-parse stx #:datum-literals (define-module-boundary-contract)
-                [(define-module-boundary-contract x y contract _ ...)
-                 #'(provide (contract-out [x contract]))]))
+  (syntax-parse
+      stx #:datum-literals (define-module-boundary-contract)
+      [(define-module-boundary-contract x y contract _ ...)
+       (if (send provide-struct struct-function? (syntax->datum #'x))
+           #'(void)
+           #'(provide (contract-out [x contract])))]))
+
+(define ((munge-contract id) stx)
+  (syntax-parse stx #:datum-literals (lambda equal? quote)
+    [(lambda ((~literal x)) (equal? (~literal x) (quote y)))
+     #:when (void? (syntax-e #'y))
+     #'void?]
+    [(f args ...)
+     #`(f #,@(map (munge-contract id)
+                  (syntax->list #'(args ...))))]
+    [other #'other]))
 
 (define provide-contract
   (new provide-contract-singleton%))

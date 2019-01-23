@@ -21,15 +21,20 @@
     (define/public (struct-function? id)
       (ormap
        (λ (datum)
-         (define functions
-           (flatten (map (λ (f) (f datum))
-                         (list struct-data-descriptor
-                               struct-data-constructor
-                               struct-data-predicate
-                               struct-data-getters
-                               struct-data-setters))))
-         (member id functions))
+         (cond
+           [(equal? id (struct-data-descriptor datum)) 'descriptor]
+           [(equal? id (struct-data-constructor datum)) 'constructor]
+           [(equal? id (struct-data-predicate datum)) 'predicate]
+           [(member id (struct-data-getters datum)) 'getter]
+           [(member id (struct-data-setters datum)) 'setter]
+           [else #f]))
        (current-record)))
+
+    (define/public (struct-fields id)
+      (define datum
+        (findf (λ (datum) (equal? id (struct-data-name id)))
+               (current-record)))
+      (struct-data-fields datum))
     ))
 
 (define (syntax->struct-data stx)
