@@ -33,7 +33,7 @@
                         all-define-values))
        #`(begin #,@all-define
                 #,@all-define-values
-                #,the-contract)]))
+                #,@the-contract)]))
 
 (define (define-case stx)
   (syntax-parse
@@ -57,9 +57,11 @@
          (send struct-data struct-function? name))
        (cond
          [(and desc (equal? (car desc) 'constructor))
-          (make-struct-out (cdr desc) contract-def)]
-         [desc #'(void)]
-         [else #'(provide (contract-out [x contract]))])]))
+          (list (make-struct-out (cdr desc) contract-def))]
+         [desc (list #'(void))]
+         [else #'((provide (contract-out [x contract]))
+                  (module+ unsafe
+                    (provide x)))])]))
 
 (define (make-struct-out info contract-def)
   (syntax-parse
