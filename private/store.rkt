@@ -53,6 +53,6 @@
       record)
 
     (define/public (current-record)
-      (hash-ref data (current-target)))
+      (hash-ref data (current-target) '()))
 
     ))

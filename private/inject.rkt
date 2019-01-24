@@ -76,7 +76,7 @@
          [require-contracts (store->contracts require-contract target)]
          [transformers (list (inject-syntax dependencies)
                              (inject-syntax provide-contracts)
-                             (inject-syntax require-contracts)
+                             #;(inject-syntax require-contracts)
                              remove-require-typed
                              strip-provides)]
          [stx (file->module target)])
