@@ -21,7 +21,7 @@
        #'void?]
       [(lambda ((~literal x)) (f (~literal x)))
        #:when (let ([function-desc (send struct-data struct-function? (syntax-e #'f))])
-                (and prefix-predicates
+                (and (prefix-predicates)
                      function-desc
                      (equal? (car function-desc) 'predicate)))
        (prefix-unsafe #'f)]

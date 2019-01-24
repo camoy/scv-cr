@@ -4,7 +4,6 @@
          racket/hash
          tr-contract/private/utils
          tr-contract/private/inject
-         tr-contract/private/tr-mapping
          tr-contract/private/store/all
          tr-contract/private/store
          (for-syntax racket/syntax))
@@ -35,8 +34,6 @@
                (send store finalize))
              all-stores))))
 
-  (for-each (λ (mod) (hash-set! tr-module-hash mod #t))
-            tr-modules)
   (for-each process-contracts tr-modules)
   )
 
