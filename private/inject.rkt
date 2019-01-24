@@ -3,6 +3,7 @@
 (require syntax/modread
          syntax/parse
          racket/syntax
+         tr-contract/private/utils
          tr-contract/private/store
          tr-contract/private/store/all)
 
@@ -50,13 +51,17 @@
 
 (define (remove-require-typed stxs)
   (define (remove-or-keep stx)
-    (syntax-parse stx #:datum-literals (require
-                                        require-typed-check
-                                        require/typed/check)
-                  [(require require-typed-check) '()]
-                  [(require/typed/check mod _ ...)
-                   (list #'(require (prefix-in unsafe: mod)))]
-                  [x (list #'x)]))
+    (syntax-parse
+        stx #:datum-literals (require
+                              require-typed-check
+                              require/typed/check)
+        [(require require-typed-check) '()]
+        [(require/typed/check mod _ ...)
+         ;; TODO: uncomment when checking provides contracts
+         (list (if #t #;(load-module (syntax-e #'mod))
+                   #'(require mod)
+                   #'(require (prefix-in unsafe: mod))))]
+        [x (list #'x)]))
   (datum->syntax stxs (append-map remove-or-keep
                                   (syntax-e stxs))))
 
@@ -76,6 +81,7 @@
          [require-contracts (store->contracts require-contract target)]
          [transformers (list (inject-syntax dependencies)
                              (inject-syntax provide-contracts)
+                             ;; TODO: uncomment when doing provide contracts
                              #;(inject-syntax require-contracts)
                              remove-require-typed
                              strip-provides)]

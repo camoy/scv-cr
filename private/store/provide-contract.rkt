@@ -16,33 +16,36 @@
            (reverse record)))))
 
 (define (begin-cases stx)
-  (syntax-parse stx #:datum-literals (begin
-                                       define
-                                       define-values
-                                       define-module-boundary-contract)
-                [(begin (define a b) ...
-                        (define-values (c) d) ...
-                        (define-module-boundary-contract e ...))
-                 (define all-define
-                   (map define-case (syntax-e #'((define a b) ...))))
-                 (define all-define-values
-                   (map define-values-case (syntax-e #'((define-values (c) d) ...))))
-                 (define the-contract
-                   (contract-case #'(define-module-boundary-contract e ...)
-                                  all-define-values))
-                 #`(begin #,@all-define
-                          #,@all-define-values
-                          #,the-contract)]))
+  (syntax-parse
+      stx #:datum-literals (begin
+                             define
+                             define-values
+                             define-module-boundary-contract)
+      [(begin (define a b) ...
+              (define-values (c) d) ...
+              (define-module-boundary-contract e ...))
+       (define all-define
+         (map define-case (syntax-e #'((define a b) ...))))
+       (define all-define-values
+         (map define-values-case (syntax-e #'((define-values (c) d) ...))))
+       (define the-contract
+         (contract-case #'(define-module-boundary-contract e ...)
+                        all-define-values))
+       #`(begin #,@all-define
+                #,@all-define-values
+                #,the-contract)]))
 
 (define (define-case stx)
-  (syntax-parse stx #:datum-literals (define)
-    [(define id contract)
-     #`(define id #,((munge-contract #'id) #'contract))]))
+  (syntax-parse
+      stx #:datum-literals (define)
+      [(define id contract)
+       #`(define id #,((munge-contract #'id) #'contract))]))
 
 (define (define-values-case stx)
-  (syntax-parse stx #:datum-literals (define-values)
-    [(define-values (id) contract)
-     #`(define-values (id) #,((munge-contract #'id) #'contract))]))
+  (syntax-parse
+      stx #:datum-literals (define-values)
+      [(define-values (id) contract)
+       #`(define-values (id) #,((munge-contract #'id) #'contract))]))
 
 (define (contract-case stx contract-def)
   (syntax-parse
