@@ -3,7 +3,6 @@
 (require tr-contract/private/store
          tr-contract/private/store/require-mapping
          tr-contract/private/munge-contract
-         racket/syntax
          syntax/parse)
 
 (provide require-contract)
@@ -31,10 +30,11 @@
                           #,@all-define-values)]))
 
 (define (define-case stx)
-  (syntax-parse
-      stx #:datum-literals (define)
-      [(define id contract)
-       #`(define id #,((munge-contract #'id) #'contract))]))
+  (parameterize ([prefix-predicates #t])
+    (syntax-parse
+        stx #:datum-literals (define)
+        [(define id contract)
+         #`(define id #,((munge-contract #'id) #'contract))])))
 
 (define (define-values-case stx)
   (syntax-parse
@@ -42,10 +42,8 @@
       [(define-values (id) contract)
        (define required-id
          (send require-mapping lookup (syntax->datum #'id)))
-       (define unsafe-required-id
-         (format-id #'id "unsafe:~a" required-id))
-         #`((define-values (id) #,((munge-contract #'id) #'contract))
-            (define/contract #,required-id id #,unsafe-required-id))]))
+       #`((define-values (id) #,((munge-contract #'id) #'contract))
+          (define/contract #,required-id id #,(prefix-unsafe required-id)))]))
 
 (define require-contract
   (new require-contract-singleton%))
