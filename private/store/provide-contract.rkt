@@ -1,7 +1,8 @@
 #lang racket
 
 (require tr-contract/private/store
-         tr-contract/private/store/provide-struct
+         tr-contract/private/store/struct-data
+         tr-contract/private/munge-contract
          syntax/parse)
 
 (provide provide-contract)
@@ -49,12 +50,12 @@
       [(define-module-boundary-contract x y contract _ ...)
        (define name
          (syntax->datum #'x))
-       (define info
-         (send provide-struct struct-function? name))
+       (define desc
+         (send struct-data struct-function? name))
        (cond
-         [(and info (equal? (car info) 'constructor))
-          (make-struct-out (cdr info) contract-def)]
-         [info #'(void)]
+         [(and desc (equal? (car desc) 'constructor))
+          (make-struct-out (cdr desc) contract-def)]
+         [desc #'(void)]
          [else #'(provide (contract-out [x contract]))])]))
 
 (define (make-struct-out info contract-def)
@@ -62,22 +63,12 @@
       contract-def #:datum-literals (->*)
       [((define-values (_) (->* (fld-type ...) () (values _ ...))))
        (define fld-pairs
-         (for/list ([fld-name (struct-data-fields info)]
+         (for/list ([fld-name (struct-desc-fields info)]
                     [fld-type (syntax->datum #'(fld-type ...))])
            #`(#,fld-name #,fld-type)))
        #`(provide (contract-out
-                   [struct #,(struct-data-name info)
+                   [struct #,(struct-desc-name info)
                      #,fld-pairs]))]))
-
-(define ((munge-contract id) stx)
-  (syntax-parse stx #:datum-literals (lambda equal? quote)
-    [(lambda ((~literal x)) (equal? (~literal x) (quote y)))
-     #:when (void? (syntax-e #'y))
-     #'void?]
-    [(f args ...)
-     #`(f #,@(map (munge-contract id)
-                  (syntax->list #'(args ...))))]
-    [other #'other]))
 
 (define provide-contract
   (new provide-contract-singleton%))

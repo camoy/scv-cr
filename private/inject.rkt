@@ -55,7 +55,7 @@
                                         require/typed/check)
                   [(require require-typed-check) '()]
                   [(require/typed/check mod _ ...)
-                   (list #'(require (prefix-in untyped: mod)))]
+                   (list #'(require (prefix-in unsafe: mod)))]
                   [x (list #'x)]))
   (datum->syntax stxs (append-map remove-or-keep
                                   (syntax-e stxs))))
@@ -72,15 +72,20 @@
                       #,@(transformer #'(forms ...))))]))
 
 (define (inject-contracts target)
-  (let* ([contracts (hash-ref (get-field data provide-contract)
-                              (simplify-path (path->complete-path target))
-                              '())]
+  (let* ([provide-contracts (store->contracts provide-contract target)]
+         [require-contracts (store->contracts require-contract target)]
          [transformers (list (inject-syntax dependencies)
-                             (inject-syntax contracts)
+                             (inject-syntax provide-contracts)
+                             (inject-syntax require-contracts)
                              remove-require-typed
                              strip-provides)]
          [stx (file->module target)])
     (apply-transformers-to-module stx transformers)))
+
+(define (store->contracts store target)
+  (hash-ref (get-field data store)
+            (simplify-path (path->complete-path target))
+            '()))
 
 ;; References
 ;; [1] https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ

@@ -186,7 +186,7 @@ index c5c1173c..4fe557b8 100644
  
  ;; kind is the greatest kind of contract that is supported, if a greater kind would be produced the
 diff --git a/typed-racket-lib/typed-racket/typecheck/tc-structs.rkt b/typed-racket-lib/typed-racket/typecheck/tc-structs.rkt
-index 948b5399..fce5145d 100644
+index 948b5399..9588bfba 100644
 --- a/typed-racket-lib/typed-racket/typecheck/tc-structs.rkt
 +++ b/typed-racket-lib/typed-racket/typecheck/tc-structs.rkt
 @@ -2,7 +2,7 @@
@@ -202,7 +202,7 @@ index 948b5399..fce5145d 100644
    ;; that the outside world will see
    ;; then register it
    (define names (get-struct-names type-name nm fld-names maker extra-maker))
-+  (send provide-struct intercept
++  (send struct-data intercept
 +             (current-module-declare-name)
 +             #`(#,@(struct->list names)
 +                #,parent-name
@@ -211,7 +211,7 @@ index 948b5399..fce5145d 100644
    (cond [prefab?
           (define-values (parent-key parent-fields)
 diff --git a/typed-racket-lib/typed-racket/utils/require-contract.rkt b/typed-racket-lib/typed-racket/utils/require-contract.rkt
-index 05219dbf..965d09d5 100644
+index 05219dbf..9aedd68e 100644
 --- a/typed-racket-lib/typed-racket/utils/require-contract.rkt
 +++ b/typed-racket-lib/typed-racket/utils/require-contract.rkt
 @@ -5,7 +5,9 @@
@@ -229,7 +229,7 @@ index 05219dbf..965d09d5 100644
  
    (syntax-parse stx
      [(require/contract nm:renameable hidden:id cnt lib)
-+     (send require-mapping-store intercept
++     (send require-mapping intercept
 +                (current-module-declare-name)
 +                #'(cnt nm.orig-nm lib))
       #`(begin (require (only-in lib [nm.orig-nm nm.orig-nm-r]))
