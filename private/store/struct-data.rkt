@@ -12,7 +12,8 @@
 
 (define struct-data-singleton%
   (class store%
-    (super-new [path "_struct-data.dat"])
+    (super-new [path "_struct-data.dat"]
+               [init-struct '()])
     (inherit current-record)
     (inherit-field data)
 

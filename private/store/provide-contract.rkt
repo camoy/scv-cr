@@ -2,6 +2,7 @@
 
 (require tr-contract/private/store
          tr-contract/private/store/struct-data
+         tr-contract/private/store/contract-registry
          tr-contract/private/munge-contract
          syntax/parse)
 
@@ -9,7 +10,8 @@
 
 (define provide-contract-singleton%
   (class store%
-    (super-new [path "_provide-contract.dat"])
+    (super-new [path "_provide-contract.dat"]
+               [init-struct '()])
     (define/override (process record)
       (map (compose begin-cases
                     (curry datum->syntax #'_))
@@ -57,11 +59,12 @@
          (send struct-data struct-function? name))
        (cond
          [(and desc (equal? (car desc) 'constructor))
-          (list (make-struct-out (cdr desc) contract-def))]
+          (make-struct-out (cdr desc) contract-def)]
          [desc (list #'(void))]
-         [else #'((provide (contract-out [x contract]))
-                  (module+ unsafe
-                    (provide x)))])]))
+         [else
+          (send contract-registry register
+                (syntax-e #'x) #'contract)
+          (list #'(void))])]))
 
 (define (make-struct-out info contract-def)
   (syntax-parse
@@ -71,9 +74,9 @@
          (for/list ([fld-name (struct-desc-fields info)]
                     [fld-type (syntax->datum #'(fld-type ...))])
            #`(#,fld-name #,fld-type)))
-       #`(provide (contract-out
-                   [struct #,(struct-desc-name info)
-                     #,fld-pairs]))]))
+       (send contract-registry register
+             (struct-desc-name info) fld-pairs)
+       (list #'(void))]))
 
 (define provide-contract
   (new provide-contract-singleton%))

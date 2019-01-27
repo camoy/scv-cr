@@ -11,7 +11,7 @@
 
 (define store%
   (class object%
-    (init-field path)
+    (init-field path init-struct)
     (field [data (make-hash)])
     (super-new)
 
@@ -53,6 +53,9 @@
       record)
 
     (define/public (current-record)
-      (hash-ref data (current-target) '()))
+      (hash-ref data (current-target)
+                (λ ()
+                  (hash-set! data (current-target) init-struct)
+                  init-struct)))
 
     ))

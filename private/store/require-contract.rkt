@@ -2,6 +2,7 @@
 
 (require tr-contract/private/store
          tr-contract/private/store/require-mapping
+         tr-contract/private/store/contract-registry
          tr-contract/private/munge-contract
          syntax/parse)
 
@@ -9,7 +10,8 @@
 
 (define require-contract-singleton%
   (class store%
-    (super-new [path "_require-contract.dat"])
+    (super-new [path "_require-contract.dat"]
+               [init-struct '()])
 
     (define/override (process record)
       (map (compose begin-cases
@@ -42,8 +44,8 @@
       [(define-values (id) contract)
        (define required-id
          (send require-mapping lookup (syntax->datum #'id)))
-       #`((define-values (id) #,((munge-contract #'id) #'contract))
-          (define/contract #,required-id id #,(prefix-unsafe required-id)))]))
+       (send contract-registry register required-id #'id)
+       (list #'(void))]))
 
 (define require-contract
   (new require-contract-singleton%))
