@@ -62,7 +62,6 @@
         [x #'x]))
   (datum->syntax stx (map transform-form (syntax-e stx))))
 
-;; TODO: transform required-typed from registry instead of just removing
 (define (transform-require-typed stxs)
   (define (transform-clause stx)
     (syntax-parse

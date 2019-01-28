@@ -40,7 +40,8 @@
                     (struct-desc-constructor datum)
                     (struct-desc-predicate datum))
               (struct-desc-getters datum)
-              (struct-desc-setters datum)))
+              ;; TR does not require mutable fields?
+              #;(struct-desc-setters datum)))
     ))
 
 (define (syntax->struct-data stx)
