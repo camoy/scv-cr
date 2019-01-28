@@ -3,7 +3,6 @@
 (require syntax/modread
          syntax/parse
          racket/syntax
-         tr-contract/private/munge-contract
          tr-contract/private/utils
          tr-contract/private/store
          tr-contract/private/store/contract-registry
