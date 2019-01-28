@@ -3,6 +3,7 @@
 (require syntax/modread
          syntax/parse
          racket/syntax
+         tr-contract/private/munge-contract
          tr-contract/private/utils
          tr-contract/private/store
          tr-contract/private/store/contract-registry
@@ -23,8 +24,9 @@
   (define port (open-input-file filename))
   (with-module-reading-parameterization
     (λ ()
-      (syntax->datum (parameterize ([current-namespace (make-base-namespace)])
-                       (read-syntax (object-name port) port))))))
+      (syntax->datum
+       (parameterize ([current-namespace (make-base-namespace)])
+         (read-syntax (object-name port) port))))))
 
 (define (module->string stx)
   (syntax-parse stx #:datum-literals (module #%module-begin)
@@ -47,12 +49,10 @@
     (syntax-parse
         y #:datum-literals (struct-out)
         [(struct-out id)
-         (define fld-pairs
-           (send contract-registry lookup (syntax-e #'id)))
+         (define fld-pairs (registry-lookup #'id))
          (list #`(provide (contract-out [struct id #,fld-pairs])))]
         [id
-         (define contract
-           (send contract-registry lookup (syntax-e #'id)))
+         (define contract (registry-lookup #'id))
          (list #`(provide (contract-out [id #,contract]))
                #`(module+ unsafe (provide id)))]))
   (define (transform-form stx)
@@ -63,20 +63,28 @@
         [x #'x]))
   (datum->syntax stx (map transform-form (syntax-e stx))))
 
-(define (remove-require-typed stxs)
-  (define (remove-or-keep stx)
+;; TODO: transform required-typed from registry instead of just removing
+(define (transform-require-typed stxs)
+  (define (transform-clause stx)
+    (syntax-parse
+        stx
+        [((~datum #:struct) id flds) #'(void)] ; TODO!!!
+        [(id type)
+         (define contract (registry-lookup #'id))
+         #`(define/contract id #,contract #,(prefix-unsafe #'id))]))
+  (define (transform-or-keep stx)
     (syntax-parse
         stx #:datum-literals (require
                               require-typed-check
                               require/typed/check)
         [(require require-typed-check) '()]
-        [(require/typed/check mod _ ...)
-         ;; TODO: uncomment when doing require contracts
-         (list (if #t #;(load-module (syntax-e #'mod))
-                   #'(require mod) #;(require (submod mod unsafe))
-                   #'(require (prefix-in unsafe: mod))))]
+        [(require/typed/check mod clause ...)
+         (if (load-module (syntax-e #'mod))
+             (list #'(require (submod mod unsafe)))
+             (cons #'(require (prefix-in unsafe: mod))
+                   (map transform-clause (syntax-e #'(clause ...)))))]
         [x (list #'x)]))
-  (datum->syntax stxs (append-map remove-or-keep
+  (datum->syntax stxs (append-map transform-or-keep
                                   (syntax-e stxs))))
 
 (define (make-no-check lang)
@@ -98,12 +106,14 @@
            [require-contracts (send require-contract current-record)]
            [transformers (list (inject-syntax dependencies)
                                (inject-syntax provide-contracts)
-                               ;; TODO: uncomment when doing require contracts
-                               #;(inject-syntax require-contracts)
-                               remove-require-typed
+                               (inject-syntax require-contracts)
+                               transform-require-typed
                                transform-provides)]
            [stx (file->module target)])
       (apply-transformers-to-module stx transformers))))
+
+(define (registry-lookup id)
+  (send contract-registry lookup (syntax-e id)))
 
 ;; References
 ;; [1] https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ

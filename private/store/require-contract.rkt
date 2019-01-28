@@ -45,7 +45,8 @@
        (define required-id
          (send require-mapping lookup (syntax->datum #'id)))
        (send contract-registry register required-id #'id)
-       (list #'(void))]))
+       #`((define-values (id) #,((munge-contract #'id) #'contract)))]))
+
 
 (define require-contract
   (new require-contract-singleton%))
