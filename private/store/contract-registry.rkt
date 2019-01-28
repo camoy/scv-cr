@@ -14,7 +14,7 @@
       (hash-set! (current-record) id contract))
 
     (define/public (lookup id)
-      (hash-ref (current-record) id))
+      (hash-ref (current-record) id #f))
 
 
     ))

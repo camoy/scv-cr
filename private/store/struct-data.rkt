@@ -32,11 +32,15 @@
            [else #f]))
        (current-record)))
 
-    (define/public (struct-fields id)
+    (define/public (struct-functions id)
       (define datum
-        (findf (λ (datum) (equal? id (struct-desc-name id)))
+        (findf (λ (datum) (equal? id (struct-desc-name datum)))
                (current-record)))
-      (struct-desc-fields datum))
+      (append (list (struct-desc-descriptor datum)
+                    (struct-desc-constructor datum)
+                    (struct-desc-predicate datum))
+              (struct-desc-getters datum)
+              (struct-desc-setters datum)))
     ))
 
 (define (syntax->struct-data stx)

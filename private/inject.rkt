@@ -67,10 +67,18 @@
   (define (transform-clause stx)
     (syntax-parse
         stx
-        [((~datum #:struct) id flds) #'(void)] ; TODO!!!
+      [((~datum #:struct) id flds)
+       (define struct-functions
+         (send struct-data struct-functions (syntax-e #'id)))
+       (map (λ (fun)
+              (define contract (registry-lookup (datum->syntax #'_ fun)))
+              (if contract
+                  #`(define/contract #,fun #,contract #,(prefix-unsafe fun))
+                  #`(define #,fun #,(prefix-unsafe fun))))
+            struct-functions)]
         [(id type)
          (define contract (registry-lookup #'id))
-         #`(define/contract id #,contract #,(prefix-unsafe #'id))]))
+         (list #`(define/contract id #,contract #,(prefix-unsafe #'id)))]))
   (define (transform-or-keep stx)
     (syntax-parse
         stx #:datum-literals (require
@@ -81,7 +89,7 @@
          (if (load-module (syntax-e #'mod))
              (list #'(require (submod mod unsafe)))
              (cons #'(require (prefix-in unsafe: mod))
-                   (map transform-clause (syntax-e #'(clause ...)))))]
+                   (append-map transform-clause (syntax-e #'(clause ...)))))]
         [x (list #'x)]))
   (datum->syntax stxs (append-map transform-or-keep
                                   (syntax-e stxs))))
