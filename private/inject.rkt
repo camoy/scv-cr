@@ -5,6 +5,7 @@
          racket/syntax
          tr-contract/private/utils
          tr-contract/private/store
+         tr-contract/private/store/contract-registry
          tr-contract/private/store/all)
 
 (provide inject-contracts
@@ -41,13 +42,26 @@
 (define ((inject-syntax new-forms) stx)
   #`(#,@new-forms #,@stx))
 
-(define (strip-provides stx)
-  (define (provide-form? stx)
-    (syntax-parse stx #:datum-literals (provide)
-                  [(provide _ ...) #t]
-                  [_ #f]))
-  (datum->syntax stx (filter (negate provide-form?)
-                             (syntax-e stx))))
+(define (transform-provides stx)
+  (define (transform-id y)
+    (syntax-parse
+        y #:datum-literals (struct-out)
+        [(struct-out id)
+         (define fld-pairs
+           (send contract-registry lookup (syntax-e #'id)))
+         (list #`(provide (contract-out [struct id #,fld-pairs])))]
+        [id
+         (define contract
+           (send contract-registry lookup (syntax-e #'id)))
+         (list #`(provide (contract-out [id #,contract]))
+               #`(module+ unsafe (provide id)))]))
+  (define (transform-form stx)
+    (syntax-parse
+        stx #:datum-literals (provide)
+        [(provide x ...)
+         #`(begin #,@(append-map transform-id (syntax-e #'(x ...))))]
+        [x #'x]))
+  (datum->syntax stx (map transform-form (syntax-e stx))))
 
 (define (remove-require-typed stxs)
   (define (remove-or-keep stx)
@@ -57,9 +71,9 @@
                               require/typed/check)
         [(require require-typed-check) '()]
         [(require/typed/check mod _ ...)
-         ;; TODO: uncomment when checking provides contracts
+         ;; TODO: uncomment when doing require contracts
          (list (if #t #;(load-module (syntax-e #'mod))
-                   #'(require mod)
+                   #'(require mod) #;(require (submod mod unsafe))
                    #'(require (prefix-in unsafe: mod))))]
         [x (list #'x)]))
   (datum->syntax stxs (append-map remove-or-keep
@@ -77,21 +91,19 @@
                       #,@(transformer #'(forms ...))))]))
 
 (define (inject-contracts target)
-  (let* ([provide-contracts (store->contracts provide-contract target)]
-         [require-contracts (store->contracts require-contract target)]
-         [transformers (list (inject-syntax dependencies)
-                             (inject-syntax provide-contracts)
-                             ;; TODO: uncomment when doing provide contracts
-                             #;(inject-syntax require-contracts)
-                             remove-require-typed
-                             strip-provides)]
-         [stx (file->module target)])
-    (apply-transformers-to-module stx transformers)))
-
-(define (store->contracts store target)
-  (hash-ref (get-field data store)
-            (simplify-path (path->complete-path target))
-            '()))
+  (define path
+    (simplify-path (path->complete-path target)))
+  (parameterize ([current-target path])
+    (let* ([provide-contracts (send provide-contract current-record)]
+           [require-contracts (send require-contract current-record)]
+           [transformers (list (inject-syntax dependencies)
+                               (inject-syntax provide-contracts)
+                               ;; TODO: uncomment when doing require contracts
+                               #;(inject-syntax require-contracts)
+                               remove-require-typed
+                               transform-provides)]
+           [stx (file->module target)])
+      (apply-transformers-to-module stx transformers))))
 
 ;; References
 ;; [1] https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ

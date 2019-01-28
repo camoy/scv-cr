@@ -14,9 +14,8 @@
       (hash-set! (current-record) id contract))
 
     (define/public (lookup id)
-      (define record
-        (hash-ref (current-record) id))
-      (values (car record) (cdr record)))
+      (hash-ref (current-record) id))
+
 
     ))
 
