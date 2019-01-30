@@ -15,7 +15,9 @@
   #'((require (except-in racket/contract ->)
               (prefix-in t: typed-racket/types/numeric-predicates)
               typed-racket/utils/struct-type-c
-              typed-racket/utils/simple-result-arrow)))
+              typed-racket/utils/simple-result-arrow
+              typed-racket/utils/any-wrap
+              typed-racket/utils/hash-contract)))
 
 ;; This came from [1].
 (define (file->module filename)
