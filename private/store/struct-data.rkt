@@ -12,8 +12,7 @@
 
 (define struct-data-singleton%
   (class store%
-    (super-new [path "_struct-data.dat"]
-               [init-struct '()])
+    (super-new [path "_struct-data.dat"])
     (inherit current-record)
     (inherit-field data)
 
@@ -32,16 +31,11 @@
            [else #f]))
        (current-record)))
 
-    (define/public (struct-functions id)
+    (define/public (struct-fields id)
       (define datum
-        (findf (λ (datum) (equal? id (struct-desc-name datum)))
+        (findf (λ (datum) (equal? id (struct-desc-name id)))
                (current-record)))
-      (append (list (struct-desc-descriptor datum)
-                    (struct-desc-constructor datum)
-                    (struct-desc-predicate datum))
-              (struct-desc-getters datum)
-              ;; TR does not require mutable fields?
-              #;(struct-desc-setters datum)))
+      (struct-desc-fields datum))
     ))
 
 (define (syntax->struct-data stx)

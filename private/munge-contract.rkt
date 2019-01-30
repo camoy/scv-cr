@@ -1,12 +1,12 @@
 #lang racket
 
 (require tr-contract/private/store/struct-data
-         tr-contract/private/utils
          syntax/parse
          racket/syntax)
 
 (provide munge-contract
-         prefix-predicates)
+         prefix-predicates
+         prefix-unsafe)
 
 (define prefix-predicates
   (make-parameter #f))
@@ -29,3 +29,6 @@
        #`(f #,@(map (munge-contract id)
                     (syntax->list #'(args ...))))]
       [other #'other]))
+
+(define (prefix-unsafe id)
+  (format-id #'_ "unsafe:~a" id))

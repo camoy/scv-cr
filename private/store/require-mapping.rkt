@@ -6,8 +6,7 @@
 
 (define require-mapping-singleton%
   (class store%
-    (super-new [path "_require-mapping.dat"]
-               [init-struct '()])
+    (super-new [path "_require-mapping.dat"])
     (inherit current-record)
     (define/override (process record)
       (define lifted->id (make-hash))
