@@ -45,8 +45,9 @@
       (displayln (module->string new-target))))
 
 (define (extract-contracts target)
-  (load-module target)
-  (map (λ (store) (send store load)) all-stores))
+  (define return (load-module target))
+  (map (λ (store) (send store load)) all-stores)
+  return)
 
 (define (command-parse argv)
   (command-line
