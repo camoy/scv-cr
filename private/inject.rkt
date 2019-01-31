@@ -28,13 +28,14 @@
                        (read-syntax (object-name port) port))))))
 
 (define (module->string stx)
-  (syntax-parse stx #:datum-literals (module #%module-begin)
-                [(module _ lang (#%module-begin forms ...))
-                 (string-join
-                  (cons (format "#lang ~a" (syntax->datum #'lang))
-                        (map (λ (s) (substring (pretty-format s) 1))
-                             (syntax->datum #'(forms ...))))
-                  "\n")]))
+  (syntax-parse
+      stx #:datum-literals (module #%module-begin)
+      [(module _ lang (#%module-begin forms ...))
+       (string-join
+        (cons (format "#lang ~a" (syntax->datum #'lang))
+              (map (λ (s) (substring (pretty-format s) 1))
+                   (syntax->datum #'(forms ...))))
+        "\n")]))
 
 (define (module->file stx filename)
   (with-output-to-file filename #:exists 'replace
@@ -61,7 +62,7 @@
         [x #'x]))
   (datum->syntax stx (map transform-form (syntax-e stx))))
 
-(define (remove-require-typed stxs)
+(define (transform-requires stxs)
   (define (remove-or-keep stx)
     (syntax-parse
         stx #:datum-literals (require
@@ -82,23 +83,26 @@
 
 (define (apply-transformers-to-module stx transformers)
   (define transformer (apply compose transformers))
-  (syntax-parse stx #:datum-literals (module #%module-begin)
-                [(module name lang (#%module-begin forms ...))
-                 #`(module name #,(make-no-check #'lang)
-                     (#%module-begin
-                      #,@(transformer #'(forms ...))))]))
+  (syntax-parse
+      stx #:datum-literals (module #%module-begin)
+      [(module name lang (#%module-begin forms ...))
+       #`(module name #,(make-no-check #'lang)
+           (#%module-begin
+            #,@(transformer #'(forms ...))))]))
 
 (define (inject-contracts target)
   (define path
     (simplify-path (path->complete-path target)))
   (parameterize ([current-target path])
     (let* ([provide-contracts (send provide-contract current-record)]
+           [require-definitions (send require-definition current-record)]
            [require-contracts (send require-contract current-record)]
            [transformers (list (inject-syntax dependencies)
                                (inject-syntax provide-contracts)
-                               ;; TODO: uncomment when doing provide contracts
+                                ;; TODO: uncomment when doing provide contracts
+                               #;(inject-syntax require-definitions)
                                #;(inject-syntax require-contracts)
-                               remove-require-typed
+                               transform-requires
                                transform-provides)]
            [stx (file->module target)])
       (apply-transformers-to-module stx transformers))))

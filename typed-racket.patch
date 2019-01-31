@@ -1,5 +1,5 @@
 diff --git a/typed-racket-lib/typed-racket/private/type-contract.rkt b/typed-racket-lib/typed-racket/private/type-contract.rkt
-index f6cc3054..4b729ce1 100644
+index fa3e1403..668c6bcf 100644
 --- a/typed-racket-lib/typed-racket/private/type-contract.rkt
 +++ b/typed-racket-lib/typed-racket/private/type-contract.rkt
 @@ -25,6 +25,10 @@
@@ -49,7 +49,7 @@ index f6cc3054..4b729ce1 100644
 -        (begin #,@defs (define-values (n) #,ctc))))]
 -    [_ (int-err "should never happen - not a define-values: ~a"
 -                (syntax->datum stx))]))
-+  (send require-contract intercept
++  (send require-definition intercept
 +    (current-module-declare-name)
 +    (block
 +      (define prop (get-contract-def-property stx))
@@ -211,7 +211,7 @@ index 948b5399..9588bfba 100644
    (cond [prefab?
           (define-values (parent-key parent-fields)
 diff --git a/typed-racket-lib/typed-racket/utils/require-contract.rkt b/typed-racket-lib/typed-racket/utils/require-contract.rkt
-index 05219dbf..9aedd68e 100644
+index 05219dbf..30aa2358 100644
 --- a/typed-racket-lib/typed-racket/utils/require-contract.rkt
 +++ b/typed-racket-lib/typed-racket/utils/require-contract.rkt
 @@ -5,7 +5,9 @@
@@ -229,7 +229,7 @@ index 05219dbf..9aedd68e 100644
  
    (syntax-parse stx
      [(require/contract nm:renameable hidden:id cnt lib)
-+     (send require-mapping intercept
++     (send require-contract intercept
 +                (current-module-declare-name)
 +                #'(cnt nm.orig-nm lib))
       #`(begin (require (only-in lib [nm.orig-nm nm.orig-nm-r]))
