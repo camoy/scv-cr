@@ -48,7 +48,7 @@
                         all-define-values))
        #`(begin #,@all-define
                 #,@all-define-values
-                #,@the-contract)]))
+                #,the-contract)]))
 
 (define (define-case stx)
   (syntax-parse
@@ -72,13 +72,14 @@
          (send struct-data struct-function? name))
        (cond
          [(and desc (equal? (car desc) 'constructor))
-          (list (make-struct-out (cdr desc) contract-def))]
-         [desc (list #'(void))]
+          (make-struct-out (cdr desc) contract-def)]
+         [desc #'(void)]
          [else
           (send provide-contract register-defined (syntax-e #'x))
-          #'((provide (contract-out [x contract]))
-             (module+ unsafe
-               (provide x)))])]))
+          #'(begin
+              (provide (contract-out [x contract]))
+              (module+ unsafe
+                (provide x)))])]))
 
 (define (make-struct-out info contract-def)
   (syntax-parse
@@ -91,8 +92,9 @@
                     [fld-type (syntax->datum #'(fld-type ...))])
            #`(#,fld-name #,fld-type)))
        (send provide-contract register-defined struct-name)
-       #`(provide (contract-out
-                   [struct #,struct-name #,fld-pairs]))]))
+       #`(begin
+           (provide (contract-out [struct #,struct-name #,fld-pairs]))
+           (module+ unsafe (provide (struct-out #,struct-name))))]))
 
 (define provide-contract
   (new provide-contract-singleton%))
