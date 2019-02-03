@@ -14,10 +14,12 @@
 (define dependencies
   #'((require (except-in racket/contract ->)
               (prefix-in t: typed-racket/types/numeric-predicates)
+              (prefix-in c: racket/class)
               typed-racket/utils/struct-type-c
               typed-racket/utils/simple-result-arrow
               typed-racket/utils/any-wrap
-              typed-racket/utils/hash-contract)))
+              typed-racket/utils/hash-contract
+              (prefix-in c: typed-racket/utils/opaque-object))))
 
 ;; This came from [1].
 (define (file->module filename)
