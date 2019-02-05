@@ -31,11 +31,19 @@
            [else #f]))
        (current-record)))
 
-    (define/public (struct-fields id)
-      (define datum
-        (findf (λ (datum) (equal? id (struct-desc-name id)))
-               (current-record)))
-      (struct-desc-fields datum))
+    (define/public (struct-all-fields id)
+      (define info
+        (struct-info id))
+      (define sup
+        (struct-desc-super-struct info))
+      (append (if sup
+                  (struct-all-fields sup)
+                  '())
+              (struct-desc-fields info)))
+
+    (define (struct-info id)
+      (findf (λ (datum) (equal? id (struct-desc-name datum)))
+             (current-record)))
     ))
 
 (define (syntax->struct-data stx)

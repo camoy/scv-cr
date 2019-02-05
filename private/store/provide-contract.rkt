@@ -88,13 +88,22 @@
        (define struct-name
          (struct-desc-name info))
        (define fld-pairs
-         (for/list ([fld-name (struct-desc-fields info)]
+         (for/list ([fld-name (send struct-data struct-all-fields struct-name)]
                     [fld-type (syntax->datum #'(fld-type ...))])
            #`(#,fld-name #,fld-type)))
        (send provide-contract register-defined struct-name)
        #`(begin
-           (provide (contract-out [struct #,struct-name #,fld-pairs]))
+           (provide (contract-out [struct #,(with-super info) #,fld-pairs]))
            (module+ unsafe (provide (struct-out #,struct-name))))]))
+
+(define (with-super info)
+  (define struct-name
+    (struct-desc-name info))
+  (define sup-name
+    (struct-desc-super-struct info))
+  (if sup-name
+      #`(#,struct-name #,sup-name)
+      struct-name))
 
 (define provide-contract
   (new provide-contract-singleton%))
