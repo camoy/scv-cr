@@ -186,7 +186,7 @@ index c5c1173c..4fe557b8 100644
  
  ;; kind is the greatest kind of contract that is supported, if a greater kind would be produced the
 diff --git a/typed-racket-lib/typed-racket/typecheck/tc-structs.rkt b/typed-racket-lib/typed-racket/typecheck/tc-structs.rkt
-index 948b5399..9588bfba 100644
+index 948b5399..a0cea46e 100644
 --- a/typed-racket-lib/typed-racket/typecheck/tc-structs.rkt
 +++ b/typed-racket-lib/typed-racket/typecheck/tc-structs.rkt
 @@ -2,7 +2,7 @@
@@ -198,14 +198,16 @@ index 948b5399..9588bfba 100644
           (prefix-in c: (contract-req))
           (rep type-rep object-rep free-variance)
           (private parse-type syntax-properties)
-@@ -396,6 +396,11 @@
+@@ -396,6 +396,13 @@
    ;; that the outside world will see
    ;; then register it
    (define names (get-struct-names type-name nm fld-names maker extra-maker))
 +  (send struct-data intercept
 +             (current-module-declare-name)
 +             #`(#,@(struct->list names)
-+                #,parent-name
++                #,(if parent-name
++                      (Name-id parent-name)
++                      #f)
 +                #,fld-names))
  
    (cond [prefab?
