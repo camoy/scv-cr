@@ -15,9 +15,11 @@
   #'((require (except-in racket/contract ->)
               (prefix-in t: typed-racket/types/numeric-predicates)
               (prefix-in c: racket/class)
+              (submod typed-racket/private/type-contract predicates)
               typed-racket/utils/struct-type-c
               typed-racket/utils/simple-result-arrow
               typed-racket/utils/any-wrap
+              typed-racket/utils/vector-contract
               typed-racket/utils/hash-contract
               (prefix-in c: typed-racket/utils/opaque-object))))
 

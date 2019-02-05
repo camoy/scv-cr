@@ -13,7 +13,7 @@
 
 (define ((munge-contract id) stx)
   (syntax-parse
-      stx #:datum-literals (lambda equal? quote class/c)
+      stx #:datum-literals (lambda equal? quote)
       [(lambda ((~literal x)) (equal? (~literal x) (quote y)))
        #:when (void? (syntax-e #'y))
        #'void?]
