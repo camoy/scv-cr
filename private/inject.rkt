@@ -12,7 +12,7 @@
          module->file)
 
 (define dependencies
-  #'((require (except-in racket/contract ->)
+  #'((require racket/contract
               (prefix-in t: typed-racket/types/numeric-predicates)
               (prefix-in c: racket/class)
               (submod typed-racket/private/type-contract predicates)
@@ -74,8 +74,9 @@
                               require/typed/check)
         [(require require-typed-check) '()]
         [(require/typed/check mod _ ...)
-         ;; TODO: uncomment when checking provides contracts
-         (list (if #t #;(load-module (syntax-e #'mod))
+         (list #'(require (prefix-in unsafe: mod)))
+         ;; TODO: Uncomment when not verifying.
+         #;(list (if (load-module (syntax-e #'mod))
                    #'(require mod)
                    #'(require (prefix-in unsafe: mod))))]
         [x (list #'x)]))
@@ -103,9 +104,8 @@
            [require-contracts (send require-contract current-record)]
            [transformers (list (inject-syntax dependencies)
                                (inject-syntax provide-contracts)
-                                ;; TODO: uncomment when doing provide contracts
-                               #;(inject-syntax require-definitions)
-                               #;(inject-syntax require-contracts)
+                               (inject-syntax require-definitions)
+                               (inject-syntax require-contracts)
                                transform-requires
                                transform-provides)]
            [stx (file->module target)])

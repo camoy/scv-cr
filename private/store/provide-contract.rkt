@@ -84,7 +84,7 @@
 (define (make-struct-out info contract-def)
   (syntax-parse
       contract-def #:datum-literals (->*)
-      [((define-values (_) (->* (fld-type ...) () (values _ ...))))
+      [((define-values (_) (-> fld-type ... (values _ ...))))
        (define struct-name
          (struct-desc-name info))
        (define fld-pairs
@@ -94,7 +94,8 @@
        (send provide-contract register-defined struct-name)
        #`(begin
            (provide (contract-out [struct #,(with-super info) #,fld-pairs]))
-           (module+ unsafe (provide (struct-out #,struct-name))))]))
+           (module+ unsafe (provide (struct-out #,struct-name))))]
+      [_ (error 'make-struct-out "failed to match on contract definition")]))
 
 (define (with-super info)
   (define struct-name

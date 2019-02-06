@@ -24,10 +24,10 @@
               (define-values (c) d))
        (define all-define
          (map define-case (syntax-e #'((define a b) ...))))
-       (define all-define-values
-         (define-values-case  #'(define-values (c) d)))
+       (define define-values-stx
+         (define-values-case #'(define-values (c) d)))
        #`(begin #,@all-define
-                #,@all-define-values)]))
+                #,define-values-stx)]))
 
 (define (define-case stx)
   (parameterize ([prefix-predicates #t])
@@ -40,7 +40,7 @@
   (syntax-parse
       stx #:datum-literals (define-values)
       [(define-values (id) contract)
-       #`((define-values (id) #,((munge-contract #'id) #'contract)))]))
+       #`(define-values (id) #,((munge-contract #'id) #'contract))]))
 
 (define require-definition
   (new require-definition-singleton%))

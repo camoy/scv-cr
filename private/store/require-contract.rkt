@@ -17,7 +17,10 @@
 (define (make-contract-out required-lst)
   (match required-lst
     [(list contract-id id lib)
-     #`(define/contract #,id #,contract-id #,(prefix-unsafe id))]))
+     #`(define/contract
+         #,id
+         #,((munge-contract #'_) contract-id)
+         #,(prefix-unsafe id))]))
 
 (define require-contract
   (new require-contract-singleton%))
