@@ -17,8 +17,6 @@
               (prefix-in c: racket/class)
               (submod typed-racket/private/type-contract predicates)
               typed-racket/utils/struct-type-c
-              typed-racket/utils/simple-result-arrow
-              typed-racket/utils/any-wrap
               typed-racket/utils/vector-contract
               typed-racket/utils/hash-contract
               (prefix-in c: typed-racket/utils/opaque-object))))
@@ -70,9 +68,12 @@
   (define (remove-or-keep stx)
     (syntax-parse
         stx #:datum-literals (require
+                              require/typed
                               require-typed-check
                               require/typed/check)
         [(require require-typed-check) '()]
+        [(require/typed mod _ ...)
+         (list #'(require (prefix-in unsafe: mod)))]
         [(require/typed/check mod _ ...)
          (list #'(require (prefix-in unsafe: mod)))
          ;; TODO: Uncomment when not verifying.

@@ -26,4 +26,4 @@ If you give the command multiple files it will process all of them. Any file not
 
 ## Installing
 
-Run `raco pkg install` from the directory. You'll also need to install a hacked version of Typed Racket. You can run `setup.sh` to do so. This will download TR, patch it, and force install the new version.
+Run `raco pkg install` from the directory. You'll also need to install a hacked version of Typed Racket. You can run `etc/setup.sh` to do so. This will download TR, patch it, and force install the new version.

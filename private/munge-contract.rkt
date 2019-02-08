@@ -42,9 +42,9 @@
       [struct-predicate-procedure?/c #'(λ (_) #f)]
       [(struct-type/c _) #'(λ (_) #f)]
 
-      ;; Error if ->* is non-convertible
-      [(->* _ ...)
-       (error 'munge-contract "cannot convert ->* to ->")]
+      ;; Warning if ->* is non-convertible
+      [(->* x ...) (begin (displayln "warning: cannot convert ->* to ->")
+                          #'(->* x ...))]
 
       ;; Unwrap some contract forms (SCV)
       [(flat-named-contract _ contract) #'1
@@ -54,7 +54,7 @@
        ((munge-contract id) #'v)]
 
       ;; Replace literal voids with (void)
-      [y #:when (void? (syntax-e #'y))
+      [(quote y) #:when (void? (syntax-e #'y))
        #'(void)]
 
       ;; Remove non-recursive recursive-contract forms (SCV)
