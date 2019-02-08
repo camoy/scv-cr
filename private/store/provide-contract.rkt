@@ -76,9 +76,10 @@
          [desc #'(void)]
          [else
           (send provide-contract register-defined (syntax-e #'x))
+          ;; TODO: uncomment unsafe
           #'(begin
               (provide (contract-out [x contract]))
-              (module+ unsafe
+              #;(module+ unsafe
                 (provide x)))])]))
 
 (define (make-struct-out info contract-def)
@@ -92,9 +93,10 @@
                     [fld-type (syntax->datum #'(fld-type ...))])
            #`(#,fld-name #,fld-type)))
        (send provide-contract register-defined struct-name)
+       ;; TODO: uncomment unsafe
        #`(begin
            (provide (contract-out [struct #,(with-super info) #,fld-pairs]))
-           (module+ unsafe (provide (struct-out #,struct-name))))]
+           #;(module+ unsafe (provide (struct-out #,struct-name))))]
       [_ (error 'make-struct-out "failed to match on contract definition")]))
 
 (define (with-super info)

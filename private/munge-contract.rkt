@@ -14,39 +14,50 @@
 (define ((munge-contract id) stx)
   (syntax-parse
       stx #:datum-literals (lambda equal? quote ->*
+                                   simple-result->
+                                   any-wrap/c
                                    flat-named-contract
                                    flat-contract-predicate
-                                   struct-predicate-procedure?
+                                   struct-predicate-procedure?/c                                                                     struct-predicate-procedure?
                                    struct-type/c
                                    letrec c-> c->*)
-      ;; Convert c-> and c->* to -> and ->*
-      [(c-> x ...) #'(-> x ...)]
-      [(c->* x ...) #'(->* x ...)]
+      ;; Convert any-wrap/c to any/c, cannot require (SCV)
+      [any-wrap/c #'any/c]
 
-      ;; Convert ->* to -> if possible (SCV limitation)
+      ;; Inline simple-result->, cannot require (SCV)
+      [(simple-result-> ran arity)
+       #`(-> #,@(for/list ([_ (syntax->datum #'arity)]) #'any/c)
+             #,((munge-contract #'id) #'ran))]
+
+      ;; Convert c-> and c->* to -> and ->* (SCV)
+      [(c-> x ...) ((munge-contract id) #'(-> x ...))]
+      [(c->* x ...) ((munge-contract id) #'(->* x ...))]
+
+      ;; Convert ->* to -> if possible (SCV)
       [(->* (dom ...) () ran)
        ((munge-contract id) #'(-> dom ... ran))]
+
+      ;; Replace contracts we cannot verify (SCV)
+      [struct-predicate-procedure? #'(λ (_) #f)]
+      [struct-predicate-procedure?/c #'(λ (_) #f)]
+      [(struct-type/c _) #'(λ (_) #f)]
 
       ;; Error if ->* is non-convertible
       [(->* _ ...)
        (error 'munge-contract "cannot convert ->* to ->")]
 
-      ;; Unwrap some contract forms (SCV limitation)
+      ;; Unwrap some contract forms (SCV)
       [(flat-named-contract _ contract) #'1
        ((munge-contract id) #'contract)]
 
       [(flat-contract-predicate v)
        ((munge-contract id) #'v)]
 
-      ;; Bypass unsupported contracts (SCV limitation)
-      [struct-predicate-procedure? #'(λ (_) #f)]
-      [(struct-type/c _) #'(λ (_) #f)]
-
       ;; Replace literal voids with (void)
       [y #:when (void? (syntax-e #'y))
        #'(void)]
 
-      ;; Remove non-recursive recursive-contract forms (SCV limitation)
+      ;; Remove non-recursive recursive-contract forms (SCV)
       [(letrec ([a (recursive-contract b args ...)] [c d]) body)
        (if (contains-id #'d #'a)
            #`(letrec ([a (recursive-contract #,id args ...)]
