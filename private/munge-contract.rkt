@@ -16,6 +16,7 @@
       stx #:datum-literals (lambda equal? quote ->*
                                    simple-result->
                                    any-wrap/c
+                                   pred-cnt
                                    flat-named-contract
                                    flat-contract-predicate
                                    struct-predicate-procedure?/c                                                                     struct-predicate-procedure?
@@ -23,6 +24,9 @@
                                    letrec c-> c->*)
       ;; Convert any-wrap/c to any/c, cannot require (SCV)
       [any-wrap/c #'any/c]
+
+      ;; Contract for predicate checking
+      [pred-cnt #'(-> any/c boolean?)]
 
       ;; Inline simple-result->, cannot require (SCV)
       [(simple-result-> ran arity)
@@ -43,8 +47,9 @@
       [(struct-type/c _) #'(λ (_) #f)]
 
       ;; Warning if ->* is non-convertible
-      [(->* x ...) (begin (displayln "warning: cannot convert ->* to ->")
-                          #'(->* x ...))]
+      [(->* x ...)
+       (begin (log-warning "explicit-contracts: cannot convert ->* to ->")
+              #'(->* x ...))]
 
       ;; Unwrap some contract forms (SCV)
       [(flat-named-contract _ contract) #'1
@@ -67,13 +72,12 @@
                body))]
 
       ;; Struct predicates within contracts should be unprotected
-      [(lambda ((~literal x)) (f (~literal x)))
-       #:when (let ([function-desc (send struct-data
-                                         struct-function?
-                                         (syntax-e #'f))])
-                (and (prefix-predicates)
-                     function-desc
-                     (equal? (car function-desc) 'predicate)))
+      [f #:when (let ([function-desc (send struct-data
+                                             struct-function?
+                                             (syntax-e #'f))])
+                    (and (prefix-predicates)
+                         function-desc
+                         (equal? (car function-desc) 'predicate)))
        (prefix-unsafe #'f)]
 
       ;; Prefix OO contracts to prevent collision with typed-racket/class

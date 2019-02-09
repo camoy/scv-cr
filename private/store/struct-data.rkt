@@ -21,15 +21,18 @@
 
     (define/public (struct-function? id)
       (ormap
-       (λ (datum)
-         (cond
-           [(equal? id (struct-desc-descriptor datum)) (cons 'descriptor datum)]
-           [(equal? id (struct-desc-constructor datum)) (cons 'constructor datum)]
-           [(equal? id (struct-desc-predicate datum)) (cons 'predicate datum)]
-           [(member id (struct-desc-getters datum)) (cons 'getter datum)]
-           [(member id (struct-desc-setters datum)) (cons 'setter datum)]
-           [else #f]))
-       (current-record)))
+       (λ (record)
+         (ormap
+          (λ (datum)
+            (cond
+              [(equal? id (struct-desc-descriptor datum)) (cons 'descriptor datum)]
+              [(equal? id (struct-desc-constructor datum)) (cons 'constructor datum)]
+              [(equal? id (struct-desc-predicate datum)) (cons 'predicate datum)]
+              [(member id (struct-desc-getters datum)) (cons 'getter datum)]
+              [(member id (struct-desc-setters datum)) (cons 'setter datum)]
+              [else #f]))
+          record))
+       (hash-values data)))
 
     (define/public (struct-all-fields id)
       (define info
