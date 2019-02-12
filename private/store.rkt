@@ -42,7 +42,7 @@
           (hash-set! data* target record*)
           (set data*)))
       stx)
-    
+
     (define/public (finalize)
       (define (process-pair k v)
         (parameterize ([current-target k])

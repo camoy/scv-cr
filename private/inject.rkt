@@ -3,6 +3,7 @@
 (require syntax/modread
          syntax/parse
          racket/syntax
+         tr-contract/private/munge-contract
          tr-contract/private/utils
          tr-contract/private/store
          tr-contract/private/store/all)
@@ -72,10 +73,15 @@
                               require-typed-check
                               require/typed/check)
         [(require require-typed-check) '()]
+        [(require mod ...)
+         (list #`(require mod ...
+                          (prefix-in unsafe: mod) ...))]
         [(require/typed mod _ ...)
-         (list #'(require (prefix-in unsafe: mod)))]
+         (list #`(require (rename-in mod
+                                     #,@(prefix-imported (syntax-e #'mod)))))]
         [(require/typed/check mod _ ...)
-         (list #'(require (prefix-in unsafe: mod)))
+         (list #`(require (rename-in mod
+                                     #,@(prefix-imported (syntax-e #'mod)))))
          ;; TODO: Uncomment when not verifying.
          #;(list (if (load-module (syntax-e #'mod))
                    #'(require mod)
@@ -83,6 +89,10 @@
         [x (list #'x)]))
   (datum->syntax stxs (append-map remove-or-keep
                                   (syntax-e stxs))))
+
+(define (prefix-imported mod)
+  (map (λ (x) #`(#,x #,(prefix-unsafe x)))
+       (send require-contract all-imports mod)))
 
 (define (make-no-check lang)
   (format-id lang "~a/no-check" (syntax-e lang)))
