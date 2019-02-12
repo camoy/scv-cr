@@ -1,0 +1,31 @@
+diff --git a/soft-contract/fake-contract.rkt b/soft-contract/fake-contract.rkt
+index 0dd8fadf..e98f21af 100644
+--- a/soft-contract/fake-contract.rkt
++++ b/soft-contract/fake-contract.rkt
+@@ -133,11 +133,11 @@
+ (require (for-syntax syntax/parse))
+ 
+ (define-syntax (provide stx)
+-  (syntax-parse stx #:literals (contract-out struct struct-out)
++  (syntax-parse stx #:literals (contract-out struct-out)
+     [(_ (~or i:id
+              (struct-out so:id)
+              (contract-out (~or [p/i:id ctc:expr]
+-                                [struct s:id ([ac:id dom:expr] ...)]) ...))
++                                [(~datum struct) s:id ([ac:id dom:expr] ...)]) ...))
+         ...)
+      (define (ids->str ids)
+        (string-join (map symbol->string (map syntax-e (syntax->list ids)))))
+diff --git a/soft-contract/parse/private.rkt b/soft-contract/parse/private.rkt
+index d71c9d2f..f47c6a65 100644
+--- a/soft-contract/parse/private.rkt
++++ b/soft-contract/parse/private.rkt
+@@ -265,6 +265,8 @@
+     (syntax-parser
+       #:literals (define-syntaxes define-values #%require let-values #%plain-app values
+                    call-with-values #%plain-lambda quote list)
++      [;; Ignore residual TR no-check forms
++       (define-values () _) #f]
+       [;; Handled by pass that figured out aliases
+        (define-values (ex:id _) (#%plain-app do-partial-app _ in:id _ ...))
+        #:when (equal? 'do-partial-app (syntax->datum #'do-partial-app)) ; TODO use "utils/evil"
