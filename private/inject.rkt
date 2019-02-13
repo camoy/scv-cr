@@ -15,12 +15,11 @@
 (define dependencies
   '(racket/contract
     (prefix-in t: typed-racket/types/numeric-predicates)
-    (prefix-in c: racket/class)
     (submod typed-racket/private/type-contract predicates)
     typed-racket/utils/struct-type-c
     typed-racket/utils/vector-contract
     typed-racket/utils/hash-contract
-    (prefix-in c: typed-racket/utils/opaque-object)))
+    typed-racket/utils/opaque-object))
 
 ;; This came from [1].
 (define (file->module filename)
@@ -121,7 +120,7 @@
   (let* ([defns (send provide-definition current-record)]
          [ctcs (send provide-contract current-record)]
          [to-define (map first defns)]
-         [all-defns (map second defns)]
+         [all-defns (map second defns)])
     (list #`(define-values (#,@to-define)
               (let ()
                 (local-require #,@dependencies)

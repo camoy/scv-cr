@@ -96,13 +96,6 @@
                          (equal? (car function-desc) 'predicate)))
        (prefix-unsafe #'f)]
 
-      ;; Prefix OO contracts to prevent collision with typed-racket/class
-      [(f x ...)
-       #:when (member (syntax-e #'f) '(class/c object/c object/c-opaque))
-       #`(#,(prefix-with-c #'f)
-          #,@(map prefix-specs
-                  (syntax->list #'(x ...))))]
-
       ;; Distribute munge-contract to all list elements
       [(f args ...)
        #`(f #,@(map (munge-contract id)
@@ -119,21 +112,6 @@
 
 (define (prefix-unsafe id)
   (format-id #'_ "unsafe:~a" id))
-
-(define (prefix-specs stx)
-  (syntax-parse
-      stx
-    [(k v ...)
-     #:when (member (syntax-e #'k) '(field init init-field
-                                           inherit inherit-field
-                                           super inner
-                                           override augment
-                                           augride absent))
-     #`(#,(prefix-with-c #'k) v ...)]
-    [x #'x]))
-
-(define (prefix-with-c id)
-  (format-id #'_ "c:~a" id))
 
 (define (make-struct-out desc ctc)
   (syntax-parse ctc #:datum-literals (->)
