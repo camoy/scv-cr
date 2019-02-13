@@ -19,7 +19,7 @@
     (define/override (process record)
       (map syntax->struct-data record))
 
-    (define/public (struct-function? id)
+    (define/public (lookup-function id)
       (ormap
        (λ (record)
          (ormap

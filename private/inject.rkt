@@ -48,44 +48,32 @@
   #`(#,@new-forms #,@stx))
 
 (define (transform-provides stx)
-  (define (if-undefined? id stx)
-    (if (send provide-contract already-defined? id)
-        '()
-        (list stx)))
-  (define (transform-id y)
+  (define (undefined? id)
+    (not (send provide-contract already-provided? id)))
+  (define (transform-spec spec)
     (syntax-parse
-        y #:datum-literals (struct-out)
-        [(struct-out id) (if-undefined? (syntax-e #'id) #'(struct-out id))]
-        [id (if-undefined? (syntax-e #'id) #'id)]))
+        spec #:datum-literals (struct-out)
+        [(~or* (struct-out x) x)
+         (if (undefined? (syntax-e #'x))
+             (list spec)
+             '())]))
   (define (transform-form stx)
     (syntax-parse
         stx #:datum-literals (provide)
         [(provide x ...)
-         #`(provide #,@(append-map transform-id (syntax-e #'(x ...))))]
+         #`(provide #,@(append-map transform-spec
+                                   (syntax-e #'(x ...))))]
         [x #'x]))
   (datum->syntax stx (map transform-form (syntax-e stx))))
 
 (define (transform-requires stxs)
   (define (remove-or-keep stx)
     (syntax-parse
-        stx #:datum-literals (require
-                              require/typed
-                              require-typed-check
+        stx #:datum-literals (require/typed
                               require/typed/check)
-        [(require require-typed-check) '()]
-        [(require mod ...)
-         (list #`(require mod ...
-                          (prefix-in unsafe: mod) ...))]
-        [(require/typed mod _ ...)
-         (list #`(require (rename-in mod
-                                     #,@(prefix-imported (syntax-e #'mod)))))]
-        [(require/typed/check mod _ ...)
-         (list #`(require (rename-in mod
-                                     #,@(prefix-imported (syntax-e #'mod)))))
-         ;; TODO: Uncomment when not verifying.
-         #;(list (if (load-module (syntax-e #'mod))
-                   #'(require mod)
-                   #'(require (prefix-in unsafe: mod))))]
+        [(~or* (require/typed _ ...)
+               (require/typed/check _ ...))
+         '()]
         [x (list #'x)]))
   (datum->syntax stxs (append-map remove-or-keep
                                   (syntax-e stxs))))
@@ -110,17 +98,44 @@
   (define path
     (simplify-path (path->complete-path target)))
   (parameterize ([current-target path])
-    (let* ([provide-contracts (send provide-contract current-record)]
-           [require-definitions (send require-definition current-record)]
-           [require-contracts (send require-contract current-record)]
-           [transformers (list (inject-syntax dependencies)
-                               (inject-syntax provide-contracts)
-                               (inject-syntax require-definitions)
-                               (inject-syntax require-contracts)
-                               transform-requires
-                               transform-provides)]
-           [stx (file->module target)])
+    (let ([transformers (list (inject-syntax (provide-all))
+                              (inject-syntax (require-all))
+                              transform-requires
+                              transform-provides)]
+          [stx (file->module target)])
       (apply-transformers-to-module stx transformers))))
+
+(define (require-all)
+  (define stx
+    (wrap-all 'require-module
+              require-definition
+              require-contract))
+  (list stx
+        #`(require (submod ".." require-module))))
+
+(define (provide-all)
+  (define stx
+    (wrap-all 'provide-module
+              provide-definition
+              provide-contract))
+  (list stx
+        #`(provide (all-from-out (submod ".." provide-module)))))
+
+(define (wrap-all name defn-obj ctc-obj)
+  (let* ([defns (send defn-obj current-record)]
+         [ctcs (send ctc-obj current-record)]
+         [defns-stx (defns->syntax defns)])
+    #`(module #,name racket/base
+        #,@dependencies
+        #,@defns-stx
+        (provide #,@ctcs))))
+
+(define (defns->syntax defns)
+  (map
+   (match-lambda
+     [(list id ctc)
+      #`(define #,id #,ctc)])
+   defns))
 
 ;; References
 ;; [1] https://groups.google.com/d/msg/racket-users/obchB2GIm4c/PGp1hWTeiqUJ

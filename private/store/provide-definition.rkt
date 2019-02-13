@@ -4,15 +4,11 @@
          tr-contract/private/munge-contract
          syntax/parse)
 
-(provide require-definition)
+(provide provide-definition)
 
-(define require-definition-singleton%
+(define provide-definition-singleton%
   (class store%
-    (super-new [path "_require-definition.dat"])
-    (inherit current-record)
-
-    (define/public (lookup ctc-id)
-      (assoc ctc-id (current-record)))
+    (super-new [path "_provide-definition.dat"])
 
     (define/override (process record)
       (append-map begin-cases (reverse record)))))
@@ -20,9 +16,10 @@
 (define begin-cases
   (match-lambda
     [`(begin (define ,as ,bs) ...
-             (define-values (,cs) ,ds) ...)
+             (define-values (,cs) ,ds) ...
+             ,_)
      (append (munge-all as bs)
              (munge-all cs ds))]))
 
-(define require-definition
-  (new require-definition-singleton%))
+(define provide-definition
+  (new provide-definition-singleton%))

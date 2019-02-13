@@ -5,11 +5,27 @@
          racket/syntax)
 
 (provide munge-contract
+         munge-all
+         contract-case
          prefix-predicates
          prefix-unsafe)
 
 (define prefix-predicates
   (make-parameter #f))
+
+(define (contract-case id ctc-id ctc)
+  (define desc
+    (send struct-data lookup-function id))
+  (cond
+    [(and desc (equal? (car desc) 'constructor))
+     (list (make-struct-out (cdr desc) ctc))]
+    [desc '()]
+    [else (list `(contract-out [,id ,ctc]))]))
+
+(define (munge-all xs ys)
+  (for/list ([x xs]
+             [y ys])
+    (list x ((munge-contract x) y))))
 
 (define ((munge-contract id) stx)
   (syntax-parse
@@ -73,8 +89,8 @@
 
       ;; Struct predicates within contracts should be unprotected
       [f #:when (let ([function-desc (send struct-data
-                                             struct-function?
-                                             (syntax-e #'f))])
+                                           lookup-function
+                                           (syntax-e #'f))])
                     (and (prefix-predicates)
                          function-desc
                          (equal? (car function-desc) 'predicate)))
@@ -118,3 +134,24 @@
 
 (define (prefix-with-c id)
   (format-id #'_ "c:~a" id))
+
+(define (make-struct-out desc ctc)
+  (syntax-parse ctc #:datum-literals (->)
+    [(-> fld-types ... (values _ ...))
+     (define struct-name
+       (struct-desc-name desc))
+     (define fld-pairs
+       (for/list ([fld-name (send struct-data struct-all-fields struct-name)]
+                  [fld-type (syntax-e #'(fld-types ...))])
+         #`(#,fld-name #,fld-type)))
+     #`(contract-out [struct #,(with-super desc) #,fld-pairs])]
+    [_ (error 'make-struct-out "failed to match on contract definition")]))
+
+(define (with-super desc)
+  (define struct-name
+    (struct-desc-name desc))
+  (define sup-name
+    (struct-desc-super-struct desc))
+  (if sup-name
+      `(,struct-name ,sup-name)
+      struct-name))
