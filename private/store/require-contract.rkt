@@ -15,10 +15,10 @@
       (append-map make-contract-out (reverse record)))
 
     (define/public (all-requires)
-      (hash-keys required))
+      (hash-ref required (current-target) '()))
 
     (define/public (already-required? mod)
-      (hash-ref required mod #f))
+      (member mod (all-requires)))
 
     (define make-contract-out
       (match-lambda
@@ -29,7 +29,10 @@
            (if ctc
                (cadr ctc)
                ((munge-contract id) ctc-id)))
-         (hash-set! required mod #t)
+         (unless (already-required? mod)
+           (hash-set! required
+                      (current-target)
+                      (cons mod (all-requires))))
          (contract-case id ctc-id ctc*)]))
     ))
 

@@ -114,7 +114,7 @@
               (require #,@requires)
               #,@defns-stx
               (provide #,@ctcs))
-          #`(require (submod ".." require-module)))))
+          #`(require 'require-contracts))))
 
 (define (provide-all)
   (let* ([defns (send provide-definition current-record)]
@@ -124,7 +124,9 @@
     (list #`(define-values (#,@to-define)
               (let ()
                 (local-require #,@dependencies)
-                (values #,@all-defns))))))
+                (let* (#,@defns) (values #,@to-define))))
+          #`(require racket/contract)
+          #`(provide #,@ctcs))))
 
 (define (defns->syntax defns)
   (map

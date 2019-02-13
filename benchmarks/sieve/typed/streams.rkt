@@ -93,6 +93,7 @@
             typed-racket/utils/vector-contract
             typed-racket/utils/hash-contract
             typed-racket/utils/opaque-object)
+   (require)
    (provide))
 (require 'require-contracts)
 (provide)
