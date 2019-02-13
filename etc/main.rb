@@ -1,24 +1,25 @@
+directory = "../benchmarks"
 benchmarks = [
-  "acquire",
-  "dungeon",
+  # "acquire",
+  # "dungeon",
   # "forth",
-  "fsm",
-  "fsmoo",
-  "gregor",
+  # "fsm",
+  # "fsmoo",
+  # "gregor",
   # "jpeg",
-  "kcfa",
+  # "kcfa",
   # "lnm",
   # "mbta",
   # "morsecode",
   # "quadT",
   # "quadU",
-  "sieve" ,
-  "snake",
-  "suffixtree",
-  "synth",
-  "take5",
-  "tetris",
-  "zombie"#,
+  "sieve" #,
+  # "snake",
+  # "suffixtree",
+  # "synth",
+  # "take5",
+  # "tetris",
+  # "zombie",
   # "zordoz"
 ]
 
@@ -26,7 +27,7 @@ benchmarks = ["sieve"]
 results = {}
 
 benchmarks.each do |benchmark|
-  Dir.chdir("benchmarks/#{benchmark}/typed") do
+  Dir.chdir("#{directory}/#{benchmark}/typed") do
     # copy dependencies
     `cp -r ../both/* .` if File.exists? "../both"
 
