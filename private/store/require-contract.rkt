@@ -14,6 +14,9 @@
     (define/override (process record)
       (append-map make-contract-out (reverse record)))
 
+    (define/public (all-requires)
+      (hash-keys required))
+
     (define/public (already-required? mod)
       (hash-ref required mod #f))
 

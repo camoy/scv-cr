@@ -13,14 +13,14 @@
          module->file)
 
 (define dependencies
-  #'((require racket/contract
-              (prefix-in t: typed-racket/types/numeric-predicates)
-              (prefix-in c: racket/class)
-              (submod typed-racket/private/type-contract predicates)
-              typed-racket/utils/struct-type-c
-              typed-racket/utils/vector-contract
-              typed-racket/utils/hash-contract
-              (prefix-in c: typed-racket/utils/opaque-object))))
+  '(racket/contract
+    (prefix-in t: typed-racket/types/numeric-predicates)
+    (prefix-in c: racket/class)
+    (submod typed-racket/private/type-contract predicates)
+    typed-racket/utils/struct-type-c
+    typed-racket/utils/vector-contract
+    typed-racket/utils/hash-contract
+    (prefix-in c: typed-racket/utils/opaque-object)))
 
 ;; This came from [1].
 (define (file->module filename)
@@ -106,29 +106,26 @@
       (apply-transformers-to-module stx transformers))))
 
 (define (require-all)
-  (define stx
-    (wrap-all 'require-module
-              require-definition
-              require-contract))
-  (list stx
-        #`(require (submod ".." require-module))))
+  (let* ([defns (send require-definition current-record)]
+         [requires (send require-contract all-requires)]
+         [ctcs (send require-contract current-record)]
+         [defns-stx (defns->syntax defns)])
+    (list #`(module require-contracts racket/base
+              (require #,@dependencies)
+              (require #,@requires)
+              #,@defns-stx
+              (provide #,@ctcs))
+          #`(require (submod ".." require-module)))))
 
 (define (provide-all)
-  (define stx
-    (wrap-all 'provide-module
-              provide-definition
-              provide-contract))
-  (list stx
-        #`(provide (all-from-out (submod ".." provide-module)))))
-
-(define (wrap-all name defn-obj ctc-obj)
-  (let* ([defns (send defn-obj current-record)]
-         [ctcs (send ctc-obj current-record)]
-         [defns-stx (defns->syntax defns)])
-    #`(module #,name racket/base
-        #,@dependencies
-        #,@defns-stx
-        (provide #,@ctcs))))
+  (let* ([defns (send provide-definition current-record)]
+         [ctcs (send provide-contract current-record)]
+         [to-define (map first defns)]
+         [all-defns (map second defns)]
+    (list #`(define-values (#,@to-define)
+              (let ()
+                (local-require #,@dependencies)
+                (values #,@all-defns))))))
 
 (define (defns->syntax defns)
   (map
