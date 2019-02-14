@@ -10,7 +10,7 @@
      typed-racket/utils/vector-contract
      typed-racket/utils/hash-contract
      typed-racket/utils/opaque-object)
-    (let* () (values))))
+    (letrec () (values))))
 (require racket/contract)
 (provide)
 (module require-contracts racket/base
@@ -36,10 +36,10 @@
    (define g19 (listof g15))
    (define lifted/45 (-> g16 g15 (values g19)))
    (provide (contract-out (struct stream ((first g15) (rest g17))))
-            (contract-out (make-stream (-> g15 g17 (values g16))))
-            (contract-out (stream-unfold (-> g16 (values g15 g16))))
-            (contract-out (stream-get (-> g16 g15 (values g15))))
-            (contract-out (stream-take (-> g16 g15 (values g19))))))
+            (contract-out (make-stream lifted/39))
+            (contract-out (stream-unfold lifted/41))
+            (contract-out (stream-get lifted/43))
+            (contract-out (stream-take lifted/45))))
 (require 'require-contracts)
 (require require-typed-check)
 (: count-from (-> Natural stream))
