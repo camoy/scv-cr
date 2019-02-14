@@ -15,15 +15,24 @@
     (define/override (process record)
       (append-map begin-cases (reverse record)))
 
+    (define/public (provided-record)
+      (define return
+        (hash-ref provided (current-target) (make-hash)))
+      (hash-set! provided (current-target) return)
+      return)
+
+    (define/public (register-provided id)
+      (hash-set! (provided-record) id #t))
+
     (define/public (already-provided? id)
-      (hash-ref provided id #f))
+      (hash-ref (provided-record) id #f))
 
     (define begin-cases
       (match-lambda
         [`(begin (define ,_ ,_) ...
                  (define-values (,_) ,ctc)
                  (define-module-boundary-contract ,id ,_ ,ctc-id ,_ ...))
-         (hash-set! provided id #t)
+         (send provide-contract register-provided id)
          (contract-case id ctc-id ((munge-contract id) ctc))]))
     ))
 

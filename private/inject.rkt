@@ -3,6 +3,7 @@
 (require syntax/modread
          syntax/parse
          racket/syntax
+         tr-contract/private/parameters
          tr-contract/private/munge-contract
          tr-contract/private/utils
          tr-contract/private/store
@@ -70,9 +71,11 @@
     (syntax-parse
         stx #:datum-literals (require/typed
                               require/typed/check)
-        [(~or* (require/typed _ ...)
-               (require/typed/check _ ...))
-         '()]
+        [(~or* (require/typed m _ ...)
+               (require/typed/check m _ ...))
+         (if (only-provide)
+             (list #'(require m))
+             '())]
         [x (list #'x)]))
   (datum->syntax stxs (append-map remove-or-keep
                                   (syntax-e stxs))))
@@ -98,7 +101,9 @@
     (simplify-path (path->complete-path target)))
   (parameterize ([current-target path])
     (let ([transformers (list (inject-syntax (provide-all))
-                              (inject-syntax (require-all))
+                              (inject-syntax (if (only-provide)
+                                                 '()
+                                                 (require-all)))
                               transform-requires
                               transform-provides)]
           [stx (file->module target)])
@@ -125,7 +130,7 @@
               (let ()
                 (local-require #,@dependencies)
                 (letrec (#,@defns) (values #,@to-define))))
-          #`(require racket/contract)
+          #`(require (only-in racket/contract contract-out))
           #`(provide #,@ctcs))))
 
 (define (defns->syntax defns)
