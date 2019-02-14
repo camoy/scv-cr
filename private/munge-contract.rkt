@@ -115,7 +115,7 @@
 
 (define (make-struct-out desc ctc)
   (syntax-parse ctc #:datum-literals (->)
-    [(-> fld-types ... (values _ ...))
+    [(-> fld-types ... _)
      (define struct-name
        (struct-desc-name desc))
      (define fld-pairs

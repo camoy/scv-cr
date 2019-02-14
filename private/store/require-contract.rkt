@@ -24,16 +24,17 @@
       (match-lambda
         [(list ctc-id id mod)
          (define ctc
-           (send require-definition lookup ctc-id))
-         (define ctc*
-           (if ctc
-               (cadr ctc)
-               ((munge-contract id) ctc-id)))
+           (let go ([x ctc-id])
+             (define ctc*
+               (send require-definition lookup x))
+             (if ctc*
+                 (go (syntax-e (cadr ctc*)))
+                 ((munge-contract id) x))))
          (unless (already-required? mod)
            (hash-set! required
                       (current-target)
                       (cons mod (all-requires))))
-         (contract-case id ctc-id ctc*)]))
+         (contract-case id ctc-id ctc)]))
     ))
 
 (define require-contract
