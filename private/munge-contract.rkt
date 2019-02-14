@@ -20,7 +20,7 @@
     [(and desc (equal? (car desc) 'constructor))
      (list (make-struct-out (cdr desc) ctc))]
     [desc '()]
-    [else (list `(contract-out [,id ,ctc]))]))
+    [else (list `(contract-out [,id ,ctc-id]))]))
 
 (define (munge-all xs ys)
   (for/list ([x xs]

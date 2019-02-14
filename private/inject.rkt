@@ -124,7 +124,7 @@
     (list #`(define-values (#,@to-define)
               (let ()
                 (local-require #,@dependencies)
-                (let* (#,@defns) (values #,@to-define))))
+                (letrec (#,@defns) (values #,@to-define))))
           #`(require racket/contract)
           #`(provide #,@ctcs))))
 
