@@ -37,12 +37,16 @@
                                    flat-contract-predicate
                                    struct-predicate-procedure?/c                                                                     struct-predicate-procedure?
                                    struct-type/c
-                                   letrec c-> c->*)
+                                   letrec c-> c->*
+                                   t:index?)
       ;; Convert any-wrap/c to any/c, cannot require (SCV)
       [any-wrap/c #'any/c]
 
       ;; Contract for predicate checking
       [pred-cnt #'(-> any/c boolean?)]
+
+      ;; From numeric predicates
+      [t:index? #'fixnum?]
 
       ;; Inline simple-result->, cannot require (SCV)
       [(simple-result-> ran arity)
