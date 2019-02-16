@@ -79,23 +79,12 @@
        g28
        generated-contract13
        generated-contract14))))
-(require racket/contract)
+(require (only-in racket/contract contract-out))
 (provide (contract-out (make-stream generated-contract5))
           (contract-out (struct stream ((first g16) (rest g18))))
           (contract-out (stream-get generated-contract12))
           (contract-out (stream-take generated-contract13))
           (contract-out (stream-unfold generated-contract14)))
-(module require-contracts racket/base
-   (require racket/contract
-            (prefix-in t: typed-racket/types/numeric-predicates)
-            (submod typed-racket/private/type-contract predicates)
-            typed-racket/utils/struct-type-c
-            typed-racket/utils/vector-contract
-            typed-racket/utils/hash-contract
-            typed-racket/utils/opaque-object)
-   (require)
-   (provide))
-(require 'require-contracts)
 (provide)
 (struct: stream ((first : Natural) (rest : (-> stream))))
 (: make-stream (-> Natural (-> stream) stream))
