@@ -15,6 +15,7 @@
 
 (define dependencies
   '(racket/contract
+    racket/class
     (prefix-in t: typed-racket/types/numeric-predicates)
     (submod typed-racket/private/type-contract predicates)
     typed-racket/utils/struct-type-c
