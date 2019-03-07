@@ -1,31 +1,35 @@
-directory = "../benchmarks"
+require "open3"
+
+directory = "benchmarks"
 benchmarks = [
-  # "acquire",
-  # "dungeon",
-  # "forth",
-  # "fsm",
-  # "fsmoo",
-  # "gregor",
-  # "jpeg",
-  # "kcfa",
-  # "lnm",
-  # "mbta",
-  # "morsecode",
-  # "quadT",
-  # "quadU",
-  "sieve" #,
-  # "snake",
-  # "suffixtree",
-  # "synth",
-  # "take5",
-  # "tetris",
-  # "zombie",
-  # "zordoz"
+  "acquire",
+  "dungeon",
+  "forth",
+  "fsm",
+  "fsmoo",
+  "gregor",
+  "jpeg",
+  "kcfa",
+  "mbta",
+  "morsecode",
+  "sieve",
+  "snake",
+  "suffixtree",
+  "synth",
+  "take5",
+  "tetris",
+  "zombie",
+  "zordoz"
 ]
 
-benchmarks = ["sieve"]
 results = {}
 
+
+# reset for run
+`git checkout #{directory}`
+`git clean -f #{directory}`
+
+# run
 benchmarks.each do |benchmark|
   Dir.chdir("#{directory}/#{benchmark}/typed") do
     # copy dependencies
@@ -35,19 +39,21 @@ benchmarks.each do |benchmark|
     results[benchmark] = {}
 
     # consider all TR source files
-    sources = `grep "#lang typed/racket" * -rl`.split("\n") 
+    sources = `find . -name "*.rkt"`.split("\n")
 
     # generate contracts and record results
-    sources.each do |source|
-      result = results[benchmark][source] = {}
-      error = `raco explicit-contracts -i #{source}`
-      print "#{source} (contract): "
-      puts(if $?.success? then
-        result[:contract] = "Success"
-      else
-        result[:contract] = "Failure: #{error}"
-      end)
-    end
+    #sources.each do |source|
+      _, error, status = Open3.capture3("raco explicit-contracts -p -i #{sources.join(' ')}")
+      sources.each do |source|
+        result = results[benchmark][source] = {}
+        print "#{benchmark}/#{source} (contracts): "
+        puts(if status == 0 then
+          result[:contract] = "Success"
+        else
+          result[:contract] = "Failure: #{error}"
+        end)
+      end
+    #end
 
     # verify contracts
     sources.each do |source|
@@ -58,30 +64,29 @@ benchmarks.each do |benchmark|
         next
       end
 
-      error = `env Z3_LIB=/usr/lib raco scv #{source}`
-      print "#{source} (verify): "
-      puts(if $?.success? then
+      _, error, status = Open3.capture3("env Z3_LIB=/usr/lib raco scv #{source}")
+      print "#{benchmark}/#{source} (verify): "
+      puts(if status == 0 then
         result[:verify] = "Success"
       else
-        result[:verify] = "Failure: #{error}"
+        result[:verify] = "Failure: \n```\n#{error}\n```\n"
       end)
     end
   end
 end
 
-# reset for another run
-`git checkout benchmarks`
-
 def hash_to_csv(hash)
-  output = ["benchmark,file,contracts,verify"]
+  #output = ["benchmark,file,contracts,verify"]
+  output = []
   hash.each do |benchmark, files|
+    output << "# #{benchmark}\n"
     files.each do |file, result|
-      output << [benchmark, file, result[:contract], result[:verify]].join(",")
+      output << ["## `#{file}`", result[:verify]].join("\n")
     end
   end
-  output.join("\n")
+  output.join("\n\n")
 end
 
-File.open("benchmarks.csv", "w") do |handle|
+File.open("benchmarks.md", "w") do |handle|
   handle << hash_to_csv(results)
 end
