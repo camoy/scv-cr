@@ -1,5 +1,5 @@
 diff --git a/soft-contract/fake-contract.rkt b/soft-contract/fake-contract.rkt
-index 5e52f0af..89afedd7 100644
+index 5e52f0af..b4fdfca1 100644
 --- a/soft-contract/fake-contract.rkt
 +++ b/soft-contract/fake-contract.rkt
 @@ -20,7 +20,7 @@
@@ -20,8 +20,13 @@ index 5e52f0af..89afedd7 100644
    (syntax-case stx ()
      [(_ name cs ...)
       #`(begin (dynamic-struct/c name cs ...)
-@@ -133,13 +133,13 @@
- (require (for-syntax syntax/parse))
+@@ -130,27 +130,30 @@
+ 
+ (define (dynamic-mon . xs) (void))
+ 
+-(require (for-syntax syntax/parse))
++(require (for-syntax syntax/parse
++                     typed-racket/base-env/type-name-error))
  
  (define-syntax (provide stx)
 -  (syntax-parse stx #:literals (contract-out struct struct-out)
@@ -34,10 +39,34 @@ index 5e52f0af..89afedd7 100644
 -                                [struct (~or s:id (s:id _:id)) ([ac:id dom:expr] ...)]) ...))
 +                                [(~datum struct) (~or s:id (s:id _:id)) ([ac:id dom:expr] ...)]) ...))
          ...)
++     (define i* (filter (lambda (i) (not (equal? (syntax-local-value i) type-name-error)))
++                        (syntax-e #'(i ...))))
       (define (ids->str ids)
         (string-join (map symbol->string (map syntax-e (syntax->list ids)))))
+      #;(unless (null? (syntax->list #'(i ...)))
+        (printf "Warning: ignore verifying: ~a~n" (ids->str #'(i ...))))
+      #;(unless (null? (syntax->list #'(so ...)))
+        (printf "Warning: ignore verifying `struct-out` form(s) for: ~a~n" (ids->str #'(so ...))))
+-     #'(begin
++     #`(begin
+          ;; Real stuff to preserve the program's meaning when run
+          (scv:ignore
+-          (r:provide i ...
++          (r:provide #,@i*
+                      (struct-out so) ...
+                      (contract-out [p/i ctc] ...
+                                    [struct s ([ac dom] ...)] ...)
+@@ -159,7 +162,7 @@
+          ;; Ignore all non-contracted identifiers because they might be macros even.
+          ;; Verifying against `any/c` doesn't mean much anyways
+          (dynamic-provide/contract
+-          i ...
++          #,@i*
+           (list p/i ctc) ... ...
+           (dynamic-struct-out 's (list 'ac dom) ...) ... ...))]))
+ 
 diff --git a/soft-contract/parse/private.rkt b/soft-contract/parse/private.rkt
-index d71c9d2f..05ce3755 100644
+index d71c9d2f..33b102c6 100644
 --- a/soft-contract/parse/private.rkt
 +++ b/soft-contract/parse/private.rkt
 @@ -56,7 +56,7 @@
@@ -108,7 +137,19 @@ index d71c9d2f..05ce3755 100644
        [(case-lambda [fml bodies ...+] ...)
         (-case-λ
          (for/list ([fmlᵢ (in-syntax-list #'(fml ...))]
-@@ -630,7 +632,7 @@
+@@ -595,8 +597,9 @@
+         (with-env ρ (-begin/simp (parse-es #'(b ...))))
+         (next-ℓ! stx))]
+       [(quote e) (parse-quote #'e)]
+-      [(quote-syntax e)
+-       (raise-syntax-error 'parse-e "TODO: ~a" stx)]
++      ;; Ignore TR internal definition annotation
++      [(quote-syntax e ...)
++       (-b (void))]
+       [((~literal #%top) . id)
+        (raise-syntax-error 'parse-e "Unknown identifier" stx #'id)]
+       [(#%variable-reference)
+@@ -630,7 +633,7 @@
        [x:id #:when (string-prefix? (symbol->string (syntax-e #'x)) "hash/c")
              'hash/c]
        [x:private-id (attribute x.name)]
@@ -117,7 +158,7 @@ index d71c9d2f..05ce3755 100644
        [i:identifier
         (or
          (parse-prim #'i)
-@@ -641,7 +643,7 @@
+@@ -641,7 +644,7 @@
  
      (define (lookup)
        (free-id-table-ref (env) id (λ () (raise-syntax-error 'parser "not in scope" id))))
@@ -126,7 +167,7 @@ index d71c9d2f..05ce3755 100644
      (match (identifier-binding id)
        ['lexical (-x (lookup) (next-ℓ! id))]
        [#f (-x (lookup) (next-ℓ! id))]
-@@ -697,7 +699,7 @@
+@@ -697,7 +700,7 @@
            (define-values (x ρ*) (parse-binder id ρ))
            (values (cons x xs-rev) ρ*)))
        (values (reverse xs-rev) ρ*))
