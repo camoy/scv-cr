@@ -1,8 +1,26 @@
 diff --git a/soft-contract/fake-contract.rkt b/soft-contract/fake-contract.rkt
-index 0dd8fadf..e98f21af 100644
+index 5e52f0af..89afedd7 100644
 --- a/soft-contract/fake-contract.rkt
 +++ b/soft-contract/fake-contract.rkt
-@@ -133,11 +133,11 @@
+@@ -20,7 +20,7 @@
+                      [c:hash/c hash/c]
+                      [c:set/c set/c])
+          dynamic-provide/contract
+-         dynamic->i dynamic->* dynamic-case-> 
++         dynamic->i dynamic->* dynamic-case->
+          dynamic-struct/c
+          dynamic-recursive-contract
+          dynamic-struct-out
+@@ -54,7 +54,7 @@
+ (define vector/c c:vector/c)
+ (define vectorof c:vectorof)
+ (define false/c c:false/c)
+-(define-syntax (struct/c stx) 
++(define-syntax (struct/c stx)
+   (syntax-case stx ()
+     [(_ name cs ...)
+      #`(begin (dynamic-struct/c name cs ...)
+@@ -133,13 +133,13 @@
  (require (for-syntax syntax/parse))
  
  (define-syntax (provide stx)
@@ -11,15 +29,49 @@ index 0dd8fadf..e98f21af 100644
      [(_ (~or i:id
               (struct-out so:id)
               (contract-out (~or [p/i:id ctc:expr]
--                                [struct s:id ([ac:id dom:expr] ...)]) ...))
-+                                [(~datum struct) s:id ([ac:id dom:expr] ...)]) ...))
+                                 ;; TODO confirm that ignoring super struct declaration here makes no difference.
+                                 ;; In a transparent module, the superstruct relation is recorded at struct definition site.
+-                                [struct (~or s:id (s:id _:id)) ([ac:id dom:expr] ...)]) ...))
++                                [(~datum struct) (~or s:id (s:id _:id)) ([ac:id dom:expr] ...)]) ...))
          ...)
       (define (ids->str ids)
         (string-join (map symbol->string (map syntax-e (syntax->list ids)))))
 diff --git a/soft-contract/parse/private.rkt b/soft-contract/parse/private.rkt
-index d71c9d2f..f47c6a65 100644
+index d71c9d2f..05ce3755 100644
 --- a/soft-contract/parse/private.rkt
 +++ b/soft-contract/parse/private.rkt
+@@ -56,7 +56,7 @@
+         (case loc-count
+           [(0) (loc->ℓ loc)]
+           [else (ℓ-with-id (loc->ℓ loc) (list 'unique loc-count))]))))
+-  
++
+   (define/contract (inc-id! id)
+     (identifier? . -> . symbol?)
+     (define m (id-occurence-count))
+@@ -115,7 +115,7 @@
+          (define 𝒾ₑₓ (-𝒾 (syntax-e #'ex) m))
+          (set-export-alias! 𝒾ₑₓ 𝒾ᵢₙ)]
+         [_ (void)]))
+-    
++
+     (syntax-parse stx
+       [((~literal module) id path ((~literal #%plain-module-begin) forms ...))
+        (parameterize ([cur-mod (mod-path->mod-name (syntax-source #'id))])
+@@ -208,11 +208,11 @@
+       [(#%declare form ...)
+        (raise-syntax-error 'parse-module-level-form "TODO: '#%declare" #'(#%declare form ...))]
+       [(begin-for-syntax _ ...) #f]
+-      
++
+       ;; Hack for reading our fake-contracts:
+       [prov:scv-provide
+        (-provide (append-map parse-provide-spec (syntax->list #'prov.provide-list)))]
+-      
++
+       [form (or (parse-general-top-level-form #'form)
+                 (parse-submodule-form #'form))]))
+ 
 @@ -265,6 +265,8 @@
      (syntax-parser
        #:literals (define-syntaxes define-values #%require let-values #%plain-app values
@@ -29,3 +81,57 @@ index d71c9d2f..f47c6a65 100644
        [;; Handled by pass that figured out aliases
         (define-values (ex:id _) (#%plain-app do-partial-app _ in:id _ ...))
         #:when (equal? 'do-partial-app (syntax->datum #'do-partial-app)) ; TODO use "utils/evil"
+@@ -296,7 +298,7 @@
+ 
+        ;; Parse for direct field accessors/mutators
+        (match-define (cons accs muts) (attribute d.accessors+mutators))
+-       
++
+        (add-struct-info! 𝒾 (attribute d.field-count) (list->seteq (hash-keys muts)))
+        (for ([name (in-sequences (list ctor (attribute d.predicate-name))
+                                  (hash-values accs)
+@@ -453,7 +455,7 @@
+          [wrap? (-@ f-ref (parse-es #'(args ...)) (next-ℓ! stx))]
+          [(and (not wrap?) (null? (syntax->list #'(args ...)))) f-ref]
+          [else (error 'parser "my understanding is wrong")])]
+-      
++
+ 
+       ;;; Contracts
+       ;; Parametric contract
+@@ -570,7 +572,7 @@
+       [(#%plain-lambda fmls b ...+)
+        (define-values (xs ρ) (parse-formals #'fmls))
+        (-λ xs (with-env ρ (-begin/simp (parse-es #'(b ...)))))]
+-      
++
+       [(case-lambda [fml bodies ...+] ...)
+        (-case-λ
+         (for/list ([fmlᵢ (in-syntax-list #'(fml ...))]
+@@ -630,7 +632,7 @@
+       [x:id #:when (string-prefix? (symbol->string (syntax-e #'x)) "hash/c")
+             'hash/c]
+       [x:private-id (attribute x.name)]
+-      
++
+       [i:identifier
+        (or
+         (parse-prim #'i)
+@@ -641,7 +643,7 @@
+ 
+     (define (lookup)
+       (free-id-table-ref (env) id (λ () (raise-syntax-error 'parser "not in scope" id))))
+-    
++
+     (match (identifier-binding id)
+       ['lexical (-x (lookup) (next-ℓ! id))]
+       [#f (-x (lookup) (next-ℓ! id))]
+@@ -697,7 +699,7 @@
+           (define-values (x ρ*) (parse-binder id ρ))
+           (values (cons x xs-rev) ρ*)))
+       (values (reverse xs-rev) ρ*))
+-    
++
+     (syntax-parse fml
+       [(x:id ...)
+        (parse-binders (syntax->list #'(x ...)) ρ₀)]
