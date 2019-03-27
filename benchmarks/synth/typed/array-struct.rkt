@@ -1,29 +1,38 @@
 #lang typed/racket/base/no-check
 (define-values
-  (g21
-   g22
-   generated-contract6
-   g23
-   g24
-   g25
-   generated-contract7
+  (g25
    g26
-   generated-contract8
+   generated-contract6
    g27
    g28
    g29
    g30
+   generated-contract7
+   generated-contract8
    g31
    g32
    g33
    generated-contract9
-   generated-contract10
-   generated-contract11
-   generated-contract12
    g34
+   generated-contract10
    g35
    g36
-   generated-contract13)
+   g37
+   g38
+   generated-contract11
+   g39
+   g40
+   g41
+   generated-contract12
+   generated-contract13
+   g42
+   generated-contract14
+   generated-contract15
+   generated-contract16
+   g43
+   g44
+   g45
+   generated-contract17)
   (let ()
     (local-require
      racket/contract
@@ -34,75 +43,96 @@
      typed-racket/utils/vector-contract
      typed-racket/utils/hash-contract
      typed-racket/utils/opaque-object)
-    (letrec ((g21 (lambda (x) (Array? x)))
-             (g22 (lambda (x) (equal? x (void))))
-             (generated-contract6 (-> g21 (values g22)))
-             (g23 '#t)
-             (g24 '#f)
-             (g25 (or/c g23 g24))
-             (generated-contract7 (-> g21 (values g25)))
-             (g26 (parameter/c g25 g25))
-             (generated-contract8 g26)
+    (letrec ((g25 (lambda (x) (Array? x)))
+             (g26 (lambda (x) (equal? x (void))))
+             (generated-contract6 (-> g25 (values g26)))
              (g27 exact-integer?)
              (g28 (or/c g27))
              (g29 (vectorof g28))
              (g30 (or/c g29))
-             (g31 flonum?)
-             (g32 (or/c g31))
-             (g33 (-> g30 (values g32)))
-             (generated-contract9 (-> g30 g33 (values g21)))
-             (generated-contract10 (-> g30 g32 (values g21)))
-             (generated-contract11 (-> g30 g33 (values g21)))
-             (generated-contract12 (-> g30 g33 (values g21)))
-             (g34 (vectorof g32))
-             (g35 (or/c g34))
-             (g36 (lambda (x) (Mutable-Array? x)))
-             (generated-contract13 (-> g30 g35 (values g36))))
+             (generated-contract7 (-> g25 (values g30)))
+             (generated-contract8 (-> g25 (values g28)))
+             (g31 '#t)
+             (g32 '#f)
+             (g33 (or/c g31 g32))
+             (generated-contract9 (-> g25 (values g33)))
+             (g34 (box/c g33))
+             (generated-contract10 g34)
+             (g35 (λ (_) #f))
+             (g36 any/c)
+             (g37 (-> g36 (values g33)))
+             (g38 (or/c g35 g37))
+             (generated-contract11 g38)
+             (g39 flonum?)
+             (g40 (or/c g39))
+             (g41 (-> g30 (values g40)))
+             (generated-contract12 (-> g30 g41 (values g25)))
+             (generated-contract13 (-> g30 g40 (values g25)))
+             (g42 (-> g30 (values g40)))
+             (generated-contract14 (-> g25 (values g42)))
+             (generated-contract15 (-> g30 g41 (values g25)))
+             (generated-contract16 (-> g30 g41 (values g25)))
+             (g43 (vectorof g40))
+             (g44 (or/c g43))
+             (g45 (lambda (x) (Mutable-Array? x)))
+             (generated-contract17 (-> g30 g44 (values g45))))
       (values
-       g21
-       g22
-       generated-contract6
-       g23
-       g24
        g25
-       generated-contract7
        g26
-       generated-contract8
+       generated-contract6
        g27
        g28
        g29
        g30
+       generated-contract7
+       generated-contract8
        g31
        g32
        g33
        generated-contract9
-       generated-contract10
-       generated-contract11
-       generated-contract12
        g34
+       generated-contract10
        g35
        g36
-       generated-contract13))))
+       g37
+       g38
+       generated-contract11
+       g39
+       g40
+       g41
+       generated-contract12
+       generated-contract13
+       g42
+       generated-contract14
+       generated-contract15
+       generated-contract16
+       g43
+       g44
+       g45
+       generated-contract17))))
 (require (only-in racket/contract contract-out))
 (provide (contract-out (array-default-strict! generated-contract6))
-          (contract-out (array-strict? generated-contract7))
-          (contract-out (array-strictness generated-contract8))
-          (contract-out (build-array generated-contract9))
-          (contract-out (make-array generated-contract10))
-          (contract-out (unsafe-build-array generated-contract11))
-          (contract-out (unsafe-build-simple-array generated-contract12))
-          (contract-out (unsafe-vector->array generated-contract13)))
+          (contract-out (array-shape generated-contract7))
+          (contract-out (array-size generated-contract8))
+          (contract-out (array-strict? generated-contract9))
+          (contract-out (array-strictness generated-contract10))
+          (contract-out (array? generated-contract11))
+          (contract-out (build-array generated-contract12))
+          (contract-out (make-array generated-contract13))
+          (contract-out (unsafe-array-proc generated-contract14))
+          (contract-out (unsafe-build-array generated-contract15))
+          (contract-out (unsafe-build-simple-array generated-contract16))
+          (contract-out (unsafe-vector->array generated-contract17)))
 (require (for-syntax racket/base syntax/parse)
           (only-in racket/fixnum fx+ fx*)
           require-typed-check
           "typed-data.rkt")
 (require "array-utils.rkt")
-(provide (rename-out (Array? array?))
-          (rename-out (Array-shape array-shape))
-          (rename-out (Array-size array-size))
-          (rename-out (Array-unsafe-proc unsafe-array-proc))
-          make-unsafe-array-proc
-          make-unsafe-array-set-proc)
+(define array? Array?)
+(define array-shape Array-shape)
+(define array-size Array-size)
+(define unsafe-array-proc Array-unsafe-proc)
+(provide make-unsafe-array-proc make-unsafe-array-set-proc)
 (define-syntax-rule
   (for-each-array+data-index ds-expr f-expr)
   (let*:
@@ -293,8 +323,8 @@
      (define: vs : (Vectorof A) (make-vector size (g js0 0)))
      (for-each-array+data-index ds (λ (js j) (vector-set! vs j (g js j))))
      vs))))
-(: array-strictness (Parameterof (U #f #t)))
-(define array-strictness (make-parameter #t))
+(: array-strictness (Boxof (U #f #t)))
+(define array-strictness (box #t))
 (define-syntax-rule
   (make-unsafe-array-proc ds ref)
   (λ: ((js : Indexes)) (ref (unsafe-array-index->value-index ds js))))
@@ -307,7 +337,7 @@
 (: array-default-strict! (Array -> Void))
 (define (array-default-strict! arr)
    (define strict? (Array-strict? arr))
-   (when (and (not (unbox strict?)) (array-strictness))
+   (when (and (not (unbox strict?)) (unbox array-strictness))
      ((Array-strict! arr))
      (set-box! strict? #t)))
 (:

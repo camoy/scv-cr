@@ -95,13 +95,19 @@
    (define downscale-ratio (/ 1.0 (apply + weights)))
    (: scale-signal (Float -> (Float -> Float)))
    (define ((scale-signal w) x) (* x w downscale-ratio))
-   (parameterize
-    ((array-broadcasting 'permissive))
-    (for/fold
-     ((res : Array (array-map (scale-signal (first weights)) (first signals))))
-     ((s (in-list (rest signals))) (w (in-list (rest weights))))
-     (define scale (scale-signal w))
-     (array-map
-      (lambda ((acc : Float) (new : Float)) (+ acc (scale new)))
-      res
-      s))))
+   (let ((array-broadcasting-old (unbox array-broadcasting)))
+     (set-box! array-broadcasting 'permissive)
+     (define result
+       (for/fold
+        ((res
+          :
+          Array
+          (array-map (scale-signal (first weights)) (first signals))))
+        ((s (in-list (rest signals))) (w (in-list (rest weights))))
+        (define scale (scale-signal w))
+        (array-map
+         (lambda ((acc : Float) (new : Float)) (+ acc (scale new)))
+         res
+         s)))
+     (set-box! array-broadcasting array-broadcasting-old)
+     result))

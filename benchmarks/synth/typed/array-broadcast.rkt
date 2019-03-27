@@ -34,7 +34,7 @@
              (g40 '#f)
              (g41 'permissive)
              (g42 (or/c g39 g40 g41))
-             (g43 (parameter/c g42 g42))
+             (g43 (box/c g42))
              (generated-contract17 g43)
              (g44 (listof g38))
              (generated-contract18 (->* (g44) (g42) (values g38))))
@@ -66,8 +66,8 @@
 (require "array-struct.rkt")
 (require "array-utils.rkt")
 (provide)
-(: array-broadcasting (Parameterof (U #f #t 'permissive)))
-(define array-broadcasting (make-parameter #t))
+(: array-broadcasting (Boxof (U #f #t 'permissive)))
+(define array-broadcasting (box #t))
 (: shift-stretch-axes (-> Array Indexes Array))
 (define (shift-stretch-axes arr new-ds)
    (define old-ds (array-shape arr))
@@ -173,7 +173,7 @@
   (case->
    ((Listof Indexes) -> Indexes)
    ((Listof Indexes) (U #f #t 'permissive) -> Indexes)))
-(define (array-shape-broadcast dss (broadcasting (array-broadcasting)))
+(define (array-shape-broadcast dss (broadcasting (unbox array-broadcasting)))
    (define (fail)
      (error
       'array-shape-broadcast

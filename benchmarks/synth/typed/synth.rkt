@@ -101,7 +101,7 @@
         "expected (in-array <Array>)"
         #'clause
         #'clause)))))
-(array-strictness #f)
+(set-box! array-strictness #f)
 (: fs Natural)
 (define fs 44100)
 (: bits-per-sample Natural)
