@@ -46,7 +46,7 @@
       [pred-cnt #'(-> any/c boolean?)]
 
       ;; From numeric predicates
-      [t:index? #'fixnum?]
+      [t:index? #'exact-nonnegative-integer?]
 
       ;; Inline simple-result->, cannot require (SCV)
       [(simple-result-> ran arity)
