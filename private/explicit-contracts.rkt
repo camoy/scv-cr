@@ -55,7 +55,9 @@
    #:once-each
    [("-i" "--in-place") "edit files in place"
                         (in-place #t)]
-   [("-p" "--only-provides") "only provide contracts"
+   [("-p" "--only-provide") "only provide contracts"
                              (only-provide #t)]
+   [("-r" "--only-require") "only require contracts"
+                             (only-require #t)]
    #:args targets
    targets))

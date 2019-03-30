@@ -101,12 +101,14 @@
   (define path
     (simplify-path (path->complete-path target)))
   (parameterize ([current-target path])
-    (let ([transformers (list (inject-syntax (provide-all))
+    (let ([transformers (list (inject-syntax (if (only-require)
+                                                 '()
+                                                 (provide-all)))
                               (inject-syntax (if (only-provide)
                                                  '()
                                                  (require-all)))
                               transform-requires
-                              transform-provides)]
+                              (if (only-require) values transform-provides))]
           [stx (file->module target)])
       (apply-transformers-to-module stx transformers))))
 
