@@ -10,7 +10,7 @@
 ;; parameter
 ;;
 
-(define-values (show-contracts
+(define-values (show-contract
                 provide-less
                 require-less)
   (values (make-parameter #f)

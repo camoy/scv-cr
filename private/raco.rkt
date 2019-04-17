@@ -1,14 +1,11 @@
 #lang racket/base
 
-(require racket/cmdline
+(require compiler/compilation-path
+         racket/cmdline
+         racket/file
+         racket/function
          scv-gt/private/configure
-         scv-gt/private/contract-syntax
-         scv-gt/private/is-tr
-         scv-gt/private/fetch-syntax
-         scv-gt/private/make-contract
-         scv-gt/private/inject-contract
-         scv-gt/private/opt-contract
-         scv-gt/private/compile-syntax)
+         syntax/modread)
 
 ;;
 ;; parsing
@@ -29,6 +26,33 @@
    targets))
 
 ;;
+;; function
+;;
+
+;; Module-Path -> Boolean
+;; whether target is a Typed Racket module
+(define (is-tr? target)
+  (module-declared? `(submod ,target #%type-decl) #t))
+
+;; Module-Path -> Syntax
+;; retrieves syntax object from module path
+(define (fetch-syntax target)
+  (let ([port (open-input-file target)]
+        [ns   (make-base-namespace)])
+    (with-module-reading-parameterization
+      (thunk
+        (parameterize ([current-namespace ns])
+          (read-syntax (object-name port) port))))))
+
+;; Module-Path Syntax -> Void
+;; compiles syntax and outputs to appropriate file
+(define (compile-syntax target stx)
+  (let ([zo-path (get-compilation-bytecode-file target)])
+    (make-parent-directory* zo-path)
+    (with-output-to-file zo-path #:exists 'replace
+      (thunk (write (compile stx))))))
+
+;;
 ;; main
 ;;
 
@@ -42,3 +66,20 @@
          [stxs/ctc     (map inject-contract stxs ctcs)]
          [stxs/opt     (map opt-contract stxs/ctc)])
     (map compile-syntax targets/tr stxs/opt)))
+
+;;
+;; test
+;;
+
+(module+ test
+  (require rackunit)
+
+  (define (benchmark-path benchmark which name)
+    (format "./test/benchmarks/~a/~a/~a" benchmark which name))
+
+  (check-true (is-tr? (benchmark-path 'sieve 'typed "main.rkt")))
+  (check-false (is-tr? (benchmark-path 'sieve 'untyped "main.rkt")))
+
+  (check-equal? (syntax->datum (fetch-syntax "./test/hello.rkt"))
+                (syntax->datum #'(module hello racket
+                                   (#%module-begin "hello")))))
