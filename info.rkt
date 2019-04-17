@@ -1,13 +1,12 @@
 #lang info
-(define collection "tr-contract")
+(define collection "scv-gt")
 (define deps '("base"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
-(define scribblings '(("scribblings/tr-contract.scrbl" ())))
-(define pkg-desc "Makes contracts in Typed Racket programs explicit.")
+(define scribblings '(("scribblings/scv-gt.scrbl" ())))
+(define pkg-desc "Typed Racket optimization with SCV")
 (define version "0.0")
 (define pkg-authors '(camoy))
 (define raco-commands
-  '(("explicit-contracts"
-     (submod tr-contract/private/explicit-contracts main)
-     "make Typed Racket contracts explicit"
-     #f)))
+  '(("scv-gt" (submod scv-gt/private/raco main)
+              "Perform optimization"
+              #f)))
