@@ -1,14 +1,12 @@
 #lang racket/base
 
-(require compiler/compilation-path
-         racket/cmdline
-         racket/file
+(require racket/cmdline
          racket/function
          scv-gt/private/configure
-         scv-gt/private/contract-make
          scv-gt/private/contract-inject
+         scv-gt/private/contract-make
          scv-gt/private/contract-opt
-         syntax/modread)
+         scv-gt/private/syntax-util)
 
 ;;
 ;; main
@@ -18,12 +16,12 @@
   (let* ([argv         (current-command-line-arguments)]
          [targets      (parse argv)]
          [targets/tr   (filter is-tr? targets)]
-         [stxs         (map fetch-syntax targets/tr)]
+         [stxs         (map syntax-fetch targets/tr)]
          [stxs/expand  (map expand stxs)]
          [ctcs         (map contract-make stxs/expand)]
          [stxs/ctc     (map contract-inject stxs ctcs)]
          [stxs/opt     (map contract-opt stxs/ctc)])
-    (map compile-syntax targets/tr stxs/opt)))
+    (map syntax-compile targets/tr stxs/opt)))
 
 ;;
 ;; parsing
@@ -42,67 +40,3 @@
                                (require-less #t)]
    #:args targets
    targets))
-
-;;
-;; function
-;;
-
-;; Module-Path -> Boolean
-;; whether target is a Typed Racket module
-(define (is-tr? target)
-  (module-declared? `(submod ,target #%type-decl) #t))
-
-;; Module-Path -> Syntax
-;; retrieves syntax object from module path
-(define (fetch-syntax target)
-  (let ([port (open-input-file target)]
-        [ns   (make-base-namespace)])
-    (with-module-reading-parameterization
-      (thunk
-        (parameterize ([current-namespace ns])
-          (read-syntax (object-name port) port))))))
-
-;; Module-Path Syntax -> Void
-;; compiles syntax and outputs to appropriate file
-(define (compile-syntax target stx)
-  (define zo-path (get-compilation-bytecode-file target))
-  (make-parent-directory* zo-path)
-  (with-output-to-file zo-path #:exists 'replace
-    (thunk (write (compile stx)))))
-
-;;
-;; test
-;;
-
-(module+ test
-  (require rackunit
-           scv-gt/private/test)
-
-  (test-case
-    "is-tr?"
-    (check-true (is-tr? (benchmark-path "sieve" "typed" "main.rkt")))
-    (check-false (is-tr? (benchmark-path "sieve" "untyped" "main.rkt"))))
-
-  (test-case
-    "fetch-syntax"
-    (check syntax=?
-           (fetch-syntax (test-path "hello.rkt"))
-           #'(module hello racket
-               (#%module-begin "hello"))))
-
-  (test-case
-    "compile-syntax"
-    (define zo-world
-      (test-path "compiled" "world_rkt.zo"))
-    (when (file-exists? zo-world)
-      (delete-file zo-world))
-    (compile-syntax (test-path "world.rkt")
-                    #'(module world racket
-                        (provide msg)
-                        (define msg "world")))
-    (check-equal? (dynamic-require zo-world 'msg (thunk #f))
-                  "world")
-    (when (file-exists? zo-world)
-      (delete-file zo-world)))
-
-  )
