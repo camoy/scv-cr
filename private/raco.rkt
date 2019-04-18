@@ -5,16 +5,31 @@
          racket/file
          racket/function
          scv-gt/private/configure
-         scv-gt/private/make-contract
-         scv-gt/private/inject-contract
-         scv-gt/private/opt-contract
+         scv-gt/private/contract-make
+         scv-gt/private/contract-inject
+         scv-gt/private/contract-opt
          syntax/modread)
+
+;;
+;; main
+;;
+
+(module+ main
+  (let* ([argv         (current-command-line-arguments)]
+         [targets      (parse argv)]
+         [targets/tr   (filter is-tr? targets)]
+         [stxs         (map fetch-syntax targets/tr)]
+         [stxs/expand  (map expand stxs)]
+         [ctcs         (map contract-make stxs/expand)]
+         [stxs/ctc     (map contract-inject stxs ctcs)]
+         [stxs/opt     (map contract-opt stxs/ctc)])
+    (map compile-syntax targets/tr stxs/opt)))
 
 ;;
 ;; parsing
 ;;
 
-(define (raco-parse argv)
+(define (parse argv)
   (command-line
    #:program "scv-gt"
    #:argv argv
@@ -50,25 +65,10 @@
 ;; Module-Path Syntax -> Void
 ;; compiles syntax and outputs to appropriate file
 (define (compile-syntax target stx)
-  (let ([zo-path (get-compilation-bytecode-file target)])
-    (make-parent-directory* zo-path)
-    (with-output-to-file zo-path #:exists 'replace
-      (thunk (write (compile stx))))))
-
-;;
-;; main
-;;
-
-(module+ main
-  (let* ([argv         (current-command-line-arguments)]
-         [targets      (raco-parse argv)]
-         [targets/tr   (filter is-tr? targets)]
-         [stxs         (map fetch-syntax targets/tr)]
-         [stxs/expand  (map expand stxs)]
-         [ctcs         (map make-contract stxs/expand)]
-         [stxs/ctc     (map inject-contract stxs ctcs)]
-         [stxs/opt     (map opt-contract stxs/ctc)])
-    (map compile-syntax targets/tr stxs/opt)))
+  (define zo-path (get-compilation-bytecode-file target))
+  (make-parent-directory* zo-path)
+  (with-output-to-file zo-path #:exists 'replace
+    (thunk (write (compile stx)))))
 
 ;;
 ;; test

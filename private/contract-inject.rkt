@@ -1,10 +1,10 @@
 #lang racket/base
 
-(provide inject-contract)
+(provide contract-inject)
 
 (require scv-gt/private/contract-syntax)
 
 ;; Syntax Contract-Syntax -> Syntax
 ;; injects provide and require contracts into a module's syntax
-(define (inject-contract stx ctc-stx)
+(define (contract-inject stx ctc-stx)
   stx)

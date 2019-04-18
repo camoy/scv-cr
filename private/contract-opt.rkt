@@ -1,8 +1,8 @@
 #lang racket/base
 
-(provide opt-contract)
+(provide contract-opt)
 
 ;; Syntax -> Syntax
 ;; uses SCV to optimize away contracts
-(define (opt-contract stx)
+(define (contract-opt stx)
   stx)
