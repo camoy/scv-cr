@@ -17,7 +17,7 @@
          [targets      (parse argv)]
          [targets/tr   (filter is-tr? targets)]
          [stxs         (map syntax-fetch targets/tr)]
-         [stxs/expand  (map expand stxs)]
+         [stxs/expand  (map expand/base+dir stxs targets/tr)]
          [ctcs         (map contract-make stxs/expand)]
          [stxs/ctc     (map contract-inject stxs ctcs)]
          [stxs/opt     (map contract-opt stxs/ctc)])

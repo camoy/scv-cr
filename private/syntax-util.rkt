@@ -4,7 +4,8 @@
          syntax-property-values
          is-tr?
          syntax-fetch
-         syntax-compile)
+         syntax-compile
+         expand/base+dir)
 
 ;;
 ;; syntax properties
@@ -28,8 +29,10 @@
 ;; retrieves a set of all the values associated with the key within the given
 ;; syntax object
 (define (syntax-property-values stx key)
+  ;; fixes key in syntax-property-values for use in map
   (define (syntax-property-values/key stx)
     (syntax-property-values stx key))
+  ;; syntax properties can return cons cells that must be flattened
   (define (flatten-value v)
     (match v
       [#f         (set)]
@@ -65,8 +68,8 @@
   (define port (open-input-file target))
   (with-module-reading-parameterization
     (thunk
-     (parameterize/base
-      (read-syntax (object-name port) port)))))
+     (parameterize ([current-namespace (make-base-namespace)])
+       (read-syntax (object-name port) port)))))
 
 ;; Module-Path Syntax -> Void
 ;; compiles syntax and outputs to appropriate file
@@ -76,14 +79,14 @@
   (with-output-to-file zo-path #:exists 'replace
     (thunk (write (compile stx)))))
 
-;;
-;; helpers
-;;
-
-;; parameterizes current namespace with base namespace
-(define-syntax-rule (parameterize/base e ...)
-  (parameterize ([current-namespace (make-base-namespace)])
-    e ...))
+;; Syntax Module-Path -> Syntax
+;; expands module with base namespace in the directory of the given path
+(define (expand/base+dir stx target)
+  (define target-dir
+    (build-path (path->complete-path target) ".."))
+  (parameterize ([current-namespace (make-base-namespace)]
+                 [current-load-relative-directory target-dir])
+    (expand stx)))
 
 ;;
 ;; syntax properties test
@@ -160,10 +163,11 @@
     (when (file-exists? zo-world)
       (delete-file zo-world)))
 
-(require scv-gt/private/test-util)
-
-(parameterize/base
- (syntax-property-values
-  (expand (syntax-fetch (test-path "abs.rkt")))
-  'provide))
+  (define path (benchmark-path "sieve" "typed" "streams.rkt"))
+  (set-map
+   (syntax-property-values (expand/base+dir
+                            (syntax-fetch path)
+                            path)
+                           'provide)
+   syntax->datum)
   )
