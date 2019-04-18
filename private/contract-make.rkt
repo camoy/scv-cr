@@ -49,7 +49,7 @@
       (check-equal? (syntax-property stx/prop 'a) stx)))
 
   (test-case
-      "syntax-property-values"
+    "syntax-property-values"
     (let* ([stx-a1      #'100]
            [stx-a2      #'200]
            [stx-b       #'300]

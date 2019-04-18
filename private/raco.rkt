@@ -75,29 +75,28 @@
 ;;
 
 (module+ test
-  (require rackunit)
-
-  (define (benchmark-path benchmark which name)
-    (format "./test/benchmarks/~a/~a/~a" benchmark which name))
+  (require rackunit
+           scv-gt/private/test)
 
   (test-case
     "is-tr?"
-    (check-true (is-tr? (benchmark-path 'sieve 'typed "main.rkt")))
-    (check-false (is-tr? (benchmark-path 'sieve 'untyped "main.rkt"))))
+    (check-true (is-tr? (benchmark-path "sieve" "typed" "main.rkt")))
+    (check-false (is-tr? (benchmark-path "sieve" "untyped" "main.rkt"))))
 
   (test-case
     "fetch-syntax"
-    (check-equal? (syntax->datum (fetch-syntax "./test/hello.rkt"))
-                  (syntax->datum #'(module hello racket
-                                     (#%module-begin "hello")))))
+    (check syntax=?
+           (fetch-syntax (test-path "hello.rkt"))
+           #'(module hello racket
+               (#%module-begin "hello"))))
 
   (test-case
     "compile-syntax"
     (define zo-world
-      "./test/compiled/world_rkt.zo")
+      (test-path "compiled" "world_rkt.zo"))
     (when (file-exists? zo-world)
       (delete-file zo-world))
-    (compile-syntax "./test/world.rkt"
+    (compile-syntax (test-path "world.rkt")
                     #'(module world racket
                         (provide msg)
                         (define msg "world")))
