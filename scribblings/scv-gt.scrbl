@@ -32,6 +32,11 @@ command-line flags:
   @exec{-r} or @exec{--require-less} --- do not attach
   contracts to require forms.
 }
+
+@item{
+  @exec{-i} or @exec{--ignore-check} --- turn all invocations
+  of @code{require-typed/check} into @code{require-typed}.
+}
 ]
 
 If you want to optimize many files at once, pass them all

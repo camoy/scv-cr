@@ -34,9 +34,11 @@
    #:once-each
    [("-s" "--show-contract")  "show contracts"
                                (show-contract #t)]
-   [("-p" "--provide-less")    "no provide contracts"
-                               (provide-less #t)]
-   [("-r" "--require-less")    "no require contracts"
-                               (require-less #t)]
+   [("-p" "--provide-less")   "no provide contracts"
+                              (provide-less #t)]
+   [("-r" "--require-less")   "no require contracts"
+                              (require-less #t)]
+   [("-i" "--ignore-check")   "ignore require-typed/check (for benchmarks)"
+                              (ignore-check #t)]
    #:args targets
    targets))

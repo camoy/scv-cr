@@ -55,7 +55,8 @@
 (require compiler/compilation-path
          racket/file
          racket/function
-         syntax/modread)
+         syntax/modread
+         scv-gt/private/proxy-resolver)
 
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
@@ -85,7 +86,9 @@
   (define target-dir
     (build-path (path->complete-path target) ".."))
   (parameterize ([current-namespace (make-base-namespace)]
-                 [current-load-relative-directory target-dir])
+                 [current-load-relative-directory target-dir]
+                 [current-module-name-resolver
+                  (get-proxy-module-name-resolver)])
     (expand stx)))
 
 ;;
@@ -136,7 +139,7 @@
 ;;
 
 (module+ test
-  (test-case
+  #;(test-case
     "is-tr?"
     (check-true (is-tr? (benchmark-path "sieve" "typed" "main.rkt")))
     (check-false (is-tr? (benchmark-path "sieve" "untyped" "main.rkt"))))
@@ -163,11 +166,15 @@
     (when (file-exists? zo-world)
       (delete-file zo-world)))
 
-  (define path (benchmark-path "sieve" "typed" "streams.rkt"))
-  (set-map
-   (syntax-property-values (expand/base+dir
-                            (syntax-fetch path)
-                            path)
-                           'provide)
-   syntax->datum)
+  #|
+  (require scv-gt/private/configure)
+  (define path (benchmark-path "sieve" "typed" "main.rkt"))
+  (parameterize ([ignore-check #t])
+    (set-map
+     (syntax-property-values (expand/base+dir
+                              (syntax-fetch path)
+                              path)
+                             'require)
+     syntax->datum))
+  |#
   )
