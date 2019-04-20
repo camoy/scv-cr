@@ -2,38 +2,63 @@
 
 (require syntax/parse
          racket/list
+         racket/match
          scv-gt/private/syntax-util
          scv-gt/private/provide-munge
          scv-gt/private/require-munge)
 
+;;
+;; contract definition functions
+;;
+
+(provide provide-ctc-defns
+         require-ctc-defns)
+
 ;; Symbol (Syntax -> Syntax) -> Syntax -> Syntax
 ;; makes a munged definition function
-(define ((make-ctc+def key munger) stx)
+(define ((make-ctc-defns key munger) stx)
   (datum->syntax stx (map munger
                           (syntax-property-values stx key))))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions
-(define provide-ctc+def
-  (make-ctc+def 'provide provide-munge))
+(define provide-ctc-defns
+  (make-ctc-defns 'provide provide-munge))
 
 ;; Syntax -> Syntax
 ;; yields munged require contract definitions
-(define (require-ctc+def stx)
-  (make-ctc+def 'require require-munge))
+(define require-ctc-defns
+  (make-ctc-defns 'require require-munge))
 
-;; Symbol (Syntax -> [List-of Syntax]) -> (Syntax -> [Hash Syntax Syntax])
+;;
+;; binding+ctc functions
+;;
+
+(provide provide-ctc-out
+         require-ctc-out)
+
+;; [List-of [Cons Syntax Syntax]] -> Syntax
+;; constructs a provide form from a mapping between identifiers and contract definitions
+(define (provide-wrapper mapping)
+  (define p/c-items
+    (for/list ([kv mapping])
+      (match kv
+        [(cons k v)
+         #`[#,k #,v]])))
+  #`(provide (contract-out #,@p/c-items)))
+
+;; Symbol (Syntax -> [List-of Syntax]) -> (Syntax -> [List-of [Cons Syntax Syntax]])
 ;; takes a key for searching syntax properties and a syntax parser that yields
 ;; associations between bindings and contract definitions and constructs a
 ;; binding+ctc function
-(define ((make-binding+ctc key transform) stx)
-  (apply hash (append-map transform (syntax-property-values stx key))))
+(define ((make-ctc-out key transform) stx)
+  (provide-wrapper (map transform (syntax-property-values stx key))))
 
-;; [List-of Syntax] -> [Hash Syntax Syntax]
+;; Syntax -> [List-of [Cons Syntax Syntax]]
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from exported
 ;; identifiers to contract definitions
-(define provide-binding+ctc
-  (make-binding+ctc
+(define provide-ctc-out
+  (make-ctc-out
    'provide
    (syntax-parser
      #:datum-literals (begin define define-values
@@ -42,13 +67,13 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (list #'k #'v)])))
+      (cons #'k #'v)])))
 
-;; Syntax -> [Hash Syntax Syntax]
+;; Syntax -> [List-of [Cons Syntax Syntax]]
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
 ;; identifiers to contract definitions
-(define require-binding+ctc
-  (make-binding+ctc
+(define require-ctc-out
+  (make-ctc-out
    'require-rename
    (syntax-parser
      #:datum-literals (begin require rename-without-provide
@@ -56,12 +81,13 @@
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (list #'k #'v)])))
+      (cons #'k #'v)])))
 
 ;;
 ;; test
 ;;
 
+#|
 (module+ test
   (require rackunit
            racket/set
@@ -92,7 +118,8 @@
              stream? stream-take struct:stream stream-first)))
   )
 
-#|
+|#
+
 
 (require scv-gt/private/configure
          scv-gt/private/syntax-util
@@ -100,7 +127,5 @@
          racket/set
          racket/pretty)
 (ignore-check #t)
-(define path (benchmark-path "sieve" "typed" "streams.rkt"))
-(provide-ctc+def (expand/base+dir (syntax-fetch path) path))
-
-|#
+(define path (benchmark-path "sieve" "typed" "main.rkt"))
+(require-ctc-out (expand/base+dir (syntax-fetch path) path))
