@@ -13,11 +13,19 @@
 #;(define (require-ctc+def stxs)
     ...)
 
+;; Symbol (Syntax -> [List-of Syntax]) -> (Syntax -> [Hash Syntax Syntax])
+;; takes a key for searching syntax properties and a syntax parser that yields
+;; associations between bindings and contract definitions and constructs a
+;; binding+ctc function
+(define ((make-binding+ctc key transform) stx)
+  (apply hash (append-map transform (syntax-property-values stx key))))
+
 ;; [List-of Syntax] -> [Hash Syntax Syntax]
-;; maps raw syntaxes from Typed Racket to an immutable hash mapping
-;; exported identifiers to contract definitions
-(define (provide-binding+ctc stx)
-  (define helper
+;; takes syntax from Typed Racket and yields an immutable hash mapping from exported
+;; identifiers to contract definitions
+(define provide-binding+ctc
+  (make-binding+ctc
+   'provide
    (syntax-parser
      #:datum-literals (begin define define-values
                        define-module-boundary-contract)
@@ -25,22 +33,21 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (list #'k #'v)]))
-  (apply hash (append-map helper (syntax-property-values stx 'provide))))
+      (list #'k #'v)])))
 
 ;; Syntax -> [Hash Syntax Syntax]
-;; takes syntax from Typed Racket and yields an immutable hash mapping from exported
+;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
 ;; identifiers to contract definitions
-(define (require-binding+ctc stx)
-  (define helper
+(define require-binding+ctc
+  (make-binding+ctc
+   'require-rename
    (syntax-parser
      #:datum-literals (begin require rename-without-provide
                        define-ignored contract)
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (list #'k #'v)]))
-  (apply hash (append-map helper (syntax-property-values stx 'require-rename))))
+      (list #'k #'v)])))
 
 ;;
 ;; test
