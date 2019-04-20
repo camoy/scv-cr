@@ -28,10 +28,10 @@
 ;; Syntax Symbol -> [Set Any]
 ;; retrieves a set of all the values associated with the key within the given
 ;; syntax object
-(define (syntax-property-values stx key)
+(define (syntax-property-values* stx key)
   ;; fixes key in syntax-property-values for use in map
   (define (syntax-property-values/key stx)
-    (syntax-property-values stx key))
+    (syntax-property-values* stx key))
   ;; syntax properties can return cons cells that must be flattened
   (define (flatten-value v)
     (match v
@@ -47,6 +47,11 @@
                   (cons values
                         (map syntax-property-values/key datum)))]
           [else values])))
+
+;; Syntax Symbol -> [List-of Any]
+;; same as syntax-property-values* except returns as a list
+(define syntax-property-values
+  (compose set->list syntax-property-values*))
 
 ;;
 ;; syntax and modules
@@ -115,7 +120,7 @@
       (check-equal? (syntax-property stx/prop 'a) stx)))
 
   (test-case
-    "syntax-property-values"
+    "syntax-property-values*"
     (let* ([stx-a1      #'100]
            [stx-a2      #'200]
            [stx-b       #'300]
@@ -126,10 +131,10 @@
             #`(+ (+ #,stx-a1/prop 2)
                  (* #,stx-a2/prop (+ 1 #,stx-a1/prop #,stx-b/prop)))])
       (check set=?
-             (syntax-property-values big-stx 'a)
+             (syntax-property-values* big-stx 'a)
              (set stx-a1 stx-a2))
       (check set=?
-             (syntax-property-values big-stx 'b)
+             (syntax-property-values* big-stx 'b)
              (set stx-b))))
 
   )
