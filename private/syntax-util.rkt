@@ -88,7 +88,7 @@
   (parameterize ([current-namespace (make-base-namespace)]
                  [current-load-relative-directory target-dir]
                  [current-module-name-resolver
-                  (get-proxy-module-name-resolver)])
+                  (get-module-name-resolver)])
     (expand stx)))
 
 ;;
@@ -139,7 +139,7 @@
 ;;
 
 (module+ test
-  #;(test-case
+  (test-case
     "is-tr?"
     (check-true (is-tr? (benchmark-path "sieve" "typed" "main.rkt")))
     (check-false (is-tr? (benchmark-path "sieve" "untyped" "main.rkt"))))
@@ -174,7 +174,7 @@
      (syntax-property-values (expand/base+dir
                               (syntax-fetch path)
                               path)
-                             'require)
+                             'require-rename)
      syntax->datum))
   |#
   )

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(provide get-proxy-module-name-resolver)
+(provide get-module-name-resolver)
 
 ;;
 ;; proxy module
@@ -22,18 +22,18 @@
 (require scv-gt/private/configure
          syntax/location)
 
-;; -> Module Name Resolver
+;; -> Module-Name-Resolver
 ;; if the ignore-check parameter is set, returns a module name
 ;; resolver that disables require-typed/check
-(define (get-proxy-module-name-resolver)
+(define (get-module-name-resolver)
   (if (ignore-check)
-      real-proxy-resolver
+      proxy-resolver
       old-resolver))
 
 (define old-resolver
   (current-module-name-resolver))
 
-(define real-proxy-resolver
+(define proxy-resolver
   (case-lambda
     [(resolved-path ns)
      (old-resolver resolved-path ns)]
