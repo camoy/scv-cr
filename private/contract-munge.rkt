@@ -2,4 +2,9 @@
 
 (provide contract-munge)
 
-(define contract-munge values)
+;;
+;; functions
+;;
+
+(define (contract-munge stx)
+  stx)

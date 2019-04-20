@@ -18,7 +18,7 @@
 ;; makes a munged definition function
 (define ((make-ctc-defns key munger) stx)
   (datum->syntax stx (map munger
-                          (syntax-property-values stx key))))
+                          (reverse (syntax-property-values stx key)))))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions
@@ -39,22 +39,17 @@
 
 ;; [List-of [Cons Syntax Syntax]] -> Syntax
 ;; constructs a provide form from a mapping between identifiers and contract definitions
-(define (provide-wrapper mapping)
-  (define p/c-items
-    (for/list ([kv mapping])
-      (match kv
-        [(cons k v)
-         #`[#,k #,v]])))
+(define (provide-wrapper p/c-items)
   #`(provide (contract-out #,@p/c-items)))
 
-;; Symbol (Syntax -> [List-of Syntax]) -> (Syntax -> [List-of [Cons Syntax Syntax]])
+;; Symbol (Syntax -> [List-of Syntax]) -> (Syntax -> [List-of [List-of Syntax]])
 ;; takes a key for searching syntax properties and a syntax parser that yields
 ;; associations between bindings and contract definitions and constructs a
 ;; binding+ctc function
 (define ((make-ctc-out key transform) stx)
   (provide-wrapper (map transform (syntax-property-values stx key))))
 
-;; Syntax -> [List-of [Cons Syntax Syntax]]
+;; Syntax -> [List-of [List-of Syntax]]
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from exported
 ;; identifiers to contract definitions
 (define provide-ctc-out
@@ -67,9 +62,9 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (cons #'k #'v)])))
+      (list #'k #'v)])))
 
-;; Syntax -> [List-of [Cons Syntax Syntax]]
+;; Syntax -> [List-of [List-of Syntax]]
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
 ;; identifiers to contract definitions
 (define require-ctc-out
@@ -81,7 +76,7 @@
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (cons #'k #'v)])))
+      (list #'k #'v)])))
 
 ;;
 ;; test
@@ -127,5 +122,5 @@
          racket/set
          racket/pretty)
 (ignore-check #t)
-(define path (benchmark-path "sieve" "typed" "main.rkt"))
-(require-ctc-out (expand/base+dir (syntax-fetch path) path))
+(define path (benchmark-path "sieve" "typed" "streams.rkt"))
+(provide-ctc-defns (expand/base+dir (syntax-fetch path) path))
