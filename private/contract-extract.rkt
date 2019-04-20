@@ -17,8 +17,8 @@
 ;; Symbol (Syntax -> Syntax) -> Syntax -> Syntax
 ;; makes a munged definition function
 (define ((make-ctc-defns key munger) stx)
-  (datum->syntax stx (map munger
-                          (reverse (syntax-property-values stx key)))))
+  #`(begin
+      #,@(map munger (reverse (syntax-property-values stx key)))))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions
@@ -122,5 +122,5 @@
          racket/set
          racket/pretty)
 (ignore-check #t)
-(define path (benchmark-path "sieve" "typed" "streams.rkt"))
-(provide-ctc-defns (expand/base+dir (syntax-fetch path) path))
+(define path (benchmark-path "sieve" "typed" "main.rkt"))
+(require-ctc-defns (expand/base+dir (syntax-fetch path) path))
