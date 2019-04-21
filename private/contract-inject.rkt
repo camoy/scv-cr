@@ -21,7 +21,8 @@
 ;; takes original syntax and contract quad and uses contract information
 ;; to inject provide contracts into the unexpanded syntax
 (define (inject-provide stx quad)
-  (syntax-parse stx
+  (define stx* (transform-provide stx))
+  (syntax-parse stx*
     #:datum-literals (module #%module-begin)
     [(module name lang (#%module-begin forms ...))
      (define provide-stx
@@ -37,12 +38,15 @@
 ;; takes original syntax and contract quad and uses contract information
 ;; to inject require contracts into the unexpanded syntax
 (define (inject-require stx quad)
-  (syntax-parse stx
+  (define-values (stx* requires)
+    (transform-require stx))
+  (syntax-parse stx*
     #:datum-literals (module #%module-begin)
     [(module name lang (#%module-begin forms ...))
      (define require-stx
        #`(begin
            (module require/contracts racket/base
+             #,@requires
              #,(contract-quad-require-defns quad)
              (provide #,(contract-quad-require-out quad)))
            (require 'require/contracts)))
@@ -61,11 +65,11 @@
      (define stx*
        #`(module name #,(as-no-check #'lang)))
      (for/fold ([stx stx*])
-               ([flag        (list (provide-less)
-                                   (require-less))]
-                [transformer (list transform-provide
-                                   transform-require)])
-       (if (not flag) (transformer stx) stx))]))
+               ([flag      (list (provide-less)
+                                 (require-less))]
+                [injection (list inject-provide
+                                 inject-require)])
+       (if (not flag) (injection stx) stx))]))
 
 ;; Syntax -> Syntax
 ;; removes provide forms
