@@ -2,6 +2,7 @@
 
 (require racket/cmdline
          racket/function
+         racket/pretty
          scv-gt/private/configure
          scv-gt/private/contract-extract
          scv-gt/private/contract-inject
@@ -22,7 +23,13 @@
          [stxs-ctc     (map contract-inject stxs ctc-quads)]
          [stxs-opt     (map contract-opt stxs-ctc)])
     (when (overwrite)
-      (map syntax-overwrite stxs-opt targets-tr))
+      (for-each syntax-overwrite stxs-opt targets-tr))
+    (when (show-contract)
+      (for-each (λ (stx target)
+                  (displayln (format "#### ~a ####" target))
+                  (pretty-print (syntax->datum stx)))
+                stxs-opt
+                targets-tr))
     (map syntax-compile targets-tr stxs-opt)))
 
 ;;
