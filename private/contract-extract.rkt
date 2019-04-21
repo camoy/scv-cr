@@ -8,6 +8,30 @@
          scv-gt/private/require-munge)
 
 ;;
+;; data
+;;
+
+(provide (struct-out contract-quad))
+(struct contract-quad (provide-defns
+                       provide-out
+                       require-defns
+                       require-out))
+
+;;
+;; extraction function
+;;
+
+(provide contract-extract)
+
+;; Syntax -> Contract-Quad
+;; extracts and collects contract information from expanded syntax
+(define (contract-extract stx)
+  (contract-quad (provide-ctc-defns stx)
+                 (provide-ctc-out stx)
+                 (require-ctc-defns stx)
+                 (require-ctc-out stx)))
+
+;;
 ;; contract definition functions
 ;;
 

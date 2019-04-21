@@ -3,6 +3,7 @@
 (require racket/cmdline
          racket/function
          scv-gt/private/configure
+         scv-gt/private/contract-extract
          scv-gt/private/contract-inject
          scv-gt/private/contract-opt
          scv-gt/private/syntax-util)
@@ -17,7 +18,8 @@
          [targets-tr   (filter is-tr? targets)]
          [stxs         (map syntax-fetch targets-tr)]
          [stxs-expand  (map expand/base+dir stxs targets-tr)]
-         [stxs-ctc     (map contract-inject stxs stxs-expand)]
+         [ctc-quads    (map contract-extract stxs-expand)]
+         [stxs-ctc     (map contract-inject stxs ctc-quads)]
          [stxs-opt     (map contract-opt stxs-ctc)])
     (map syntax-compile targets-tr stxs-opt)))
 
