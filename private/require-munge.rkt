@@ -19,9 +19,10 @@
             (define-values (y) y-def))
      (with-syntax ([(x-def* ...)
                     (map contract-munge
+                         (syntax-e #'(xs ...))
                          (syntax-e #'(x-def ...)))]
                    [y-def*
-                    (contract-munge #'y-def)])
+                    (contract-munge #'y #'y-def)])
        #`(begin (define xs x-def*) ...
                 (define-values (y) y-def*)))]))
 
