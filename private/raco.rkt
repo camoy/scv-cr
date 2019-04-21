@@ -42,3 +42,15 @@
                               (ignore-check #t)]
    #:args targets
    targets))
+
+;;
+;; TODO: remove
+;;
+(require scv-gt/private/configure
+         scv-gt/private/test-util
+         racket/set)
+(define path (benchmark-path "sieve" "typed" "main.rkt"))
+(define stx (syntax-fetch path))
+(parameterize ([ignore-check #t])
+  (syntax->datum (contract-inject stx
+                   (contract-extract (expand/base+dir stx path)))))

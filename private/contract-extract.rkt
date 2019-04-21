@@ -15,7 +15,7 @@
 (struct contract-quad (provide-defns
                        provide-out
                        require-defns
-                       require-out))
+                       require-out) #:transparent)
 
 ;;
 ;; extraction function

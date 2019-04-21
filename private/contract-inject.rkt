@@ -63,13 +63,13 @@
     #:datum-literals (module #%module-begin)
     [(module name lang forms ...)
      (define stx*
-       #`(module name #,(as-no-check #'lang)))
+       #`(module name #,(as-no-check #'lang) forms ...))
      (for/fold ([stx stx*])
                ([flag      (list (provide-less)
                                  (require-less))]
                 [injection (list inject-provide
                                  inject-require)])
-       (if (not flag) (injection stx) stx))]))
+       (if (not flag) (injection stx quad) stx))]))
 
 ;; Syntax -> Syntax
 ;; removes provide forms
@@ -101,5 +101,5 @@
                   ([stx (syntax-e #'(x ...))])
          (transform-require stx)))
      (values (datum->syntax stx stxs*)
-             (append requires))]
+             (apply append requires))]
     [x (values #'x '())]))

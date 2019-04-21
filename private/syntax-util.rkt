@@ -170,16 +170,4 @@
                   "world")
     (when (file-exists? zo-world)
       (delete-file zo-world)))
-
-  #|
-  (require scv-gt/private/configure)
-  (define path (benchmark-path "sieve" "typed" "main.rkt"))
-  (parameterize ([ignore-check #t])
-    (set-map
-     (syntax-property-values (expand/base+dir
-                              (syntax-fetch path)
-                              path)
-                             'require-rename)
-     syntax->datum))
-  |#
   )
