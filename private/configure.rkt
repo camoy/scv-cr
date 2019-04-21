@@ -13,8 +13,10 @@
 (define-values (show-contract
                 provide-less
                 require-less
-                ignore-check)
+                ignore-check
+                overwrite)
   (values (make-parameter #f)
+          (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)))

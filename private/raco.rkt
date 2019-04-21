@@ -21,6 +21,8 @@
          [ctc-quads    (map contract-extract stxs-expand)]
          [stxs-ctc     (map contract-inject stxs ctc-quads)]
          [stxs-opt     (map contract-opt stxs-ctc)])
+    (when (overwrite)
+      (map syntax-overwrite stxs-opt targets-tr))
     (map syntax-compile targets-tr stxs-opt)))
 
 ;;
@@ -40,12 +42,15 @@
                               (require-less #t)]
    [("-i" "--ignore-check")   "ignore require-typed/check (for benchmarks)"
                               (ignore-check #t)]
+   [("-o" "--overwrite")      "overwrite source files"
+                              (overwrite #t)]
    #:args targets
    targets))
 
 ;;
 ;; TODO: remove
 ;;
+#|
 (require scv-gt/private/configure
          scv-gt/private/test-util
          racket/set)
@@ -54,3 +59,4 @@
 (parameterize ([ignore-check #t])
   (syntax->datum (contract-inject stx
                    (contract-extract (expand/base+dir stx path)))))
+|#

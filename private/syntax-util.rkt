@@ -3,6 +3,7 @@
 (provide syntax-property-self*
          syntax-property-values
          is-tr?
+         syntax-overwrite
          syntax-fetch
          syntax-compile
          expand/base+dir)
@@ -68,6 +69,13 @@
 (define (is-tr? target)
   (module-declared? `(submod ,target #%type-decl) #t))
 
+;; Syntax Module-Path -> Void
+;; replaces content of target with new syntax
+(define (syntax-overwrite stx target)
+  (with-output-to-file target
+    #:exists 'replace
+    (thunk (write stx))))
+
 ;; Module-Path -> Syntax
 ;; retrieves syntax object from module path
 (define (syntax-fetch target)
@@ -82,7 +90,8 @@
 (define (syntax-compile target stx)
   (define zo-path (get-compilation-bytecode-file target))
   (make-parent-directory* zo-path)
-  (with-output-to-file zo-path #:exists 'replace
+  (with-output-to-file zo-path
+    #:exists 'replace
     (thunk (write (compile stx)))))
 
 ;; Syntax Module-Path -> Syntax
