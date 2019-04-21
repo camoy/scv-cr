@@ -15,13 +15,13 @@
 (module+ main
   (let* ([argv         (current-command-line-arguments)]
          [targets      (parse argv)]
-         [targets/tr   (filter is-tr? targets)]
-         [stxs         (map syntax-fetch targets/tr)]
-         [stxs/expand  (map expand/base+dir stxs targets/tr)]
-         [ctcs         (map contract-make stxs/expand)]
-         [stxs/ctc     (map contract-inject stxs ctcs)]
-         [stxs/opt     (map contract-opt stxs/ctc)])
-    (map syntax-compile targets/tr stxs/opt)))
+         [targets-tr   (filter is-tr? targets)]
+         [stxs         (map syntax-fetch targets-tr)]
+         [stxs-expand  (map expand/base+dir stxs targets-tr)]
+         [ctcs         (map contract-make stxs-expand)]
+         [stxs-ctc     (map contract-inject stxs ctcs)]
+         [stxs-opt     (map contract-opt stxs-ctc)])
+    (map syntax-compile targets-tr stxs-opt)))
 
 ;;
 ;; parsing

@@ -2,7 +2,7 @@
 
 (provide contract-inject)
 
-(require scv-gt/private/contract-syntax)
+(require scv-gt/private/contract-make)
 
 ;; Syntax Contract-Syntax -> Syntax
 ;; injects provide and require contracts into a module's syntax

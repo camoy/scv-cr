@@ -115,7 +115,7 @@
 
 |#
 
-
+#|
 (require scv-gt/private/configure
          scv-gt/private/syntax-util
          scv-gt/private/test-util
@@ -124,3 +124,4 @@
 (ignore-check #t)
 (define path (benchmark-path "sieve" "typed" "main.rkt"))
 (require-ctc-defns (expand/base+dir (syntax-fetch path) path))
+|#
