@@ -37,6 +37,16 @@ command-line flags:
   @exec{-i} or @exec{--ignore-check} --- turn all invocations
   of @code{require-typed/check} into @code{require-typed}.
 }
+
+@item{
+  @exec{-o} or @exec{--overwrite} --- overwrite original
+  source files with the a version with optimized contracts.
+}
+
+@item{
+  @exec{-c} or @exec{--compiler-off} --- do not compile the
+  zo files.
+}
 ]
 
 If you want to optimize many files at once, pass them all

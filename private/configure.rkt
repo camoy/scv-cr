@@ -14,8 +14,10 @@
                 provide-less
                 require-less
                 ignore-check
-                overwrite)
+                overwrite
+                compiler-off)
   (values (make-parameter #f)
+          (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)

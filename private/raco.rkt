@@ -29,8 +29,9 @@
                   (displayln (format "#### ~a ####" target))
                   (displayln (syntax->string stx)))
                 stxs-opt
-                targets-tr)))
-    #;(for-each syntax-compile targets-tr stxs-opt))
+                targets-tr))
+    (unless (compiler-off)
+      (for-each syntax-compile targets-tr stxs-opt))))
 
 ;;
 ;; parsing
@@ -51,6 +52,8 @@
                               (ignore-check #t)]
    [("-o" "--overwrite")      "overwrite source files"
                               (overwrite #t)]
+   [("-c" "--compiler-off")   "do not compile zo files"
+                              (compiler-off #t)]
    #:args targets
    targets))
 
