@@ -6,8 +6,7 @@
          syntax->string
          syntax-overwrite
          syntax-fetch
-         syntax-compile
-         expand/base+dir)
+         syntax-compile)
 
 ;;
 ;; syntax properties
@@ -65,8 +64,7 @@
 (require compiler/compilation-path
          racket/file
          racket/function
-         syntax/modread
-         scv-gt/private/proxy-resolver)
+         syntax/modread)
 
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
@@ -109,17 +107,6 @@
   (with-output-to-file zo-path
     #:exists 'replace
     (thunk (write (compile stx)))))
-
-;; Syntax Module-Path -> Syntax
-;; expands module with base namespace in the directory of the given path
-(define (expand/base+dir stx target)
-  (define target-dir
-    (build-path (path->complete-path target) ".."))
-  (parameterize ([current-namespace (make-base-namespace)]
-                 [current-load-relative-directory target-dir]
-                 [current-module-name-resolver
-                  (get-module-name-resolver)])
-    (expand stx)))
 
 ;;
 ;; syntax properties test

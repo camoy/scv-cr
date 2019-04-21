@@ -1,6 +1,7 @@
 #lang racket/base
 
-(provide get-module-name-resolver)
+(provide get-module-name-resolver
+         expand/base+dir)
 
 ;;
 ;; proxy module
@@ -21,6 +22,17 @@
 
 (require scv-gt/private/configure
          syntax/location)
+
+;; Syntax Module-Path -> Syntax
+;; expands module with base namespace in the directory of the given path
+(define (expand/base+dir stx target)
+  (define target-dir
+    (build-path (path->complete-path target) ".."))
+  (parameterize ([current-namespace (make-base-namespace)]
+                 [current-load-relative-directory target-dir]
+                 [current-module-name-resolver
+                  (get-module-name-resolver)])
+    (expand stx)))
 
 ;; -> Module-Name-Resolver
 ;; if the ignore-check parameter is set, returns a module name

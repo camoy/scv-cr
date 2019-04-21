@@ -3,6 +3,7 @@
 (require racket/cmdline
          racket/function
          racket/pretty
+         scv-gt/private/proxy-resolver
          scv-gt/private/configure
          scv-gt/private/contract-extract
          scv-gt/private/contract-inject
