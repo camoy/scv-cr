@@ -3,6 +3,7 @@
 (provide syntax-property-self*
          syntax-property-values
          is-tr?
+         syntax->string
          syntax-overwrite
          syntax-fetch
          syntax-compile
@@ -14,7 +15,10 @@
 
 (require racket/set
          racket/list
-         racket/match)
+         racket/match
+         racket/string
+         racket/pretty
+         syntax/parse)
 
 ;; Syntax -> Syntax
 ;; helper for calling syntax-property-self from Typed Racket source
@@ -69,12 +73,24 @@
 (define (is-tr? target)
   (module-declared? `(submod ,target #%type-decl) #t))
 
+;; Syntax -> String
+;; converts syntax to nicer printable representation
+(define syntax->string
+  (syntax-parser
+    #:datum-literals (module #%module-begin)
+    [(module _ lang (#%module-begin forms ...))
+     (string-join
+      (cons (format "#lang ~a" (syntax->datum #'lang))
+            (map (λ (s) (substring (pretty-format s) 1))
+                 (syntax->datum #'(forms ...))))
+      "\n")]))
+
 ;; Syntax Module-Path -> Void
 ;; replaces content of target with new syntax
 (define (syntax-overwrite stx target)
   (with-output-to-file target
     #:exists 'replace
-    (thunk (write stx))))
+    (thunk (displayln (syntax->string stx)))))
 
 ;; Module-Path -> Syntax
 ;; retrieves syntax object from module path

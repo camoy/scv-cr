@@ -27,10 +27,10 @@
     (when (show-contract)
       (for-each (λ (stx target)
                   (displayln (format "#### ~a ####" target))
-                  (pretty-print (syntax->datum stx)))
+                  (displayln (syntax->string stx)))
                 stxs-opt
-                targets-tr))
-    (map syntax-compile targets-tr stxs-opt)))
+                targets-tr)))
+    #;(for-each syntax-compile targets-tr stxs-opt))
 
 ;;
 ;; parsing

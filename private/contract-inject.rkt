@@ -28,7 +28,7 @@
      (define provide-stx
        #`(begin
            #,(contract-quad-provide-defns quad)
-           (provide #,(contract-quad-provide-out quad))))
+           #,(contract-quad-provide-out quad)))
      #`(module name lang
          (#%module-begin
           #,provide-stx
@@ -48,7 +48,7 @@
            (module require/contracts racket/base
              #,@requires
              #,(contract-quad-require-defns quad)
-             (provide #,(contract-quad-require-out quad)))
+             #,(contract-quad-require-out quad))
            (require 'require/contracts)))
      #`(module name lang
          (#%module-begin
