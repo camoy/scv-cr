@@ -67,7 +67,11 @@
          racket/set)
 (define path (benchmark-path "sieve" "typed" "main.rkt"))
 (define stx (syntax-fetch path))
-(parameterize ([ignore-check #t])
-  (syntax->datum (contract-inject stx
-                   (contract-extract (expand/base+dir stx path)))))
+(define stx*
+  (parameterize ([ignore-check #t])
+    (syntax->datum (contract-inject
+                    stx
+                    (contract-extract (expand/base+dir stx path))))))
+
+(expand stx*)
 |#

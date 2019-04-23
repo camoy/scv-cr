@@ -6,7 +6,8 @@
          syntax->string
          syntax-overwrite
          syntax-fetch
-         syntax-compile)
+         syntax-compile
+         syntax-normalize)
 
 ;;
 ;; syntax properties
@@ -107,6 +108,19 @@
   (with-output-to-file zo-path
     #:exists 'replace
     (thunk (write (compile stx)))))
+
+;; Module-Path Syntax -> Syntax
+;; normalize syntax such that all identifiers that came from the given
+;; module will be stripped of their lexical context
+(define (syntax-normalize mod e)
+  (cond
+    [(and (syntax? e) (equal? (syntax-source e) mod))
+     (define e* (syntax-normalize mod (syntax-e e)))
+     (datum->syntax #f e* e e)]
+    [(syntax? e) e]
+    [(pair? e) (cons (syntax-normalize mod (car e))
+                     (syntax-normalize mod (cdr e)))]
+    [else e]))
 
 ;;
 ;; syntax properties test

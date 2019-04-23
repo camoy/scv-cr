@@ -8,9 +8,15 @@
 
 (require scv-gt/private/contract-extract
          scv-gt/private/configure
+         scv-gt/private/syntax-util
          syntax/parse
+         syntax/modresolve
          racket/syntax
          racket/function)
+
+(define here
+  (resolve-module-path-index
+   (variable-reference->module-path-index (#%variable-reference))))
 
 ;; Syntax -> Syntax
 ;; changes Typed Racket #lang to the no-check variant
@@ -50,17 +56,17 @@
              #,(contract-quad-require-defns quad)
              #,(contract-quad-require-out quad))
            (require 'require/contracts)))
-     #`(module name lang
-         (#%module-begin
-          #,require-stx
-          forms ...))]))
+     (define mb #`(#%module-begin #,require-stx forms ...))
+     #`(module name lang #,(syntax-normalize
+                            here
+                            mb))]))
 
 ;; Syntax Contract-Quad -> Syntax
 ;; takes original syntax and contract quad and uses contract information
 ;; to inject provide and require contracts into the unexpanded syntax
 (define (contract-inject stx quad)
   (syntax-parse stx
-    #:datum-literals (module #%module-begin)
+    #:datum-literals (module)
     [(module name lang forms ...)
      (define stx*
        #`(module name #,(as-no-check #'lang) forms ...))
