@@ -22,55 +22,43 @@
 ;; Syntax Contract-Quad -> Syntax
 ;; takes original syntax and contract quad and uses contract information
 ;; to inject provide contracts into the unexpanded syntax
-(define (inject-provide stx quad)
-  (define stx* (transform-provide stx))
-  (syntax-parse stx*
-    #:datum-literals (module #%module-begin)
-    [(module name lang (#%module-begin forms ...))
-     (define provide-stx
-       #`(begin
-           #,(contract-quad-provide-defns quad)
-           #,(contract-quad-provide-out quad)))
-     #`(module name lang
-         (#%module-begin
-          #,provide-stx
-          forms ...))]))
+(define (inject-provide forms quad)
+  (define forms* (transform-provide forms))
+  #`(#,(contract-quad-provide-defns quad)
+     #,(contract-quad-provide-out quad)
+     #,@forms*))
 
 ;; Syntax Contract-Quad -> Syntax
 ;; takes original syntax and contract quad and uses contract information
 ;; to inject require contracts into the unexpanded syntax
-(define (inject-require stx quad)
-  (define-values (stx* requires)
-    (transform-require stx))
-  (syntax-parse stx*
-    #:datum-literals (module #%module-begin)
-    [(module name lang (#%module-begin forms ...))
-     (define require-stx
-       #`(begin
-           (module require/contracts racket/base
-             #,@requires
-             #,(contract-quad-require-defns quad)
-             #,(contract-quad-require-out quad))
-           (require 'require/contracts)))
-     (define mb #`(#%module-begin #,require-stx forms ...))
-     #`(module name lang #,mb)]))
+(define (inject-require forms quad)
+  (define-values (forms* requires)
+    (transform-require forms))
+  #`((module require/contracts racket/base
+       #,@requires
+       #,(contract-quad-require-defns quad)
+       #,(contract-quad-require-out quad))
+     (require 'require/contracts)
+     #,@forms*))
 
 ;; Syntax Contract-Quad -> Syntax
 ;; takes original syntax and contract quad and uses contract information
 ;; to inject provide and require contracts into the unexpanded syntax
 (define (contract-inject stx quad)
-  (define stx* (syntax-fresh-scope stx))
-  (syntax-parse stx*
+  (syntax-parse (syntax-fresh-scope stx)
     #:datum-literals (module)
-    [(module name lang forms ...)
-     (define stx**
-       #`(module name #,(as-no-check #'lang) forms ...))
-     (for/fold ([stx stx**])
-               ([flag      (list (provide-less)
-                                 (require-less))]
-                [injection (list inject-provide
-                                 inject-require)])
-       (if (not flag) (injection stx quad) stx))]))
+    [(module name lang (mb forms ...))
+     (define forms*
+       (for/fold ([stx #'(forms ...)])
+                 ([flag      (list (provide-less)
+                                   (require-less))]
+                  [injection (list inject-provide
+                                   inject-require)])
+         (if (not flag) (injection stx quad) stx)))
+     (define stx*
+       #`(module name #,(as-no-check #'lang)
+           (mb #,@forms*)))
+     (syntax-scope-expanded stx*)]))
 
 ;; Syntax -> Syntax
 ;; removes provide forms
