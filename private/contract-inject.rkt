@@ -14,10 +14,6 @@
          racket/syntax
          racket/function)
 
-(define here
-  (resolve-module-path-index
-   (variable-reference->module-path-index (#%variable-reference))))
-
 ;; Syntax -> Syntax
 ;; changes Typed Racket #lang to the no-check variant
 (define (as-no-check lang)
@@ -57,9 +53,8 @@
              #,(contract-quad-require-out quad))
            (require 'require/contracts)))
      (define mb #`(#%module-begin #,require-stx forms ...))
-     #`(module name lang #,(syntax-normalize
-                            here
-                            mb))]))
+     (syntax-normalize #`(module name lang #,mb))
+     #;#`(module name lang #,(syntax-normalize mb))]))
 
 ;; Syntax Contract-Quad -> Syntax
 ;; takes original syntax and contract quad and uses contract information

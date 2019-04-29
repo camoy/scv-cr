@@ -9,21 +9,15 @@
 (require syntax/parse
          syntax/modresolve
          racket/function
-         scv-gt/private/syntax-util)
-
-(define here
-  (resolve-module-path-index
-   (variable-reference->module-path-index (#%variable-reference))))
+         racket/contract)
 
 ;; Syntax -> Syntax -> Syntax
 ;; given an id of a contract definition, munges that contract for use in
 ;; verification
 (define (contract-munge id stx)
-  (syntax-normalize
-   here
-   (syntax-parse stx
-     #:datum-literals (lambda
-                       equal?
+  (syntax-parse stx
+    #:datum-literals (lambda
+                         equal?
                        quote ->*
                        simple-result->
                        any-wrap/c
@@ -35,76 +29,76 @@
                        struct-type/c
                        letrec c-> c->*
                        t:index?)
-       ;; Convert any-wrap/c to any/c, cannot require (SCV)
-       [any-wrap/c #'any/c]
+    ;; Convert any-wrap/c to any/c, cannot require (SCV)
+    [any-wrap/c #'any/c]
 
-       ;; Contract for predicate checking
-       [pred-cnt #'(-> any/c boolean?)]
+    ;; Contract for predicate checking
+    [pred-cnt #'(-> any/c boolean?)]
 
-       ;; From numeric predicates
-       [t:index? #'exact-nonnegative-integer?]
+    ;; From numeric predicates
+    [t:index? #'exact-nonnegative-integer?]
 
-       ;; Inline simple-result->, cannot require (SCV)
-       [(simple-result-> ran arity)
-        #`(-> #,@(for/list ([_ (syntax->datum #'arity)]) #'any/c)
-              #,(contract-munge id #'ran))]
+    ;; Inline simple-result->, cannot require (SCV)
+    [(simple-result-> ran arity)
+     #`(-> #,@(for/list ([_ (syntax->datum #'arity)]) #'any/c)
+           #,(contract-munge id #'ran))]
 
-       ;; Convert c-> and c->* to -> and ->* (SCV)
-       [(c-> x ...) (contract-munge id #'(-> x ...))]
-       [(c->* x ...) (contract-munge id #'(->* x ...))]
+    ;; Convert c-> and c->* to -> and ->* (SCV)
+    [(c-> x ...) (contract-munge id #'(-> x ...))]
+    [(c->* x ...) (contract-munge id #'(->* x ...))]
 
-       ;; Convert ->* to -> if possible (SCV)
-       [(->* (dom ...) () ran)
-        (contract-munge id #'(-> dom ... ran))]
+    ;; Convert ->* to -> if possible (SCV)
+    [(->* (dom ...) () ran)
+     (contract-munge id #'(-> dom ... ran))]
 
-       ;; Replace contracts we cannot verify (SCV)
-       [struct-predicate-procedure? #'(λ (_) #f)]
-       [struct-predicate-procedure?/c #'(λ (_) #f)]
-       [(struct-type/c _) #'(λ (_) #f)]
+    ;; Replace contracts we cannot verify (SCV)
+    [struct-predicate-procedure? #'(λ (_) #f)]
+    [struct-predicate-procedure?/c #'(λ (_) #f)]
+    [(struct-type/c _) #'(λ (_) #f)]
 
-       ;; Warning if ->* is non-convertible
-       [(->* x ...)
-        (begin (log-warning "explicit-contracts: cannot convert ->* to ->")
-               #'(->* x ...))]
+    ;; Warning if ->* is non-convertible
+    [(->* x ...)
+     (begin (log-warning "explicit-contracts: cannot convert ->* to ->")
+            #'(->* x ...))]
 
-       ;; Unwrap some contract forms (SCV)
-       [(flat-named-contract _ ctc)
-        (contract-munge id #'ctc)]
+    ;; Unwrap some contract forms (SCV)
+    [(flat-named-contract _ ctc)
+     (contract-munge id #'ctc)]
 
-       [(flat-contract-predicate v)
-        (contract-munge id #'v)]
+    [(flat-contract-predicate v)
+     (contract-munge id #'v)]
 
-       ;; Replace literal voids with (void)
-       [(quote y) #:when (void? (syntax-e #'y))
-        #'(void)]
+    ;; Replace literal voids with (void)
+    [(quote y) #:when (void? (syntax-e #'y))
+               #'(void)]
 
-       ;; Remove non-recursive recursive-contract forms (SCV)
-       [(letrec ([a (recursive-contract b args ...)] [c d]) body)
-        (if (contains-id #'d #'a)
-            #`(letrec ([a (recursive-contract #,id args ...)]
-                       [c #,(contract-munge id #'d)])
-                body)
-            #'(let ([a d])
-                body))]
+    ;; Remove non-recursive recursive-contract forms (SCV)
+    [(letrec ([a (recursive-contract b args ...)] [c d]) body)
+     (if (contains-id #'d #'a)
+         #`(letrec ([a (recursive-contract #,id args ...)]
+                    [c #,(contract-munge id #'d)])
+             body)
+         #'(let ([a d])
+             body))]
 
-       ;; Struct predicates within contracts should be unprotected
-       #|
-       [f #:when (let ([function-desc (send struct-data
-                                            lookup-function
-                                            (syntax-e #'f))])
-                     (and (prefix-predicates)
-                          function-desc
-                          (equal? (car function-desc) 'predicate)))
-        (prefix-unsafe #'f)]
-       |#
+    ;; Struct predicates within contracts should be unprotected
+    #|
+    [f #:when (let ([function-desc (send struct-data
+    lookup-function
+    (syntax-e #'f))])
+    (and (prefix-predicates)
+    function-desc
+    (equal? (car function-desc) 'predicate)))
+    (prefix-unsafe #'f)]
+    |#
 
-       ;; Distribute munge-contract to all list elements
-       [(f args ...)
-        #`(f #,@(map (curry contract-munge id)
-                     (syntax->list #'(args ...))))]
+    ;; Distribute munge-contract to all list elements
+    [(f args ...)
+     #`(f #,@(map (curry contract-munge id)
+                  (syntax->list #'(args ...))))]
 
-       ;; Catch-all case
-       [other #'other])))
+    ;; Catch-all case
+    [other #'other]))
 
 ;; Syntax Syntax -> Boolean
 ;; whether of not stx contains the identifier id

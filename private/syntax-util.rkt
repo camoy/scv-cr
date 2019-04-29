@@ -2,7 +2,7 @@
 
 (provide syntax-property-self*
          syntax-property-values
-         is-tr?
+         typed?
          syntax->string
          syntax-overwrite
          syntax-fetch
@@ -65,11 +65,12 @@
 (require compiler/compilation-path
          racket/file
          racket/function
-         syntax/modread)
+         syntax/modread
+         pkg/path)
 
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
-(define (is-tr? target)
+(define (typed? target)
   (module-declared? `(submod ,target #%type-decl) #t))
 
 ;; Syntax -> String
@@ -109,17 +110,32 @@
     #:exists 'replace
     (thunk (write (compile stx)))))
 
+;; Syntax -> Boolean
+;; if syntax was created by SCV GT
+(define (from-scv-gt? stx)
+  (define src (syntax-source stx))
+  (cond
+    [src (define-values (pkg subpath)
+           (path->pkg+subpath (syntax-source stx)))
+         (and (equal? pkg "scv-gt")
+              (equal? (string->path "private")
+                      (first (explode-path subpath))))]
+    [else #f]))
+
 ;; Module-Path Syntax -> Syntax
 ;; normalize syntax such that all identifiers that came from the given
 ;; module will be stripped of their lexical context
-(define (syntax-normalize mod e)
+
+(define (syntax-normalize e)
   (cond
-    [(and (syntax? e) (equal? (syntax-source e) mod))
-     (define e* (syntax-normalize mod (syntax-e e)))
+    [(and (syntax? e) (from-scv-gt? e))
+     (define e* (syntax-normalize (syntax-e e)))
      (datum->syntax #f e* e e)]
-    [(syntax? e) e]
-    [(pair? e) (cons (syntax-normalize mod (car e))
-                     (syntax-normalize mod (cdr e)))]
+    [(syntax? e)
+     (define e* (syntax-normalize (syntax-e e)))
+     (datum->syntax e e* e e)]
+    [(pair? e) (cons (syntax-normalize (car e))
+                     (syntax-normalize (cdr e)))]
     [else e]))
 
 ;;
@@ -171,9 +187,9 @@
 
 (module+ test
   (test-case
-    "is-tr?"
-    (check-true (is-tr? (benchmark-path "sieve" "typed" "main.rkt")))
-    (check-false (is-tr? (benchmark-path "sieve" "untyped" "main.rkt"))))
+    "typed?"
+    (check-true (typed? (benchmark-path "sieve" "typed" "main.rkt")))
+    (check-false (typed? (benchmark-path "sieve" "untyped" "main.rkt"))))
 
   (test-case
     "syntax-fetch"

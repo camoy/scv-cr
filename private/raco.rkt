@@ -17,7 +17,7 @@
 (module+ main
   (let* ([argv         (current-command-line-arguments)]
          [targets      (parse argv)]
-         [targets-tr   (filter is-tr? targets)]
+         [targets-tr   (filter typed? targets)]
          [stxs         (map syntax-fetch targets-tr)]
          [stxs-expand  (map expand/base+dir stxs targets-tr)]
          [ctc-quads    (map contract-extract stxs-expand)]
@@ -61,17 +61,23 @@
 ;;
 ;; TODO: remove
 ;;
-#|
+
+
+
 (require scv-gt/private/configure
          scv-gt/private/test-util
-         racket/set)
-(define path (benchmark-path "sieve" "typed" "main.rkt"))
+         racket/set
+         racket/pretty
+         syntax/parse)
+
+#;(define path (benchmark-path "sieve" "typed" "streams.rkt"))
+(define path (test-path "abs.rkt"))
 (define stx (syntax-fetch path))
 (define stx*
   (parameterize ([ignore-check #t])
-    (syntax->datum (contract-inject
-                    stx
-                    (contract-extract (expand/base+dir stx path))))))
-
-(expand stx*)
-|#
+    (contract-inject
+     stx
+     (contract-extract (expand/base+dir stx path)))))
+stx*
+(pretty-print (syntax->datum stx*))
+(expand/base+dir stx* path)

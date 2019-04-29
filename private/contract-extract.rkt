@@ -64,7 +64,9 @@
 ;; [List-of [Cons Syntax Syntax]] -> Syntax
 ;; constructs a provide form from a mapping between identifiers and contract definitions
 (define (provide-wrapper p/c-items)
-  #`(provide (contract-out #,@p/c-items)))
+  (if (empty? p/c-items)
+      #'(provide)
+      #`(provide (contract-out #,@p/c-items))))
 
 ;; Symbol (Syntax -> [List-of Syntax]) -> (Syntax -> [List-of [List-of Syntax]])
 ;; takes a key for searching syntax properties and a syntax parser that yields
