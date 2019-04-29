@@ -3,6 +3,7 @@
 (require syntax/parse
          racket/list
          racket/match
+         racket/contract
          scv-gt/private/syntax-util
          scv-gt/private/provide-munge
          scv-gt/private/require-munge)
@@ -88,7 +89,7 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (list #'k #'v)])))
+      (list (syntax-fresh-scope #'k) #'v)])))
 
 ;; Syntax -> [List-of [List-of Syntax]]
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
@@ -102,7 +103,7 @@
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (list #'k #'v)])))
+      (list (syntax-fresh-scope #'k) #'v)])))
 
 ;;
 ;; test

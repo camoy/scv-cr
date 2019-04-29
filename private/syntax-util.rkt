@@ -7,7 +7,7 @@
          syntax-overwrite
          syntax-fetch
          syntax-compile
-         syntax-normalize)
+         syntax-fresh-scope)
 
 ;;
 ;; syntax properties
@@ -66,7 +66,7 @@
          racket/file
          racket/function
          syntax/modread
-         pkg/path)
+         syntax/strip-context)
 
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
@@ -110,33 +110,11 @@
     #:exists 'replace
     (thunk (write (compile stx)))))
 
-;; Syntax -> Boolean
-;; if syntax was created by SCV GT
-(define (from-scv-gt? stx)
-  (define src (syntax-source stx))
-  (cond
-    [src (define-values (pkg subpath)
-           (path->pkg+subpath (syntax-source stx)))
-         (and (equal? pkg "scv-gt")
-              (equal? (string->path "private")
-                      (first (explode-path subpath))))]
-    [else #f]))
-
-;; Module-Path Syntax -> Syntax
-;; normalize syntax such that all identifiers that came from the given
-;; module will be stripped of their lexical context
-
-(define (syntax-normalize e)
-  (cond
-    [(and (syntax? e) (from-scv-gt? e))
-     (define e* (syntax-normalize (syntax-e e)))
-     (datum->syntax #f e* e e)]
-    [(syntax? e)
-     (define e* (syntax-normalize (syntax-e e)))
-     (datum->syntax e e* e e)]
-    [(pair? e) (cons (syntax-normalize (car e))
-                     (syntax-normalize (cdr e)))]
-    [else e]))
+;; Syntax -> Syntax
+;; strips syntax of lexical context and attaches fresh scope
+(define syntax-fresh-scope
+  (let ([introducer (make-syntax-introducer)])
+    (compose introducer strip-context)))
 
 ;;
 ;; syntax properties test

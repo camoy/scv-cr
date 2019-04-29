@@ -53,19 +53,19 @@
              #,(contract-quad-require-out quad))
            (require 'require/contracts)))
      (define mb #`(#%module-begin #,require-stx forms ...))
-     (syntax-normalize #`(module name lang #,mb))
-     #;#`(module name lang #,(syntax-normalize mb))]))
+     #`(module name lang #,mb)]))
 
 ;; Syntax Contract-Quad -> Syntax
 ;; takes original syntax and contract quad and uses contract information
 ;; to inject provide and require contracts into the unexpanded syntax
 (define (contract-inject stx quad)
-  (syntax-parse stx
+  (define stx* (syntax-fresh-scope stx))
+  (syntax-parse stx*
     #:datum-literals (module)
     [(module name lang forms ...)
-     (define stx*
+     (define stx**
        #`(module name #,(as-no-check #'lang) forms ...))
-     (for/fold ([stx stx*])
+     (for/fold ([stx stx**])
                ([flag      (list (provide-less)
                                  (require-less))]
                 [injection (list inject-provide
