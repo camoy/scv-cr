@@ -89,7 +89,7 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (list (syntax-fresh-scope #'k) #'v)])))
+      (list #'k #'v)])))
 
 ;; Syntax -> [List-of [List-of Syntax]]
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
@@ -103,7 +103,7 @@
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (list (syntax-fresh-scope #'k) #'v)])))
+      (list #'k #'v)])))
 
 ;;
 ;; test

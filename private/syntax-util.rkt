@@ -7,7 +7,7 @@
          syntax-overwrite
          syntax-fetch
          syntax-compile
-         syntax-fresh-scope)
+         syntax-scope-expanded)
 
 ;;
 ;; syntax properties
@@ -115,6 +115,22 @@
 (define syntax-fresh-scope
   (let ([introducer (make-syntax-introducer)])
     (compose introducer strip-context)))
+
+;; Syntax -> Syntax
+;; places a fresh scope on syntax that came from expansion
+(define (syntax-scope-expanded stx)
+  (let go ([e stx])
+    (cond [(syntax? e)
+           (let* ([src (syntax-source-module stx)]
+                  [resolved (module-path-index-resolve src)]
+                  [name (resolved-module-path-name resolved)]
+                  [from-expansion? (equal? '|expanded module| name)]
+                  [introducer (if from-expansion? syntax-fresh-scope values)]
+                  [e* (go (syntax-e e))])
+             (introducer (datum->syntax e e* e e)))]
+          [(pair? e)
+           (cons (go (car e)) (go (cdr e)))]
+          [else e])))
 
 ;;
 ;; syntax properties test

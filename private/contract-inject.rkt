@@ -25,16 +25,12 @@
 (define (inject-provide stx quad)
   (define stx* (transform-provide stx))
   (syntax-parse stx*
-    #:datum-literals (module #%module-begin)
-    [(module name lang (#%module-begin forms ...))
+    [(forms ...)
      (define provide-stx
        #`(begin
            #,(contract-quad-provide-defns quad)
            #,(contract-quad-provide-out quad)))
-     #`(module name lang
-         (#%module-begin
-          #,provide-stx
-          forms ...))]))
+     #`(#,provide-stx forms ...)]))
 
 ;; Syntax Contract-Quad -> Syntax
 ;; takes original syntax and contract quad and uses contract information
@@ -43,8 +39,7 @@
   (define-values (stx* requires)
     (transform-require stx))
   (syntax-parse stx*
-    #:datum-literals (module #%module-begin)
-    [(module name lang (#%module-begin forms ...))
+    [(forms ...)
      (define require-stx
        #`(begin
            (module require/contracts racket/base
@@ -52,25 +47,29 @@
              #,(contract-quad-require-defns quad)
              #,(contract-quad-require-out quad))
            (require 'require/contracts)))
-     (define mb #`(#%module-begin #,require-stx forms ...))
-     #`(module name lang #,mb)]))
+     #`(#,require-stx forms ...)]))
 
 ;; Syntax Contract-Quad -> Syntax
 ;; takes original syntax and contract quad and uses contract information
 ;; to inject provide and require contracts into the unexpanded syntax
 (define (contract-inject stx quad)
-  (define stx* (syntax-fresh-scope stx))
-  (syntax-parse stx*
+  (syntax-parse stx
     #:datum-literals (module)
-    [(module name lang forms ...)
-     (define stx**
-       #`(module name #,(as-no-check #'lang) forms ...))
-     (for/fold ([stx stx**])
-               ([flag      (list (provide-less)
-                                 (require-less))]
-                [injection (list inject-provide
-                                 inject-require)])
-       (if (not flag) (injection stx quad) stx))]))
+    [(module name lang (mb forms ...))
+     (define syntax-scope-expanded*
+       (λ (stx _)
+         (syntax-scope-expanded stx)))
+     (define forms*
+       (for/fold ([stx #'(forms ...)])
+                 ([flag      (list (provide-less)
+                                   (require-less)
+                                   #f)]
+                  [injection (list inject-provide
+                                   inject-require
+                                   syntax-scope-expanded*)])
+         (if (not flag) (injection stx quad) stx)))
+     #`(module name #,(as-no-check #'lang)
+         (mb forms ...))]))
 
 ;; Syntax -> Syntax
 ;; removes provide forms
