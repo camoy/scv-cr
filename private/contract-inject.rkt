@@ -50,8 +50,8 @@
     [(module name lang (mb forms ...))
      (define forms*
        (for/fold ([stx #'(forms ...)])
-                 ([flag      (list (provide-less)
-                                   (require-less))]
+                 ([flag      (list (provide-off)
+                                   (require-off))]
                   [injection (list inject-provide
                                    inject-require)])
          (if (not flag) (injection stx quad) stx)))

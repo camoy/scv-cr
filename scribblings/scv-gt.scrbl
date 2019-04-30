@@ -24,12 +24,12 @@ command-line flags:
 }
 
 @item{
-  @exec{-p} or @exec{--provide-less} --- do not attach
+  @exec{-p} or @exec{--provide-off} --- do not attach
   contracts to provide forms.
 }
 
 @item{
-  @exec{-r} or @exec{--require-less} --- do not attach
+  @exec{-r} or @exec{--require-off} --- do not attach
   contracts to require forms.
 }
 

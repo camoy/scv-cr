@@ -2,8 +2,8 @@
 
 (require racket/require
          (multi-in racket (cmdline
-                          function
-                          pretty))
+                           function
+                           pretty))
          (multi-in scv-gt
                    private
                    (proxy-resolver
@@ -25,10 +25,38 @@
 ;;
 
 (module+ main
-  (let* ([argv         (current-command-line-arguments)]
-         [targets      (parse argv)]
-         [_            (for-each module-delete-zo targets)]
-         [targets-tr   (filter module-typed? targets)]
+  (let* ([argv    (current-command-line-arguments)]
+         [targets (parse argv)])
+    (optimize targets)))
+
+
+;;
+;; runner
+;;
+
+(provide optimize)
+
+;; [List-of Module-Path] -> Void
+;; optimizes target modules, see documentation for the purpose of
+;; the flags
+(define (optimize targets
+                  #:show-contract [s (show-contract)]
+                  #:provide-off [p (provide-off)]
+                  #:require-off [r (require-off)]
+                  #:ignore-check [i (ignore-check)]
+                  #:overwrite [o (overwrite)]
+                  #:compiler-off [c (compiler-off)])
+  ;; set parameters
+  (show-contract s)
+  (provide-off p)
+  (require-off r)
+  (ignore-check i)
+  (overwrite o)
+  (compiler-off c)
+
+  ;; optimize
+  (for-each module-delete-zo targets)
+  (let* ([targets-tr   (filter module-typed? targets)]
          [stxs         (map syntax-fetch targets-tr)]
          [stxs-expand  (map expand/base+dir stxs targets-tr)]
          [ctc-quads    (map contract-extract stxs-expand)]
@@ -59,11 +87,11 @@
    #:argv argv
    #:once-each
    [("-s" "--show-contract")  "show contracts"
-                               (show-contract #t)]
-   [("-p" "--provide-less")   "no provide contracts"
-                              (provide-less #t)]
-   [("-r" "--require-less")   "no require contracts"
-                              (require-less #t)]
+                              (show-contract #t)]
+   [("-p" "--provide-off")    "no provide contracts"
+                              (provide-off #t)]
+   [("-r" "--require-off")    "no require contracts"
+                              (require-off #t)]
    [("-i" "--ignore-check")   "ignore require-typed/check (for benchmarks)"
                               (ignore-check #t)]
    [("-o" "--overwrite")      "overwrite source files"

@@ -11,8 +11,8 @@
 ;;
 
 (define-values (show-contract
-                provide-less
-                require-less
+                provide-off
+                require-off
                 ignore-check
                 overwrite
                 compiler-off)
