@@ -1,12 +1,11 @@
 #lang racket/base
 
-(require syntax/parse
-         racket/list
-         racket/match
-         racket/contract
-         scv-gt/private/syntax-util
-         scv-gt/private/provide-munge
-         scv-gt/private/require-munge)
+(require racket/require
+         syntax/parse
+         (multi-in racket (list match contract))
+         (multi-in scv-gt private (syntax-util
+                                   provide-munge
+                                   require-munge)))
 
 ;;
 ;; data
@@ -56,7 +55,7 @@
   (make-ctc-defns 'require require-munge))
 
 ;;
-;; binding+ctc functions
+;; contract out functions
 ;;
 
 (provide provide-ctc-out
@@ -104,51 +103,3 @@
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
       (list #'k #'v)])))
-
-;;
-;; test
-;;
-
-#|
-(module+ test
-  (require rackunit
-           racket/set
-           scv-gt/private/configure
-           scv-gt/private/syntax-util
-           scv-gt/private/test-util)
-
-  (ignore-check #t)
-
-  (test-case
-    "require-binding+ctc"
-    (define path (benchmark-path "sieve" "typed" "main.rkt"))
-    (define stx
-      (expand/base+dir (syntax-fetch path) path))
-    (check set=?
-           (map syntax-e (hash-keys (require-binding+ctc stx)))
-           '(stream-first stream-unfold stream3 make-stream stream?
-                          stream-take stream-get stream-rest)))
-
-  (test-case
-    "provide-binding+ctc"
-    (define path (benchmark-path "sieve" "typed" "streams.rkt"))
-    (define stx
-      (expand/base+dir (syntax-fetch path) path))
-    (check set=?
-           (map syntax-e (hash-keys (provide-binding+ctc stx)))
-           '(stream stream-rest make-stream stream-unfold stream-get
-             stream? stream-take struct:stream stream-first)))
-  )
-
-|#
-
-#|
-(require scv-gt/private/configure
-         scv-gt/private/syntax-util
-         scv-gt/private/test-util
-         racket/set
-         racket/pretty)
-(ignore-check #t)
-(define path (benchmark-path "sieve" "typed" "main.rkt"))
-(require-ctc-defns (expand/base+dir (syntax-fetch path) path))
-|#

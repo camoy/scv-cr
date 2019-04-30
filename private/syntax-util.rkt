@@ -99,8 +99,7 @@
   (define port (open-input-file target))
   (with-module-reading-parameterization
     (thunk
-     (parameterize ([current-namespace (make-base-namespace)])
-       (read-syntax (object-name port) port)))))
+     (read-syntax (object-name port) port))))
 
 ;; Module-Path Syntax -> Void
 ;; compiles syntax and outputs to appropriate file
@@ -189,7 +188,7 @@
   (test-case
     "syntax-fetch"
     (check syntax=?
-           (syntax-fetch (test-path "hello.rkt"))
+           (syntax-fetch (test-path "basic" "hello.rkt"))
            #'(module hello racket
                (#%module-begin "hello"))))
 

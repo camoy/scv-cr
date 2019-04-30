@@ -8,5 +8,5 @@
 (define pkg-authors '(camoy))
 (define raco-commands
   '(("scv-gt" (submod scv-gt/private/raco main)
-              "Perform optimization"
+              "Optimize Typed Racket program with SCV"
               #f)))

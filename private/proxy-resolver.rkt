@@ -1,7 +1,6 @@
 #lang racket/base
 
-(provide get-module-name-resolver
-         expand/base+dir)
+(provide expand/base+dir)
 
 ;;
 ;; proxy module
@@ -42,9 +41,8 @@
       proxy-resolver
       old-resolver))
 
-(define old-resolver
-  (current-module-name-resolver))
-
+;; Module-Name-Resolver
+;; proxy module name resolver to intercept require-typed-check loads
 (define proxy-resolver
   (case-lambda
     [(resolved-path ns)
@@ -56,3 +54,8 @@
                        stx
                        load?)
          (old-resolver module-path source-resolved-path stx load?))]))
+
+;; Module-Name-Resolver
+;; cache old resolver for proxying
+(define old-resolver
+  (current-module-name-resolver))
