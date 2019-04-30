@@ -18,6 +18,7 @@
 ;;
 
 (define line-length 80)
+(define long-line (build-string line-length (const #\━)))
 
 ;;
 ;; main
@@ -38,8 +39,9 @@
 
     (when (show-contract)
       (for-each (λ (stx target)
+                  (displayln long-line)
                   (displayln target)
-                  (displayln (build-string line-length (const #\━)))
+                  (displayln long-line)
                   (displayln (syntax->string stx)))
                 stxs-opt
                 targets-tr))
