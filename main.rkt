@@ -45,7 +45,8 @@
                   #:require-off [r (require-off)]
                   #:ignore-check [i (ignore-check)]
                   #:overwrite [o (overwrite)]
-                  #:compiler-off [c (compiler-off)])
+                  #:compiler-off [c (compiler-off)]
+                  #:verify-off [v (verify-off)])
   ;; set parameters
   (show-contract s)
   (provide-off p)
@@ -53,6 +54,7 @@
   (ignore-check i)
   (overwrite o)
   (compiler-off c)
+  (verify-off v)
 
   ;; optimize
   (for-each module-delete-zo targets)
@@ -86,17 +88,19 @@
    #:program "scv-gt"
    #:argv argv
    #:once-each
-   [("-s" "--show-contract")  "show contracts"
+   [("-s" "--show-contract")  "dump modules with contracts"
                               (show-contract #t)]
-   [("-p" "--provide-off")    "no provide contracts"
+   [("-p" "--provide-off")    "don't attach contracts to provided bindings"
                               (provide-off #t)]
-   [("-r" "--require-off")    "no require contracts"
+   [("-r" "--require-off")    "don't attach contracts to required bindings"
                               (require-off #t)]
-   [("-i" "--ignore-check")   "ignore require-typed/check (for benchmarks)"
+   [("-i" "--ignore-check")   "ignore require-typed/check (for debugging)"
                               (ignore-check #t)]
-   [("-o" "--overwrite")      "overwrite source files"
+   [("-o" "--overwrite")      "overwrite source files (for debugging)"
                               (overwrite #t)]
-   [("-c" "--compiler-off")   "do not compile zo files"
+   [("-c" "--compiler-off")   "don't compile zo files"
                               (compiler-off #t)]
+   [("-v" "--verify-off")     "don't compile zo files"
+                              (verify-off #t)]
    #:args targets
    targets))

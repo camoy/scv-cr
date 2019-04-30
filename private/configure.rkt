@@ -15,8 +15,10 @@
                 require-off
                 ignore-check
                 overwrite
-                compiler-off)
+                compiler-off
+                verify-off)
   (values (make-parameter #f)
+          (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)

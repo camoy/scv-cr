@@ -2,7 +2,11 @@
 
 (provide contract-opt)
 
+(require scv-gt/private/configure)
+
 ;; Syntax -> Syntax
-;; uses SCV to optimize away contracts
+;; TODO: use SCV to optimize away contracts
 (define (contract-opt stx)
-  stx)
+  (if (verify-off)
+      stx
+      (values stx)))

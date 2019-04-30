@@ -44,8 +44,13 @@ command-line flags:
 }
 
 @item{
-  @exec{-c} or @exec{--compiler-off} --- do not compile the
-  zo files.
+  @exec{-c} or @exec{--compiler-off} --- don't compile the
+  targets into zo files.
+}
+
+@item{
+  @exec{-v} or @exec{--verify-off} --- don't pass the modules
+  through SCV.
 }
 ]
 
