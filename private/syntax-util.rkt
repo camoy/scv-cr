@@ -2,7 +2,8 @@
 
 (provide syntax-property-self*
          syntax-property-values
-         typed?
+         module-typed?
+         module-delete-zo
          syntax->string
          syntax-overwrite
          syntax-fetch
@@ -71,8 +72,15 @@
 
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
-(define (typed? target)
+(define (module-typed? target)
   (module-declared? `(submod ,target #%type-decl) #t))
+
+;; Module-Path -> Void
+;; deletes zo associated with target if exists
+(define (module-delete-zo target)
+  (define zo-path (get-compilation-bytecode-file target))
+  (when (file-exists? zo-path)
+    (delete-file zo-path)))
 
 ;; Syntax -> String
 ;; converts syntax to nicer printable representation
@@ -181,9 +189,9 @@
 
 (module+ test
   (test-case
-    "typed?"
-    (check-true (typed? (benchmark-path "sieve" "typed" "main.rkt")))
-    (check-false (typed? (benchmark-path "sieve" "untyped" "main.rkt"))))
+    "module-typed?"
+    (check-true (module-typed? (benchmark-path "sieve" "typed" "main.rkt")))
+    (check-false (module-typed? (benchmark-path "sieve" "untyped" "main.rkt"))))
 
   (test-case
     "syntax-fetch"
@@ -194,16 +202,14 @@
 
   (test-case
     "syntax-compile"
-    (define zo-world
+    (define path (test-path "world.rkt"))
+    (define world-zo
       (test-path "compiled" "world_rkt.zo"))
-    (when (file-exists? zo-world)
-      (delete-file zo-world))
-    (syntax-compile (test-path "world.rkt")
+    (module-delete-zo path)
+    (syntax-compile path
                     #'(module world racket
                         (provide msg)
                         (define msg "world")))
-    (check-equal? (dynamic-require zo-world 'msg (thunk #f))
-                  "world")
-    (when (file-exists? zo-world)
-      (delete-file zo-world)))
+    (check-equal? (dynamic-require world-zo 'msg (thunk #f)) "world")
+    (module-delete-zo path))
   )

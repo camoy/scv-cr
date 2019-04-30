@@ -26,7 +26,8 @@
 (module+ main
   (let* ([argv         (current-command-line-arguments)]
          [targets      (parse argv)]
-         [targets-tr   (filter typed? targets)]
+         [_            (for-each module-delete-zo targets)]
+         [targets-tr   (filter module-typed? targets)]
          [stxs         (map syntax-fetch targets-tr)]
          [stxs-expand  (map expand/base+dir stxs targets-tr)]
          [ctc-quads    (map contract-extract stxs-expand)]
