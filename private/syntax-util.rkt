@@ -8,8 +8,7 @@
          syntax-overwrite
          syntax-fetch
          syntax-compile
-         syntax-fresh-scope
-         syntax-scope-expanded)
+         syntax-fresh-scope)
 
 ;;
 ;; syntax properties
@@ -121,12 +120,11 @@
 ;; Syntax -> Syntax
 ;; strips syntax of lexical context and attaches fresh scope
 (define syntax-fresh-scope
-  (let ([introducer (make-syntax-introducer)])
-    (compose introducer strip-context)))
+  (make-syntax-introducer))
 
 ;; Syntax -> Syntax
 ;; places a fresh scope on syntax that came from expansion
-(define (syntax-scope-expanded stx)
+#;(define (syntax-scope-expanded stx)
   (let go ([e stx])
     (cond [(syntax? e)
            (let* ([binding (and (identifier? e) (identifier-binding e))]
