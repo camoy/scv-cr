@@ -35,6 +35,7 @@
   (define-values (forms* requires)
     (transform-require forms))
   #`((module require/contracts racket/base
+       (require racket/contract)
        #,@requires
        #,(contract-quad-require-defns quad)
        #,(contract-quad-require-out quad))

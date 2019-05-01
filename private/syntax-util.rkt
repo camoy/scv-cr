@@ -129,7 +129,8 @@
 (define (syntax-scope-expanded stx)
   (let go ([e stx])
     (cond [(syntax? e)
-           (let* ([src (syntax-source-module e)]
+           (let* ([binding (and (identifier? e) (identifier-binding e))]
+                  [src (and binding (first binding))]
                   [resolved (and src (module-path-index-resolve src))]
                   [name (and resolved (resolved-module-path-name resolved))]
                   [from-expansion? (equal? '|expanded module| name)]
