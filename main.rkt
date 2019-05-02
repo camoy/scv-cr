@@ -77,7 +77,9 @@
                 targets-tr))
 
     (unless (compiler-off)
-      (for-each syntax-compile targets-tr stxs-opt))))
+      (for-each syntax-compile targets-tr stxs-opt))
+
+    ))
 
 ;;
 ;; parsing
