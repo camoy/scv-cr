@@ -32,8 +32,11 @@
 ;; takes original syntax and contract quad and uses contract information
 ;; to inject require contracts into the unexpanded syntax
 (define (inject-require forms quad)
-  (define forms* (transform-require forms))
+  (define-values (forms* requires)
+    (transform-require forms))
   #`((module require/contracts racket/base
+       (require racket/contract)
+       #,@requires
        #,(contract-quad-require-defns quad)
        #,(contract-quad-require-out quad))
      (require 'require/contracts)
@@ -56,7 +59,7 @@
      (define stx*
        #`(module name #,(as-no-check #'lang)
            (mb #,@forms*)))
-     stx*]))
+     (syntax-scope-expanded stx*)]))
 
 ;; Syntax -> Syntax
 ;; removes provide forms
@@ -80,10 +83,13 @@
     #:datum-literals (require/typed require/typed/check)
     [(~or* (require/typed m _ ...)
            (require/typed/check m _ ...))
-     #'(require m)]
+     (values #'(require m)
+             (list #'(require m)))]
     [(x ...)
-     (define stxs*
-       (for/list ([stx (syntax-e #'(x ...))])
+     (define-values (stxs* requires)
+       (for/lists (stxs* requires)
+                  ([stx (syntax-e #'(x ...))])
          (transform-require stx)))
-     (datum->syntax stx stxs*)]
-    [x #'x]))
+     (values (datum->syntax stx stxs*)
+             (apply append requires))]
+    [x (values #'x '())]))

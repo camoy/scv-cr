@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require racket/require
-         (multi-in syntax (parse strip-context))
+         syntax/parse
          (multi-in racket (list match contract))
          (multi-in scv-gt private (syntax-util
                                    provide-munge
@@ -88,7 +88,7 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (list (syntax-fresh-scope (strip-context #'k)) #'v)])))
+      (list #'k #'v)])))
 
 ;; Syntax -> [List-of [List-of Syntax]]
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
