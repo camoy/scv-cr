@@ -68,7 +68,8 @@
          racket/file
          racket/function
          syntax/modread
-         syntax/strip-context)
+         syntax/strip-context
+         scv-gt/private/proxy-resolver)
 
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
@@ -116,7 +117,7 @@
   (make-parent-directory* zo-path)
   (with-output-to-file zo-path
     #:exists 'replace
-    (thunk (write (compile stx)))))
+    (thunk (write (compile/dir stx target)))))
 
 ;; Syntax -> Syntax
 ;; strips syntax of lexical context and attaches fresh scope

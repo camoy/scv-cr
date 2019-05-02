@@ -1,6 +1,7 @@
 #lang racket/base
 
-(provide expand/base+dir)
+(provide expand/base+dir
+         compile/dir)
 
 ;;
 ;; proxy module
@@ -22,16 +23,27 @@
 (require scv-gt/private/configure
          syntax/location)
 
+;; evaluates with load path from the parent of target directory
+(define-syntax-rule (in-dir target forms ...)
+  (begin
+    (define target-dir
+      (build-path (path->complete-path target) ".."))
+    (parameterize ([current-load-relative-directory target-dir])
+      forms ...)))
+
 ;; Syntax Module-Path -> Syntax
 ;; expands module with base namespace in the directory of the given path
 (define (expand/base+dir stx target)
-  (define target-dir
-    (build-path (path->complete-path target) ".."))
-  (parameterize ([current-namespace (make-base-namespace)]
-                 [current-load-relative-directory target-dir]
-                 [current-module-name-resolver
-                  (get-module-name-resolver)])
-    (expand stx)))
+  (in-dir target
+    (parameterize ([current-namespace (make-base-namespace)]
+                   [current-module-name-resolver
+                    (get-module-name-resolver)])
+      (expand stx))))
+
+;; Syntax Module-Path -> Syntax
+;; compiles module in the directory of the given path
+(define (compile/dir stx target)
+  (in-dir target (compile stx)))
 
 ;; -> Module-Name-Resolver
 ;; if the ignore-check parameter is set, returns a module name
