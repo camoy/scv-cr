@@ -2,11 +2,15 @@
 
 (provide contract-opt)
 
-(require scv-gt/private/configure)
+(require soft-contract/main
+         scv-gt/private/configure
+         racket/pretty)
 
-;; Syntax -> Syntax
-;; TODO: use SCV to optimize away contracts
-(define (contract-opt stx)
+;; [List-of Syntax] [List-of Path] -> [List-of Syntax]
+;; use SCV to optimize away contracts
+(define (contract-opt stxs targets)
+  (pretty-print (syntax->datum (car stxs)))
+  (displayln (verify-modules targets stxs))
   (if (verify-off)
-      stx
-      (values stx)))
+      stxs
+      stxs))

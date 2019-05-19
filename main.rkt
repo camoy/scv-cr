@@ -63,7 +63,7 @@
          [stxs-expand  (map expand/base+dir stxs targets-tr)]
          [ctc-quads    (map contract-extract stxs-expand)]
          [stxs-ctc     (map contract-inject stxs ctc-quads)]
-         [stxs-opt     (map contract-opt stxs-ctc)])
+         [stxs-opt     (contract-opt stxs-ctc targets-tr)])
     (when (overwrite)
       (for-each syntax-overwrite stxs-opt targets-tr))
 
