@@ -1,7 +1,6 @@
 #lang racket/base
 
-(provide syntax-property-self*
-         syntax-property-values
+(provide syntax-property-values
          module-typed?
          module-delete-zo
          syntax->string
@@ -21,16 +20,6 @@
          racket/string
          racket/pretty
          syntax/parse)
-
-;; Syntax -> Syntax
-;; helper for calling syntax-property-self from Typed Racket source
-(define-syntax-rule (syntax-property-self* key e ...)
-  (syntax-property-self (let () e ...) key))
-
-;; Syntax Symbol -> Syntax
-;; associates the syntax itself with the given key
-(define (syntax-property-self stx key)
-  (syntax-property stx key stx))
 
 ;; Syntax Symbol -> [Set Any]
 ;; retrieves a set of all the values associated with the key within the given
@@ -148,22 +137,8 @@
 
 (module+ test
   (require rackunit
+           scv-gt/private/syntax-typed-racket
            scv-gt/private/test-util)
-
-  (test-case
-    "syntax-property-self*"
-    (let* ([stx #'hello]
-           [stx/prop (syntax-property-self*
-                      'a
-                      (define foo 'bar)
-                      stx)])
-      (check-equal? (syntax-property stx/prop 'a) stx)))
-
-  (test-case
-    "syntax-property-self"
-    (let* ([stx #'hello]
-           [stx/prop (syntax-property-self stx 'a)])
-      (check-equal? (syntax-property stx/prop 'a) stx)))
 
   (test-case
     "syntax-property-values*"
