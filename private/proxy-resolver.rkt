@@ -1,7 +1,8 @@
 #lang racket/base
 
 (provide expand/base+dir
-         compile/dir)
+         compile/dir
+         in-dir)
 
 ;;
 ;; proxy module
@@ -21,14 +22,15 @@
 ;;
 
 (require scv-gt/private/configure
-         syntax/location)
+         syntax/location
+         racket/path)
 
-;; evaluates with load path from the parent of target directory
+;; evaluates with current directory from the parent of the target
 (define-syntax-rule (in-dir target forms ...)
   (begin
     (define target-dir
-      (build-path (path->complete-path target) ".."))
-    (parameterize ([current-load-relative-directory target-dir])
+      (path-only (path->complete-path target)))
+    (parameterize ([current-directory target-dir])
       forms ...)))
 
 ;; Syntax Module-Path -> Syntax

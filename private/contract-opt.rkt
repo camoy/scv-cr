@@ -9,8 +9,8 @@
 ;; [List-of Syntax] [List-of Path] -> [List-of Syntax]
 ;; use SCV to optimize away contracts
 (define (contract-opt stxs targets)
-  (pretty-print (syntax->datum (car stxs)))
-  (displayln (verify-modules targets stxs))
+  #;(pretty-print (syntax->datum (car stxs)))
+  #;(displayln (verify-modules targets stxs))
   (if (verify-off)
       stxs
       stxs))
