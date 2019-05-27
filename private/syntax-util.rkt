@@ -63,6 +63,8 @@
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
 (define (module-typed? target)
+  (unless (file-exists? target)
+    (error 'module-typed? "file ~a doesn't exist" target))
   (module-declared? `(submod ,target #%type-decl) #t))
 
 ;; Module-Path -> Void
@@ -168,7 +170,8 @@
   (test-case
     "module-typed?"
     (check-true (module-typed? (benchmark-path "sieve" "typed" "main.rkt")))
-    (check-false (module-typed? (benchmark-path "sieve" "untyped" "main.rkt"))))
+    (check-false (module-typed? (benchmark-path "sieve" "untyped" "main.rkt")))
+    (check-exn exn:fail? (thunk (module-typed? "unknown.rkt"))))
 
   (test-case
     "syntax-fetch"

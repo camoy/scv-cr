@@ -34,7 +34,7 @@
            [main
             (findf is-main? benchmark-files*)])
       (test-case
-          benchmark
+        benchmark
         (test-optimize main benchmark-files*))))
 
   (test-case
