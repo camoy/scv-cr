@@ -18,15 +18,16 @@
                       define
                       define-values
                       define-module-boundary-contract)
-    [(begin (define xs x-def) ...
+    [(begin (define xs xs-def) ...
             (define-values (y) y-def)
             (define-module-boundary-contract
               _ ...))
-     (with-syntax ([(x-def* ...)
+     (with-syntax ([(xs-def* ...)
                     (map contract-munge
                          (syntax-e #'(xs ...))
-                         (syntax-e #'(x-def ...)))]
+                         (syntax-e #'(xs-def ...)))]
                    [y-def*
                     (contract-munge #'y #'y-def)])
-       #`(begin (define xs x-def*) ...
-                (define-values (y) y-def*)))]))
+       (map cons
+            (syntax-e #'(xs ... y))
+            (syntax-e #'(xs-def* ... y-def))))]))

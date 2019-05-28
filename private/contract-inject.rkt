@@ -24,7 +24,7 @@
 ;; to inject provide contracts into the unexpanded syntax
 (define (inject-provide forms quad)
   (define forms* (transform-provide forms))
-  #`(#,(contract-quad-provide-defns quad)
+  #`(#,@(contract-quad-provide-defns quad)
      #,(contract-quad-provide-out quad)
      #,@forms*))
 
@@ -37,7 +37,7 @@
   #`((module require/contracts racket/base
        (require racket/contract)
        #,@requires
-       #,(contract-quad-require-defns quad)
+       #,@(contract-quad-require-defns quad)
        #,(contract-quad-require-out quad))
      (require 'require/contracts)
      #,@forms*))

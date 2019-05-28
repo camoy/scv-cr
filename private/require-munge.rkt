@@ -15,13 +15,14 @@
 (define (require-munge stx)
   (syntax-parse stx
     #:datum-literals (begin define define-values)
-    [(begin (define xs x-def) ...
+    [(begin (define xs xs-def) ...
             (define-values (y) y-def))
-     (with-syntax ([(x-def* ...)
+     (with-syntax ([(xs-def* ...)
                     (map contract-munge
                          (syntax-e #'(xs ...))
-                         (syntax-e #'(x-def ...)))]
+                         (syntax-e #'(xs-def ...)))]
                    [y-def*
                     (contract-munge #'y #'y-def)])
-       #`(begin (define xs x-def*) ...
-                (define-values (y) y-def*)))]))
+       (map cons
+            (syntax-e #'(xs ... y))
+            (syntax-e #'(xs-def* ... y-def))))]))

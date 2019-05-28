@@ -38,11 +38,17 @@
 (provide provide-ctc-defns
          require-ctc-defns)
 
-;; Symbol (Syntax -> Syntax) -> Syntax -> Syntax
+;; Symbol (Syntax -> Syntax) -> Syntax -> [Listof Syntax]
 ;; makes a munged definition function
 (define ((make-ctc-defns key munger) stx)
-  #`(begin
-      #,@(map munger (reverse (syntax-property-values stx key)))))
+  (let* ([id->ctc
+          (append-map munger (syntax-property-values stx key))]
+         [id->ctc*
+          (sort id->ctc (λ (x y) (symbol<? (syntax-e (car x))
+                                           (syntax-e (car y)))))]
+         [pair->stx
+          (λ (p) #`(define #,(car p) #,(cdr p)))])
+    (map pair->stx id->ctc*)))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions
