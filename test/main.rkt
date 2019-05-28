@@ -5,7 +5,9 @@
            racket/function
            racket/list
            racket/path
+           racket/rerequire
            scv-gt
+           scv-gt/private/syntax-util
            scv-gt/private/proxy-resolver)
 
   ;; Module-Path -> Void
@@ -17,7 +19,8 @@
               #:verify-off #t)
     (define main* (path->complete-path main))
     (in-dir main*
-      (check-not-exn (thunk (dynamic-require main* #f)))))
+      (check-not-exn (thunk (dynamic-rerequire main*))))
+    (for-each module-delete-zo targets))
 
   ;; String -> Void
   ;; takes benchmark name and runs all files with test-optimize
@@ -37,10 +40,18 @@
         benchmark
         (test-optimize main benchmark-files*))))
 
-  (test-case
+  #;(test-case
     "basic programs"
     (test-optimize "basic/abs.rkt"
                    '("basic/abs.rkt")))
+
+  ;; success
   (test-benchmark "sieve")
-  (test-benchmark "snake")
+  #;(test-benchmark "snake")
+  #;(test-benchmark "zombie")
+  #;(test-benchmark "tetris")
+  #;(test-benchmark "synth")
+
+  ;; error
+  #;(test-benchmark "morsecode")
   )

@@ -56,6 +56,7 @@
 (require compiler/compilation-path
          racket/file
          racket/function
+         racket/rerequire
          syntax/modread
          syntax/strip-context
          scv-gt/private/proxy-resolver)
@@ -65,6 +66,7 @@
 (define (module-typed? target)
   (unless (file-exists? target)
     (error 'module-typed? "file ~a doesn't exist" target))
+  (dynamic-rerequire target)
   (module-declared? `(submod ,target #%type-decl) #t))
 
 ;; Module-Path -> Void
@@ -108,7 +110,8 @@
   (make-parent-directory* zo-path)
   (with-output-to-file zo-path
     #:exists 'replace
-    (thunk (write (compile/dir stx target)))))
+    (thunk (write (compile/dir stx target))))
+  (file-or-directory-modify-seconds target (current-seconds)))
 
 ;; Syntax -> Syntax
 ;; strips syntax of lexical context and attaches fresh scope
