@@ -17,8 +17,9 @@
 (define (contract-munge id stx)
   (syntax-parse stx
     #:datum-literals (lambda
-                         equal?
-                       quote ->*
+                       equal?
+                       quote
+                       ->*
                        simple-result->
                        any-wrap/c
                        pred-cnt
@@ -27,7 +28,9 @@
                        struct-predicate-procedure?/c
                        struct-predicate-procedure?
                        struct-type/c
-                       letrec c-> c->*
+                       letrec
+                       c->
+                       c->*
                        t:index?)
     ;; Convert any-wrap/c to any/c, cannot require (SCV)
     [any-wrap/c #'any/c]
@@ -54,7 +57,7 @@
     ;; Replace contracts we cannot verify (SCV)
     [struct-predicate-procedure? #'(λ (_) #f)]
     [struct-predicate-procedure?/c #'(λ (_) #f)]
-    [(struct-type/c _) #'(λ (_) #f)]
+    #;[(struct-type/c _) #'(λ (_) #f)]
 
     ;; Warning if ->* is non-convertible
     [(->* x ...)

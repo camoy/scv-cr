@@ -14,6 +14,12 @@
          racket/syntax
          racket/function)
 
+;; [Listof Syntax]
+;; modules that provide bindings for contract definitions
+(define ctc-dependencies
+  '(racket/contract
+    typed-racket/utils/struct-type-c))
+
 ;; Syntax -> Syntax
 ;; changes Typed Racket #lang to the no-check variant
 (define (as-no-check lang)
@@ -24,7 +30,8 @@
 ;; to inject provide contracts into the unexpanded syntax
 (define (inject-provide forms quad)
   (define forms* (transform-provide forms))
-  #`(#,@(contract-quad-provide-defns quad)
+  #`((require #,@ctc-dependencies)
+     #,@(contract-quad-provide-defns quad)
      #,(contract-quad-provide-out quad)
      #,@forms*))
 
@@ -35,7 +42,7 @@
   (define-values (forms* requires)
     (transform-require forms))
   #`((module require/contracts racket/base
-       (require racket/contract)
+       (require #,@ctc-dependencies)
        #,@requires
        #,@(contract-quad-require-defns quad)
        #,(contract-quad-require-out quad))
