@@ -36,6 +36,17 @@
 
 (provide optimize)
 
+;; Module-Path -> Syntax
+;; takes a target and returns syntax object with full contracts
+(define (pipeline target)
+  (define stx (syntax-fetch target))
+  (if (module-typed? target)
+      (let* ([stx-expand (expand/base+dir stx target)]
+             [ctc-quads  (contract-extract stx-expand)]
+             [stx-ctc    (contract-inject stx ctc-quads)])
+        stx-ctc)
+      stx))
+
 ;; [List-of Module-Path] -> Void
 ;; optimizes target modules, see documentation for the purpose of
 ;; the flags
@@ -57,29 +68,27 @@
   (verify-off v)
 
   ;; optimize
-  (for-each module-delete-zo targets)
-  (let* ([targets-tr   (filter module-typed? targets)]
-         [stxs         (map syntax-fetch targets-tr)]
-         [stxs-expand  (map expand/base+dir stxs targets-tr)]
-         [ctc-quads    (map contract-extract stxs-expand)]
-         [stxs-ctc     (map contract-inject stxs ctc-quads)]
-         [stxs-opt     (contract-opt stxs-ctc targets-tr)])
-    (when (overwrite)
-      (for-each syntax-overwrite stxs-opt targets-tr))
+  (define targets* (map path->complete-path targets))
+  (for-each module-delete-zo targets*)
+  (define stxs-opt (contract-opt targets* (map pipeline targets*)))
 
-    (when (show-contract)
-      (for-each (λ (stx target)
-                  (displayln long-line)
-                  (displayln target)
-                  (displayln long-line)
-                  (displayln (syntax->string stx)))
-                stxs-opt
-                targets-tr))
+  ;; flags
+  (when (overwrite)
+    (for-each syntax-overwrite stxs-opt targets*))
 
-    (unless (compiler-off)
-      (for-each syntax-compile targets-tr stxs-opt))
+  (when (show-contract)
+    (for-each (λ (stx target)
+                (displayln long-line)
+                (displayln target)
+                (displayln long-line)
+                (displayln (syntax->string stx)))
+              stxs-opt
+              targets*))
 
-    ))
+  (unless (compiler-off)
+    (for-each syntax-compile targets* stxs-opt))
+
+  )
 
 ;;
 ;; parsing

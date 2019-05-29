@@ -27,11 +27,8 @@
 
 ;; evaluates with current directory from the parent of the target
 (define-syntax-rule (in-dir target forms ...)
-  (begin
-    (define target-dir
-      (path-only (path->complete-path target)))
-    (parameterize ([current-directory target-dir])
-      forms ...)))
+  (parameterize ([current-directory (path-only target)])
+    forms ...))
 
 ;; Syntax Module-Path -> Syntax
 ;; expands module with base namespace in the directory of the given path
