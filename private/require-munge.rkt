@@ -25,4 +25,4 @@
                     (contract-munge #'y #'y-def)])
        (map cons
             (syntax-e #'(xs ... y))
-            (syntax-e #'(xs-def* ... y-def))))]))
+            (syntax-e #'(xs-def* ... y-def*))))]))
