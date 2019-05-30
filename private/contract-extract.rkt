@@ -11,10 +11,12 @@
 ;; data
 ;;
 
-(provide (struct-out contract-quad))
-(struct contract-quad (provide-defns
+(provide (struct-out contract-data))
+(struct contract-data (provide-defns
+                       provide-ids
                        provide-out
                        require-defns
+                       require-ids
                        require-out) #:transparent)
 
 ;;
@@ -26,10 +28,16 @@
 ;; Syntax -> Contract-Quad
 ;; extracts and collects contract information from expanded syntax
 (define (contract-extract stx)
-  (contract-quad (provide-ctc-defns stx)
-                 (provide-ctc-out stx)
+  (define-values (provide-ids provide-out)
+    (provide-ctc-out stx))
+  (define-values (require-ids require-out)
+    (require-ctc-out stx))
+  (contract-data (provide-ctc-defns stx)
+                 provide-ids
+                 provide-out
                  (require-ctc-defns stx)
-                 (require-ctc-out stx)))
+                 require-ids
+                 require-out))
 
 ;;
 ;; contract definition functions
@@ -79,7 +87,9 @@
 ;; associations between bindings and contract definitions and constructs a
 ;; binding+ctc function
 (define ((make-ctc-out key transform) stx)
-  (provide-wrapper (map transform (syntax-property-values stx key))))
+  (define pairs (map transform (syntax-property-values stx key)))
+  (values (map car pairs)
+          (provide-wrapper pairs)))
 
 ;; Syntax -> [List-of [List-of Syntax]]
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from exported

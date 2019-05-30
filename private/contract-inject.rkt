@@ -25,34 +25,34 @@
 (define (as-no-check lang)
   (format-id lang "~a/no-check" (syntax-e lang)))
 
-;; Syntax Contract-Quad -> Syntax
-;; takes original syntax and contract quad and uses contract information
+;; Syntax Contract-Data -> Syntax
+;; takes original syntax and contract data and uses contract information
 ;; to inject provide contracts into the unexpanded syntax
-(define (inject-provide forms quad)
-  (define forms* (transform-provide forms))
+(define (inject-provide forms data)
+  (define forms* (transform-provide forms data))
   #`((require #,@ctc-dependencies)
-     #,@(contract-quad-provide-defns quad)
-     #,(contract-quad-provide-out quad)
+     #,@(contract-data-provide-defns data)
+     #,(contract-data-provide-out data)
      #,@forms*))
 
-;; Syntax Contract-Quad -> Syntax
-;; takes original syntax and contract quad and uses contract information
+;; Syntax Contract-Data -> Syntax
+;; takes original syntax and contract data and uses contract information
 ;; to inject require contracts into the unexpanded syntax
-(define (inject-require forms quad)
+(define (inject-require forms data)
   (define-values (forms* requires)
     (transform-require forms))
   #`((module require/contracts racket/base
        (require #,@ctc-dependencies)
        #,@requires
-       #,@(contract-quad-require-defns quad)
-       #,(contract-quad-require-out quad))
+       #,@(contract-data-require-defns data)
+       #,(contract-data-require-out data))
      (require 'require/contracts)
      #,@forms*))
 
-;; Syntax Contract-Quad -> Syntax
-;; takes original syntax and contract quad and uses contract information
+;; Syntax Contract-Data -> Syntax
+;; takes original syntax and contract data and uses contract information
 ;; to inject provide and require contracts into the unexpanded syntax
-(define (contract-inject stx quad)
+(define (contract-inject stx data)
   (syntax-parse (syntax-fresh-scope stx)
     #:datum-literals (module)
     [(module name lang (mb forms ...))
@@ -62,25 +62,37 @@
                                    (require-off))]
                   [injection (list inject-provide
                                    inject-require)])
-         (if (not flag) (injection stx quad) stx)))
+         (if (not flag) (injection stx data) stx)))
      (define stx*
        #`(module name #,(as-no-check #'lang)
            (mb #,@forms*)))
      (syntax-scope-expanded stx*)]))
 
-;; Syntax -> Syntax
+;; Syntax Contract-Data -> Syntax
 ;; removes provide forms
-(define (transform-provide stx)
-  (define provide?
+(define (transform-provide stx data)
+  (define extract-struct-name
+    (syntax-parser
+      #:datum-literals (struct-out)
+      [(struct-out y) (syntax-e #'y)]
+      [_ #f]))
+  (define (already-provided? id)
+    (memf (λ (x) (or (equal? (syntax-e id) (syntax-e x))
+                     (equal? (extract-struct-name id) (syntax-e x))))
+          (contract-data-provide-ids data)))
+  (define filter-provide
     (syntax-parser
       #:datum-literals (provide)
-      [(provide _ ...) #t]
-      [_ #f]))
+      [(provide x ...)
+       #`(provide #,@(filter (negate already-provided?)
+                             (syntax-e #'(x ...))))]
+      [x #'x]))
   (syntax-parse stx
     [(x ...)
-     (define no-provides
-       (filter (negate provide?) (syntax-e #'(x ...))))
-     (datum->syntax stx (map transform-provide no-provides))]
+     (define provides*
+       (map filter-provide (syntax-e #'(x ...))))
+     (datum->syntax stx (map (λ (x) (transform-provide x data))
+                             provides*))]
     [x #'x]))
 
 ;; Syntax -> Syntax [List-of Syntax]
