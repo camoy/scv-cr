@@ -1,5 +1,7 @@
 #lang racket/base
 
+(provide collapse-modules)
+
 (require racket/function
          racket/path
          racket/list
@@ -60,58 +62,44 @@
 ;; test
 ;;
 
-(define client-stx
-  #'(module client racket/base
-      (#%module-begin
-        (module inner racket/base
-          (require "../nested/server.rkt"))
-        (require 'inner))))
+(module+ test
+  (require rackunit
+           scv-gt/private/test-util)
 
-(define client-path
-  "/home/camoy/buried/client.rkt")
+  (define client-stx
+    #'(module client racket/base
+        (#%module-begin
+         (module inner racket/base
+           (require "../nested/server.rkt"))
+         (require 'inner))))
 
-(define server-stx
-  #'(module server racket/base
-      (#%module-begin
-       42)))
+  (define client-path
+    "/home/camoy/buried/client.rkt")
 
-(define server-path
-  "/home/camoy/nested/server.rkt")
+  (define server-stx
+    #'(module server racket/base
+        (#%module-begin
+         42)))
 
-(syntax->datum
- (collapse-modules (list server-path client-path)
-                  (list server-stx client-stx)))
+  (define server-path
+    "/home/camoy/nested/server.rkt")
 
-#|
- (module motion typed/racket/no-check
-    (#%module-begin
-     (module require/contracts racket/base
-       (require racket/contract typed-racket/utils/struct-type-c)
-       (require "const.rkt")
-       (require "data.rkt")
-       (require "motion-help.rkt")
-       (define g12 exact-integer?)
-       (define g15 any/c)
-       (define g16 '#t)
-       (define g17 '#f)
-       (define g18 (or/c g16 g17))
-       (define g20 (lambda (x) (snake? x)))
-       (define g21 (-> any/c g20))
-       (define lifted/1 g12)
-       (define lifted/3 g12)
-       (define lifted/5 (-> g15 g15 (values g18)))
-       (define lifted/7 g21)
-       (define lifted/9 g21)
-       (provide (contract-out
-                 (BOARD-HEIGHT lifted/3)
-                 (snake-grow lifted/9)
-                 (BOARD-WIDTH lifted/1)
-                 (snake-slither lifted/7)
-                 (posn=? lifted/5))))
-     (require 'require/contracts)
-     (require racket/contract typed-racket/utils/struct-type-c)
-     (define g25 (lambda (x) (world? x)))
-     (define g27 '"up")
-     (define g28 '"down")
-     (define g29 '"left")
-|#
+  (define expected
+    #'(module top racket/base
+        (#%module-begin
+         (module /home/camoy/nested/server.rkt racket/base
+           (#%module-begin 42))
+         (module /home/camoy/buried/client.rkt racket/base
+           (#%module-begin
+            (module inner racket/base
+              (require (submod ".."
+                               ".."
+                               /home/camoy/nested/server.rkt)))
+            (require 'inner))))))
+
+  (test-case
+    "collapse-modules"
+    (check syntax=?
+           (collapse-modules (list server-path client-path)
+                             (list server-stx client-stx))
+           expected)))
