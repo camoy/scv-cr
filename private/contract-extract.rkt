@@ -51,7 +51,10 @@
 (provide provide-ctc-defns
          require-ctc-defns)
 
-;; Symbol (Syntax -> Syntax) -> (Syntax -> [Hash Syntax Syntax] Syntax)
+;; A I/C-Hash is a [Hash Syntax Syntax] mapping
+;; from identifiers to contract definitions.
+
+;; Symbol (Syntax -> Syntax) -> (Syntax -> I/C-Hash Syntax)
 ;; makes a munged definition function
 (define ((make-ctc-defns key munger) stx)
   (define (compare-syntax-pair x y)
@@ -59,10 +62,10 @@
               (syntax-e (car y))))
   (define (pair->defn pair)
     #`(define #,(car pair) #,(cdr pair)))
-  (let* ([id->ctc (append-map munger (syntax-property-values stx key))]
-         [id->ctc* (sort id->ctc compare-syntax-pair)])
-    (values (make-hash id->ctc*)
-            (map pair->defn id->ctc*))))
+  (let* ([i/c-list (append-map munger (syntax-property-values stx key))]
+         [i/c-list* (sort i/c-list compare-syntax-pair)])
+    (values (make-hash i/c-list*)
+            (map pair->defn i/c-list*))))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions
@@ -81,27 +84,31 @@
 (provide provide-ctc-out
          require-ctc-out)
 
-;; [Hash Syntax Syntax] -> Syntax
+;; A P/C-Hash is a [Hash Syntax Syntax] mapping
+;; provided identifiers to contract definitions.
+
+;; P/C-Hash -> Syntax
 ;; constructs a provide form from a mapping
 ;; between identifiers and contract definitions
-(define (provide-wrapper p/c-hash)
+(define (provide-wrapper p/c-hash struct-outs)
   #`(provide
      (contract-out
-      #,@(hash-map p/c-hash list))))
+      #,@(hash-map p/c-hash list)
+      #,@struct-outs)))
 
-;; Symbol (Syntax -> [Cons Syntax Syntax]) -> (Syntax -> [Hash Syntax Syntax])
+;; Symbol (Syntax -> [Cons Syntax Syntax]) -> (Syntax I/C-Hash -> P/C-Hash)
 ;; takes a key for searching syntax properties and a syntax parser that yields
 ;; associations between bindings and contract definitions and constructs a
 ;; binding+ctc function
-(define ((make-ctc-out key transform) stx defn-map)
-  (define id->ctc-defn
+(define ((make-ctc-out key transform) stx i/c-hash)
+  (define p/c-hash
     (make-hash (map transform (syntax-property-values stx key))))
-  (define id->ctc-defn*
-    (struct-munge id->ctc-defn stx defn-map))
-  (values (hash-keys id->ctc-defn*)
-          (provide-wrapper id->ctc-defn*)))
+  (define struct-outs
+    (struct-munge! p/c-hash i/c-hash stx))
+  (values (hash-keys p/c-hash)
+          (provide-wrapper p/c-hash struct-outs)))
 
-;; Syntax -> [List-of [List-of Syntax]]
+;; Syntax -> P/C-Hash
 ;; takes syntax from Typed Racket and yields a hash
 ;; mapping exported identifiers to contract definitions
 (define provide-ctc-out
@@ -116,7 +123,7 @@
                _ k v _ ...))
       (cons #'k #'v)])))
 
-;; Syntax -> [List-of [List-of Syntax]]
+;; Syntax -> P/C-Hash
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
 ;; identifiers to contract definitions
 (define require-ctc-out
