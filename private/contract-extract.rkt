@@ -4,6 +4,7 @@
          syntax/parse
          (multi-in racket (list match contract))
          (multi-in scv-gt private (syntax-util
+                                   struct-extract
                                    provide-munge
                                    require-munge)))
 
@@ -28,14 +29,18 @@
 ;; Syntax -> Contract-Quad
 ;; extracts and collects contract information from expanded syntax
 (define (contract-extract stx)
+  (define-values (provide-defn-map provide-defns)
+    (provide-ctc-defns stx))
+  (define-values (require-defn-map require-defns)
+    (require-ctc-defns stx))
   (define-values (provide-ids provide-out)
-    (provide-ctc-out stx))
+    (provide-ctc-out stx provide-defn-map))
   (define-values (require-ids require-out)
-    (require-ctc-out stx))
-  (contract-data (provide-ctc-defns stx)
+    (require-ctc-out stx require-defn-map))
+  (contract-data provide-defns
                  provide-ids
                  provide-out
-                 (require-ctc-defns stx)
+                 require-defns
                  require-ids
                  require-out))
 
@@ -46,7 +51,7 @@
 (provide provide-ctc-defns
          require-ctc-defns)
 
-;; Symbol (Syntax -> Syntax) -> Syntax -> [Listof Syntax]
+;; Symbol (Syntax -> Syntax) -> Syntax -> [Listof Syntax] TODO
 ;; makes a munged definition function
 (define ((make-ctc-defns key munger) stx)
   (let* ([id->ctc
@@ -56,7 +61,8 @@
                                            (syntax-e (car y)))))]
          [pair->stx
           (λ (p) #`(define #,(car p) #,(cdr p)))])
-    (map pair->stx id->ctc*)))
+    (values id->ctc*
+            (map pair->stx id->ctc*))))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions
@@ -86,8 +92,11 @@
 ;; takes a key for searching syntax properties and a syntax parser that yields
 ;; associations between bindings and contract definitions and constructs a
 ;; binding+ctc function
-(define ((make-ctc-out key transform) stx)
-  (define pairs (map transform (syntax-property-values stx key)))
+(define ((make-ctc-out key transform) stx defn-map)
+  (define pairs
+    (map transform (syntax-property-values stx key)))
+  (define pairs*
+    (struct-munge pairs stx defn-map))
   (values (map car pairs)
           (provide-wrapper pairs)))
 
