@@ -26,17 +26,17 @@
 
 (provide contract-extract)
 
-;; Syntax -> Contract-Quad
+;; Syntax Syntax -> Contract-Quad
 ;; extracts and collects contract information from expanded syntax
-(define (contract-extract stx)
+(define (contract-extract stx-raw stx)
   (define-values (provide-defn-map provide-defns)
     (provide-ctc-defns stx))
   (define-values (require-defn-map require-defns)
     (require-ctc-defns stx))
   (define-values (provide-ids provide-out)
-    (provide-ctc-out stx provide-defn-map))
+    (provide-ctc-out stx-raw stx provide-defn-map))
   (define-values (require-ids require-out)
-    (require-ctc-out stx require-defn-map))
+    (require-ctc-out stx-raw stx require-defn-map))
   (contract-data provide-defns
                  provide-ids
                  provide-out
@@ -96,15 +96,19 @@
       #,@(hash-map p/c-hash list)
       #,@struct-outs)))
 
+(require racket/pretty)
+
 ;; Symbol (Syntax -> [Cons Syntax Syntax]) -> (Syntax I/C-Hash -> P/C-Hash)
 ;; takes a key for searching syntax properties and a syntax parser that yields
 ;; associations between bindings and contract definitions and constructs a
 ;; binding+ctc function
-(define ((make-ctc-out key transform) stx i/c-hash)
+(define ((make-ctc-out key struct? transform) stx-raw stx i/c-hash)
   (define p/c-hash
     (make-hash (map transform (syntax-property-values stx key))))
   (define struct-outs
-    (struct-munge! p/c-hash i/c-hash stx))
+    (if struct?
+        (struct-munge! p/c-hash i/c-hash stx-raw)
+        '()))
   (values (hash-keys p/c-hash)
           (provide-wrapper p/c-hash struct-outs)))
 
@@ -114,6 +118,7 @@
 (define provide-ctc-out
   (make-ctc-out
    'provide
+   #t
    (syntax-parser
      #:datum-literals (begin define define-values
                        define-module-boundary-contract)
@@ -129,6 +134,7 @@
 (define require-ctc-out
   (make-ctc-out
    'require-rename
+   #f
    (syntax-parser
      #:datum-literals (begin require rename-without-provide
                        define-ignored contract)
