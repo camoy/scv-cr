@@ -51,18 +51,18 @@
 (provide provide-ctc-defns
          require-ctc-defns)
 
-;; Symbol (Syntax -> Syntax) -> Syntax -> [Listof Syntax] TODO
+;; Symbol (Syntax -> Syntax) -> (Syntax -> [Hash Syntax Syntax] Syntax)
 ;; makes a munged definition function
 (define ((make-ctc-defns key munger) stx)
-  (let* ([id->ctc
-          (append-map munger (syntax-property-values stx key))]
-         [id->ctc*
-          (sort id->ctc (λ (x y) (symbol<? (syntax-e (car x))
-                                           (syntax-e (car y)))))]
-         [pair->stx
-          (λ (p) #`(define #,(car p) #,(cdr p)))])
-    (values id->ctc*
-            (map pair->stx id->ctc*))))
+  (define (compare-syntax-pair x y)
+    (symbol<? (syntax-e (car x))
+              (syntax-e (car y))))
+  (define (pair->defn pair)
+    #`(define #,(car pair) #,(cdr pair)))
+  (let* ([id->ctc (append-map munger (syntax-property-values stx key))]
+         [id->ctc* (sort id->ctc compare-syntax-pair)])
+    (values (make-hash id->ctc*)
+            (map pair->defn id->ctc*))))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions
@@ -81,28 +81,29 @@
 (provide provide-ctc-out
          require-ctc-out)
 
-;; [List-of [Cons Syntax Syntax]] -> Syntax
-;; constructs a provide form from a mapping between identifiers and contract definitions
-(define (provide-wrapper p/c-items)
-  (if (empty? p/c-items)
-      #'(provide)
-      #`(provide (contract-out #,@p/c-items))))
+;; [Hash Syntax Syntax] -> Syntax
+;; constructs a provide form from a mapping
+;; between identifiers and contract definitions
+(define (provide-wrapper p/c-hash)
+  #`(provide
+     (contract-out
+      #,@(hash-map p/c-hash list))))
 
-;; Symbol (Syntax -> [List-of Syntax]) -> (Syntax -> [List-of [List-of Syntax]])
+;; Symbol (Syntax -> [Cons Syntax Syntax]) -> (Syntax -> [Hash Syntax Syntax])
 ;; takes a key for searching syntax properties and a syntax parser that yields
 ;; associations between bindings and contract definitions and constructs a
 ;; binding+ctc function
 (define ((make-ctc-out key transform) stx defn-map)
-  (define pairs
-    (map transform (syntax-property-values stx key)))
-  (define pairs*
-    (struct-munge pairs stx defn-map))
-  (values (map car pairs)
-          (provide-wrapper pairs)))
+  (define id->ctc-defn
+    (make-hash (map transform (syntax-property-values stx key))))
+  (define id->ctc-defn*
+    (struct-munge id->ctc-defn stx defn-map))
+  (values (hash-keys id->ctc-defn*)
+          (provide-wrapper id->ctc-defn*)))
 
 ;; Syntax -> [List-of [List-of Syntax]]
-;; takes syntax from Typed Racket and yields an immutable hash mapping from exported
-;; identifiers to contract definitions
+;; takes syntax from Typed Racket and yields a hash
+;; mapping exported identifiers to contract definitions
 (define provide-ctc-out
   (make-ctc-out
    'provide
@@ -113,7 +114,7 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (list #'k #'v)])))
+      (cons #'k #'v)])))
 
 ;; Syntax -> [List-of [List-of Syntax]]
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
@@ -127,4 +128,4 @@
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (list #'k #'v)])))
+      (cons #'k #'v)])))
