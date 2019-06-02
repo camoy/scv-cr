@@ -77,9 +77,10 @@
       [(struct-out y) (syntax-e #'y)]
       [_ #f]))
   (define (already-provided? id)
-    (memf (λ (x) (or (equal? (syntax-e id) x)
-                     (equal? (extract-struct-name id) x)))
-          (contract-data-provide-ids data)))
+    (or (memf (λ (x) (equal? (syntax-e id) x))
+              (contract-data-provide-ids data))
+        (memf (λ (x) (equal? (extract-struct-name id) x))
+              (contract-data-provide-struct-ids data))))
   (define filter-provide
     (syntax-parser
       #:datum-literals (provide)

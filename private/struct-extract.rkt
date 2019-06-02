@@ -1,4 +1,4 @@
-#lang errortrace racket/base
+#lang racket/base
 
 (require racket/list
          racket/set
@@ -38,7 +38,8 @@
          (hash-remove! p/c-hash id))
        (when (ctor? id)
          (struct-hash-add! struct-hash name->fields id ctc i/c-hash))))
-    (make-struct-out stx-raw struct-hash)))
+    (values (make-struct-out stx-raw struct-hash)
+            (hash-keys name->fields))))
 
 ;; Struct-Hash -> [List-of Syntax]
 ;; returns list of struct-out declarations for contract-out
@@ -83,9 +84,9 @@
 ;; Struct-Proc
 ;; returns all exports
 (define (struct-exports name flds)
-  (append (list name
-                (format-symbol "~a?" name)
+  (append (list (format-symbol "~a?" name)
                 (format-symbol "struct:~a" name))
+          (struct-ctor name flds)
           (struct-accessors name flds)
           (struct-mutators name flds)))
 
@@ -101,7 +102,9 @@
 
 ;; Struct-Proc
 ;; returns only the constructor
-(define (struct-ctor name flds) (list name))
+(define (struct-ctor name flds)
+  (list name
+        (format-symbol "~a3" name)))
 
 ;; Struct-Proc [Hash Symbol Symbol] -> (Symbol -> Symbol or #f)
 ;; takes a Struct-Proc and name field mapping and returns
@@ -140,10 +143,18 @@
 ;; appropriate field-to-contract association into struct
 ;; hash
 (define (struct-hash-add! struct-hash name->fields id ctc i/c-hash)
-  (let* ([fld-ctcs (chase-domain ctc i/c-hash)]
-         [fld+ctcs (map list (hash-ref name->fields id) fld-ctcs)])
-    (hash-set! struct-hash id fld+ctcs)))
+  (let* ([id*      (unstrange id)]
+         [fld-ctcs (chase-domain ctc i/c-hash)]
+         [fld+ctcs (map list
+                        (hash-ref name->fields id*)
+                        fld-ctcs)])
+    (hash-set! struct-hash id* fld+ctcs)))
 
+(define (unstrange id)
+  (define id* (symbol->string id))
+  (if (string-suffix? id* "3")
+      (string->symbol (substring id* 0 (sub1 (string-length id*))))
+      id))
 ;;
 ;; test struct name
 ;;

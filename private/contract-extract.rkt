@@ -1,4 +1,4 @@
-#lang errortrace racket/base
+#lang racket/base
 
 (require racket/require
          syntax/parse
@@ -16,9 +16,11 @@
 (struct contract-data (provide-defns
                        provide-ids
                        provide-out
+                       provide-struct-ids
                        require-defns
                        require-ids
-                       require-out) #:transparent)
+                       require-out
+                       require-struct-ids) #:transparent)
 
 ;;
 ;; extraction function
@@ -33,16 +35,18 @@
     (provide-ctc-defns stx))
   (define-values (require-defn-map require-defns)
     (require-ctc-defns stx))
-  (define-values (provide-ids provide-out)
+  (define-values (provide-ids provide-out provide-struct-ids)
     (provide-ctc-out stx-raw stx provide-defn-map))
-  (define-values (require-ids require-out)
+  (define-values (require-ids require-out require-struct-ids)
     (require-ctc-out stx-raw stx require-defn-map))
   (contract-data provide-defns
                  provide-ids
                  provide-out
+                 provide-struct-ids
                  require-defns
                  require-ids
-                 require-out))
+                 require-out
+                 require-struct-ids))
 
 ;;
 ;; contract definition functions
@@ -107,10 +111,11 @@
 (define ((make-ctc-out key transform) stx-raw stx i/c-hash)
   (define p/c-hash
     (make-hash (map transform (syntax-property-values stx key))))
-  (define struct-outs
+  (define-values (struct-outs struct-ids)
     (struct-munge! p/c-hash i/c-hash key stx-raw))
   (values (hash-keys p/c-hash)
-          (provide-wrapper stx-raw p/c-hash struct-outs)))
+          (provide-wrapper stx-raw p/c-hash struct-outs)
+          struct-ids))
 
 ;; Syntax -> P/C-Hash
 ;; takes syntax from Typed Racket and yields a hash

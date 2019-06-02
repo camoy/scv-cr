@@ -36,7 +36,7 @@
 (define primes (sieve (count-from 2)))
 
 (: N-1 Natural)
-(define N-1 6666)
+(define N-1 6)
 
 (: main (-> Void))
 (define (main)
