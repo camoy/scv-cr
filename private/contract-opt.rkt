@@ -11,8 +11,8 @@
 (define (contract-opt targets stxs)
   (define targets* (map path->string targets))
   (pretty-print targets*)
-  (pretty-print (map syntax->datum stxs))
-  #;(displayln stxs)
+  #;(pretty-print (map syntax->datum stxs))
+  (displayln stxs)
   #;(displayln (verify-modules targets* stxs))
   (if (verify-off)
       stxs

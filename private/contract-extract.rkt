@@ -57,13 +57,13 @@
 ;; Symbol (Syntax -> Syntax) -> (Syntax -> I/C-Hash Syntax)
 ;; makes a munged definition function
 (define ((make-ctc-defns key munger) stx)
-  (define (compare-syntax-pair x y)
-    (symbol<? (car x)
-              (car y)))
+  (define (compare-pair x y)
+    (symbol<? (car x) (car y)))
   (define (pair->defn pair)
-    #`(define #,(car pair) #,(cdr pair)))
+    #`(define #,(datum->syntax stx (car pair))
+              #,(datum->syntax stx (cdr pair))))
   (let* ([i/c-list (append-map munger (syntax-property-values stx key))]
-         [i/c-list* (sort i/c-list compare-syntax-pair)])
+         [i/c-list* (sort i/c-list compare-pair)])
     (values (make-hash i/c-list*)
             (map pair->defn i/c-list*))))
 
@@ -90,10 +90,14 @@
 ;; P/C-Hash -> Syntax
 ;; constructs a provide form from a mapping
 ;; between identifiers and contract definitions
-(define (provide-wrapper p/c-hash struct-outs)
+(define (provide-wrapper stx-raw p/c-hash struct-outs)
+  (define stx* (syntax-fresh-scope stx-raw))
+  (define (list/context k v)
+    (list (datum->syntax stx* k)
+          (datum->syntax stx* v)))
   #`(provide
      (contract-out
-      #,@(hash-map p/c-hash list)
+      #,@(hash-map p/c-hash list/context)
       #,@struct-outs)))
 
 (require racket/pretty)
@@ -108,7 +112,7 @@
   (define struct-outs
     (struct-munge! p/c-hash i/c-hash key stx-raw))
   (values (hash-keys p/c-hash)
-          (provide-wrapper p/c-hash struct-outs)))
+          (provide-wrapper stx-raw p/c-hash struct-outs)))
 
 ;; Syntax -> P/C-Hash
 ;; takes syntax from Typed Racket and yields a hash

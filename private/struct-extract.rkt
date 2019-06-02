@@ -39,14 +39,18 @@
          (hash-remove! p/c-hash id))
        (when (accessor? id)
          (struct-hash-add! struct-hash id ctc i/c-hash))))
-    (make-struct-out struct-hash)))
+    (make-struct-out stx-raw struct-hash)))
+
+(require scv-gt/private/syntax-util)
 
 ;; Struct-Hash -> [List-of Syntax]
 ;; returns list of struct-out declarations for contract-out
-(define (make-struct-out struct-hash)
+(define (make-struct-out stx-raw struct-hash)
   (hash-map struct-hash
             (λ (name fld->ctc)
-              #`(struct #,name #,(hash-map fld->ctc list)))))
+              #`(struct
+                  #,(datum->syntax (syntax-fresh-scope stx-raw) name)
+                  #,(hash-map fld->ctc list)))))
 
 ;;
 ;; struct names

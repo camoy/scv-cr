@@ -42,7 +42,7 @@
   (define stx (syntax-fetch target))
   (if (module-typed? target)
       (let* ([stx-expand (expand/base+dir stx target)]
-             [ctc-quads  (contract-extract stx-expand)]
+             [ctc-quads  (contract-extract stx stx-expand)]
              [stx-ctc    (contract-inject stx ctc-quads)])
         stx-ctc)
       stx))
