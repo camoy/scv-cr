@@ -1,4 +1,4 @@
-#lang racket/base
+#lang errortrace racket/base
 
 (require racket/list
          racket/set
@@ -6,7 +6,8 @@
          racket/string
          racket/function
          mischief/dict
-         syntax/parse)
+         syntax/parse
+         scv-gt/private/syntax-util)
 
 ;; A Struct-Hash is a [Hash Symbol [Hash Syntax Syntax]]
 ;; mapping struct identifier to a mapping between fields
@@ -28,20 +29,16 @@
 (define (struct-munge! p/c-hash i/c-hash kind stx-raw)
   (let* ([name->fields (extract-structs kind stx-raw)]
          [export?      (struct-export? name->fields)]
-         [accessor?    (struct-accessor? name->fields)]
-         [struct-hash  (make-hash (hash-map name->fields
-                                            (λ (name _)
-                                              (cons name (make-hash)))))])
+         [ctor?        (struct-ctor? name->fields)]
+         [struct-hash  (make-hash)])
     (hash-for-each
      p/c-hash
      (λ (id ctc)
        (when (export? id)
          (hash-remove! p/c-hash id))
-       (when (accessor? id)
-         (struct-hash-add! struct-hash id ctc i/c-hash))))
+       (when (ctor? id)
+         (struct-hash-add! struct-hash name->fields id ctc i/c-hash))))
     (make-struct-out stx-raw struct-hash)))
-
-(require scv-gt/private/syntax-util)
 
 ;; Struct-Hash -> [List-of Syntax]
 ;; returns list of struct-out declarations for contract-out
@@ -50,7 +47,7 @@
             (λ (name fld->ctc)
               #`(struct
                   #,(datum->syntax (syntax-fresh-scope stx-raw) name)
-                  #,(hash-map fld->ctc list)))))
+                  #,fld->ctc))))
 
 ;;
 ;; struct names
@@ -102,6 +99,10 @@
 (define (struct-mutators name flds)
   (map (curry format-symbol "set-~a-~a!" name) flds))
 
+;; Struct-Proc
+;; returns only the constructor
+(define (struct-ctor name flds) (list name))
+
 ;; Struct-Proc [Hash Symbol Symbol] -> (Symbol -> Symbol or #f)
 ;; takes a Struct-Proc and name field mapping and returns
 ;; a function that can determine if a symbol is that kind
@@ -118,40 +119,30 @@
 (define struct-export? (make-struct-proc? struct-exports))
 (define struct-accessor? (make-struct-proc? struct-accessors))
 (define struct-mutator? (make-struct-proc? struct-mutators))
+(define struct-ctor? (make-struct-proc? struct-ctor))
 
 ;;
 ;; struct munging helpers
 ;;
 
 ;; Syntax I/C-Hash -> Syntax
-;; returns co-domain of the given definition through
+;; returns domain of the given definition through
 ;; layers of definitional indirection
-(define (chase-codomain i i/c-hash)
+(define (chase-domain i i/c-hash)
   (syntax-parse i
     #:datum-literals (->)
-    [(-> _ x) #'x]
-    [x        (chase-codomain (hash-ref i/c-hash
-                                        (syntax-e i))
-                              i/c-hash)]))
+    [(-> x ... _) (syntax-e #'(x ...))]
+    [x            (chase-domain (hash-ref i/c-hash
+                                          (syntax-e i))
+                                i/c-hash)]))
 
-;; Symbol -> Symbol
-;; returns struct name and field from accessor name
-(define (accessor->split id)
-  (define split (string-split (symbol->string id) "-"))
-  (values (string->symbol (car split))
-          (string->symbol (cadr split))))
-
-;; Syntax Syntax [Hash Syntax Syntax] Struct-Hash ->
-;; takes pair matching accessor with contract and pushes
+;; takes pair matching constructor with contract and pushes
 ;; appropriate field-to-contract association into struct
 ;; hash
-(define (struct-hash-add! struct-hash id ctc i/c-hash)
-  (define-values (struct-name fld)
-    (accessor->split id))
-  (define fld-ctc (chase-codomain ctc i/c-hash))
-  (hash-set! (hash-ref struct-hash struct-name)
-             fld
-             fld-ctc))
+(define (struct-hash-add! struct-hash name->fields id ctc i/c-hash)
+  (let* ([fld-ctcs (chase-domain ctc i/c-hash)]
+         [fld+ctcs (map list (hash-ref name->fields id) fld-ctcs)])
+    (hash-set! struct-hash id fld+ctcs)))
 
 ;;
 ;; test struct name

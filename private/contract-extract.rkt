@@ -1,4 +1,4 @@
-#lang racket/base
+#lang errortrace racket/base
 
 (require racket/require
          syntax/parse
@@ -99,8 +99,6 @@
      (contract-out
       #,@(hash-map p/c-hash list/context)
       #,@struct-outs)))
-
-(require racket/pretty)
 
 ;; Symbol (Syntax -> [Cons Syntax Syntax]) -> (Syntax I/C-Hash -> P/C-Hash)
 ;; takes a key for searching syntax properties and a syntax parser that yields
