@@ -51,15 +51,15 @@
 (provide provide-ctc-defns
          require-ctc-defns)
 
-;; A I/C-Hash is a [Hash Syntax Syntax] mapping
+;; A I/C-Hash is a [Hash Symbol Syntax] mapping
 ;; from identifiers to contract definitions.
 
 ;; Symbol (Syntax -> Syntax) -> (Syntax -> I/C-Hash Syntax)
 ;; makes a munged definition function
 (define ((make-ctc-defns key munger) stx)
   (define (compare-syntax-pair x y)
-    (symbol<? (syntax-e (car x))
-              (syntax-e (car y))))
+    (symbol<? (car x)
+              (car y)))
   (define (pair->defn pair)
     #`(define #,(car pair) #,(cdr pair)))
   (let* ([i/c-list (append-map munger (syntax-property-values stx key))]
@@ -84,7 +84,7 @@
 (provide provide-ctc-out
          require-ctc-out)
 
-;; A P/C-Hash is a [Hash Syntax Syntax] mapping
+;; A P/C-Hash is a [Hash Symbol Syntax] mapping
 ;; provided identifiers to contract definitions.
 
 ;; P/C-Hash -> Syntax
@@ -102,13 +102,11 @@
 ;; takes a key for searching syntax properties and a syntax parser that yields
 ;; associations between bindings and contract definitions and constructs a
 ;; binding+ctc function
-(define ((make-ctc-out key struct? transform) stx-raw stx i/c-hash)
+(define ((make-ctc-out key transform) stx-raw stx i/c-hash)
   (define p/c-hash
     (make-hash (map transform (syntax-property-values stx key))))
   (define struct-outs
-    (if struct?
-        (struct-munge! p/c-hash i/c-hash stx-raw)
-        '()))
+    (struct-munge! p/c-hash i/c-hash key stx-raw))
   (values (hash-keys p/c-hash)
           (provide-wrapper p/c-hash struct-outs)))
 
@@ -118,7 +116,6 @@
 (define provide-ctc-out
   (make-ctc-out
    'provide
-   #t
    (syntax-parser
      #:datum-literals (begin define define-values
                        define-module-boundary-contract)
@@ -126,7 +123,7 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (cons #'k #'v)])))
+      (cons (syntax-e #'k) #'v)])))
 
 ;; Syntax -> P/C-Hash
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
@@ -134,11 +131,10 @@
 (define require-ctc-out
   (make-ctc-out
    'require-rename
-   #f
    (syntax-parser
      #:datum-literals (begin require rename-without-provide
                        define-ignored contract)
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (cons #'k #'v)])))
+      (cons (syntax-e #'k) #'v)])))

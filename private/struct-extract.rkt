@@ -25,8 +25,8 @@
 ;; P/C-Hash I/C-Hash Syntax -> Syntax
 ;; takes an mapping between exports and contract definitions, the entire
 ;; program source, and mapping between
-(define (struct-munge! p/c-hash i/c-hash stx-raw)
-  (let* ([name->fields (extract-structs stx-raw)]
+(define (struct-munge! p/c-hash i/c-hash kind stx-raw)
+  (let* ([name->fields (extract-structs kind stx-raw)]
          [export?      (struct-export? name->fields)]
          [accessor?    (struct-accessor? name->fields)]
          [struct-hash  (make-hash (hash-map name->fields
@@ -35,9 +35,9 @@
     (hash-for-each
      p/c-hash
      (λ (id ctc)
-       (when (export? (syntax-e id))
+       (when (export? id)
          (hash-remove! p/c-hash id))
-       (when (accessor? (syntax-e id))
+       (when (accessor? id)
          (struct-hash-add! struct-hash id ctc i/c-hash))))
     (make-struct-out struct-hash)))
 
@@ -55,13 +55,20 @@
 ;; Syntax -> [Hash Symbol [List-of Symbol]]
 ;; takes Typed Racket syntax and returns hash
 ;; that maps struct names to their fields
-(define (extract-structs stx)
+(define (extract-structs kind stx)
   (define name->fields
     (make-hash))
   (let go ([stx stx])
     (syntax-parse stx
       #:datum-literals (struct struct: :)
       [((~or struct struct:) name ((fld : type) ...))
+       #:when (equal? kind 'provide)
+       (hash-set! name->fields
+                  (syntax-e #'name)
+                  (syntax->datum #'(fld ...)))
+       stx]
+      [((~datum #:struct) name ((fld : type) ...))
+       #:when (equal? kind 'require-rename)
        (hash-set! name->fields
                   (syntax-e #'name)
                   (syntax->datum #'(fld ...)))
@@ -119,7 +126,9 @@
   (syntax-parse i
     #:datum-literals (->)
     [(-> _ x) #'x]
-    [x        (chase-codomain (hash-ref i/c-hash i) i/c-hash)]))
+    [x        (chase-codomain (hash-ref i/c-hash
+                                        (syntax-e i))
+                              i/c-hash)]))
 
 ;; Symbol -> Symbol
 ;; returns struct name and field from accessor name
@@ -134,7 +143,7 @@
 ;; hash
 (define (struct-hash-add! struct-hash id ctc i/c-hash)
   (define-values (struct-name fld)
-    (accessor->split (syntax-e id)))
+    (accessor->split id))
   (define fld-ctc (chase-codomain ctc i/c-hash))
   (hash-set! (hash-ref struct-hash struct-name)
              fld
@@ -154,9 +163,19 @@
     "extract-structs"
     (check-equal?
      (extract-structs
+      'provide
       #'(module root typed/racket/base
           (struct: posn ((x : Real) (y : Real) (z : Real)))))
-     posn-hash))
+     posn-hash)
+
+    (check-equal?
+     (extract-structs
+      'require-rename
+      #'(module root typed/racket/base
+          (require/typed/check "streams.rkt"
+            [#:struct posn ([x : Real] [y : Real] [z : Real])])))
+     posn-hash)
+    )
 
   (test-case
     "struct-exports"

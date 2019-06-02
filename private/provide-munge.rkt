@@ -29,5 +29,5 @@
                    [y-def*
                     (contract-munge #'y #'y-def)])
        (map cons
-            (syntax-e #'(xs ... y))
+            (syntax->datum #'(xs ... y))
             (syntax-e #'(xs-def* ... y-def*))))]))
