@@ -14,13 +14,14 @@
   ;; checks to make sure running optimization on the modules does not yield
   ;; an issue; runs the main target
   (define (test-optimize main targets)
-    (optimize targets
-              #:ignore-check #t
-              #:verify-off #t)
-    (define main* (path->complete-path main))
-    (in-dir main*
-      (check-not-exn (thunk (dynamic-rerequire main*))))
-    (for-each module-delete-zo targets))
+    (after
+     (optimize targets
+               #:ignore-check #t
+               #:verify-off #t)
+     (define main* (path->complete-path main))
+     (in-dir main*
+       (check-not-exn (thunk (dynamic-rerequire main*))))
+     (for-each module-delete-zo targets)))
 
   ;; String -> Void
   ;; takes benchmark name and runs all files with test-optimize
@@ -40,7 +41,7 @@
         benchmark
         (test-optimize main benchmark-files*))))
 
-  #;(test-case
+  (test-case
     "basic programs"
     (test-optimize "basic/abs.rkt"
                    '("basic/abs.rkt")))

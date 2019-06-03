@@ -29,7 +29,7 @@
 (define (struct-munge! p/c-hash i/c-hash kind stx-raw)
   (let* ([name->fields (extract-structs kind stx-raw)]
          [export?      (struct-export? name->fields)]
-         [ctor?        (struct-ctor? name->fields)]
+         [ctor?        (curry struct-unstrange name->fields)]
          [struct-hash  (make-hash)])
     (hash-for-each
      p/c-hash
@@ -84,9 +84,9 @@
 ;; Struct-Proc
 ;; returns all exports
 (define (struct-exports name flds)
-  (append (list (format-symbol "~a?" name)
+  (append (list name
+                (format-symbol "~a?" name)
                 (format-symbol "struct:~a" name))
-          (struct-ctor name flds)
           (struct-accessors name flds)
           (struct-mutators name flds)))
 
@@ -100,13 +100,7 @@
 (define (struct-mutators name flds)
   (map (curry format-symbol "set-~a-~a!" name) flds))
 
-;; Struct-Proc
-;; returns only the constructor
-(define (struct-ctor name flds)
-  (list name
-        (format-symbol "~a3" name)))
-
-;; Struct-Proc [Hash Symbol Symbol] -> (Symbol -> Symbol or #f)
+;; Struct-Proc -> [Hash Symbol Symbol] -> (Symbol -> Symbol or #f)
 ;; takes a Struct-Proc and name field mapping and returns
 ;; a function that can determine if a symbol is that kind
 ;; of export for the given mapping
@@ -119,10 +113,11 @@
   (define exports* (apply append exports))
   (dict->procedure exports* #:failure #f))
 
-(define struct-export? (make-struct-proc? struct-exports))
+(define ((struct-export? name->fields) id)
+  (or (((make-struct-proc? struct-exports) name->fields) id)
+      (struct-unstrange name->fields id)))
 (define struct-accessor? (make-struct-proc? struct-accessors))
 (define struct-mutator? (make-struct-proc? struct-mutators))
-(define struct-ctor? (make-struct-proc? struct-ctor))
 
 ;;
 ;; struct munging helpers
@@ -143,18 +138,25 @@
 ;; appropriate field-to-contract association into struct
 ;; hash
 (define (struct-hash-add! struct-hash name->fields id ctc i/c-hash)
-  (let* ([id*      (unstrange id)]
+  (let* ([id*      (struct-unstrange name->fields id)]
          [fld-ctcs (chase-domain ctc i/c-hash)]
          [fld+ctcs (map list
                         (hash-ref name->fields id*)
                         fld-ctcs)])
     (hash-set! struct-hash id* fld+ctcs)))
 
-(define (unstrange id)
+;;
+;; strange stuff
+;;
+
+(define (struct-unstrange name->fields id)
   (define id* (symbol->string id))
-  (if (string-suffix? id* "3")
-      (string->symbol (substring id* 0 (sub1 (string-length id*))))
-      id))
+  (findf (λ (name)
+           (define name* (symbol->string name))
+           (and (string-prefix? id* name*)
+                (string->number (substring id* (string-length name*)))))
+         (hash-keys name->fields)))
+
 ;;
 ;; test struct name
 ;;
@@ -230,4 +232,8 @@
     (check-false (posn-mutator? 'posn?))
     (check-false (posn-mutator? 'struct:posn))
     )
+
+  (test-case
+    "struct-unstrange"
+    (check-equal? (struct-unstrange posn-hash 'posn3) 'posn))
   )
