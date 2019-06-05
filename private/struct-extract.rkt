@@ -153,8 +153,9 @@
   (define id* (symbol->string id))
   (findf (λ (name)
            (define name* (symbol->string name))
-           (and (string-prefix? id* name*)
-                (string->number (substring id* (string-length name*)))))
+           (or (string=? id* name*)
+               (and (string-prefix? id* name*)
+                    (string->number (substring id* (string-length name*))))))
          (hash-keys name->fields)))
 
 ;;

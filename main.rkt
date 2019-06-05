@@ -39,11 +39,13 @@
 ;; Module-Path -> Syntax
 ;; takes a target and returns syntax object with full contracts
 (define (pipeline target)
-  (let* ([stx (syntax-fetch target)]
-         [stx-expand (expand/base+dir stx target)]
-         [ctc-quads  (contract-extract stx stx-expand)]
-         [stx-ctc    (contract-inject stx ctc-quads)])
-    stx-ctc))
+  (define stx (syntax-fetch target))
+  (if (module-typed? target)
+      (let* ([stx-expand (expand/base+dir stx target)]
+             [ctc-quads  (contract-extract stx stx-expand)]
+             [stx-ctc    (contract-inject stx ctc-quads)])
+        stx-ctc)
+      stx))
 
 ;; [List-of Module-Path] -> Void
 ;; optimizes target modules, see documentation for the purpose of
@@ -66,14 +68,15 @@
   (verify-off v)
 
   ;; optimize
-  (define targets* (map path->complete-path targets))
-  (define targets** (filter module-typed? targets*))
-  (for-each module-delete-zo targets**)
-  (define stxs-opt (contract-opt targets** (map pipeline targets**)))
+  (define targets*
+    (map path->complete-path targets))
+  (for-each module-delete-zo targets*)
+  (define stxs-opt
+    (contract-opt targets* (map pipeline targets*)))
 
   ;; flags
   (when (overwrite)
-    (for-each syntax-overwrite stxs-opt targets**))
+    (for-each syntax-overwrite stxs-opt targets*))
 
   (when (show-contract)
     (for-each (λ (stx target)
@@ -82,10 +85,10 @@
                 (displayln long-line)
                 (displayln (syntax->string stx)))
               stxs-opt
-              targets**))
+              targets*))
 
   (unless (compiler-off)
-    (for-each syntax-compile targets** stxs-opt))
+    (for-each syntax-compile targets* stxs-opt))
 
   )
 

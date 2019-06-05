@@ -41,18 +41,18 @@
         benchmark
         (test-optimize main benchmark-files*))))
 
-  (test-case
+  #;(test-case
     "basic programs"
     (test-optimize "basic/abs.rkt"
                    '("basic/abs.rkt")))
 
-   #;(test-case
+  #;(test-case
     "basic posn"
     (test-optimize "basic/posn-typed.rkt"
                    '("basic/posn-typed.rkt" "basic/posn-untyped.rkt")))
 
   ;; success
-  #;(test-benchmark "sieve")
+  (test-benchmark "sieve")
   #;(test-benchmark "snake")
   #;(test-benchmark "zombie")
   #;(test-benchmark "tetris")

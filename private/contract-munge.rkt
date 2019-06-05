@@ -57,7 +57,7 @@
     ;; Replace contracts we cannot verify (SCV)
     [struct-predicate-procedure? #'(λ (_) #f)]
     [struct-predicate-procedure?/c #'(λ (_) #f)]
-    #;[(struct-type/c _) #'(λ (_) #f)]
+    [(struct-type/c _) #'#t]
 
     ;; Warning if ->* is non-convertible
     [(->* x ...)

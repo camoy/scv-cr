@@ -42,7 +42,9 @@
 ;; Syntax Module-Path -> Syntax
 ;; compiles module in the directory of the given path
 (define (compile/dir stx target)
-  (in-dir target (compile stx)))
+  (in-dir target
+    (parameterize ([current-namespace (make-base-namespace)])
+      (compile stx))))
 
 ;; -> Module-Name-Resolver
 ;; if the ignore-check parameter is set, returns a module name

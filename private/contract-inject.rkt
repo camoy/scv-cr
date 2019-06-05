@@ -18,7 +18,9 @@
 ;; modules that provide bindings for contract definitions
 (define ctc-dependencies
   '(racket/contract
-    typed-racket/utils/struct-type-c))
+    typed-racket/utils/struct-type-c
+    typed-racket/utils/any-wrap
+    (submod typed-racket/private/type-contract predicates)))
 
 ;; Syntax -> Syntax
 ;; changes Typed Racket #lang to the no-check variant
