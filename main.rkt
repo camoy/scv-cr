@@ -11,7 +11,8 @@
                     contract-extract
                     contract-inject
                     contract-opt
-                    syntax-util)))
+                    syntax-util
+                    syntax-compile)))
 
 ;;
 ;; const
@@ -88,7 +89,7 @@
               targets*))
 
   (unless (compiler-off)
-    (for-each syntax-compile targets* stxs-opt))
+    (syntax-compile-all targets* stxs-opt))
 
   )
 

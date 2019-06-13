@@ -6,7 +6,6 @@
          syntax->string
          syntax-overwrite
          syntax-fetch
-         syntax-compile
          syntax-fresh-scope
          syntax-scope-expanded)
 
@@ -53,11 +52,10 @@
 ;; syntax and modules
 ;;
 
-(require compiler/compilation-path
-         racket/file
-         racket/function
+(require racket/function
          racket/rerequire
          syntax/modread
+         compiler/compilation-path
          syntax/strip-context
          scv-gt/private/proxy-resolver)
 
@@ -102,16 +100,6 @@
   (with-module-reading-parameterization
     (thunk
      (read-syntax (object-name port) port))))
-
-;; Module-Path Syntax -> Void
-;; compiles syntax and outputs to appropriate file
-(define (syntax-compile target stx)
-  (define zo-path (get-compilation-bytecode-file target))
-  (make-parent-directory* zo-path)
-  (with-output-to-file zo-path
-    #:exists 'replace
-    (thunk (write (compile/dir stx target))))
-  (file-or-directory-modify-seconds target (current-seconds)))
 
 ;; Syntax -> Syntax
 ;; strips syntax of lexical context and attaches fresh scope
@@ -183,16 +171,4 @@
            #'(module hello racket
                (#%module-begin "hello"))))
 
-  (test-case
-    "syntax-compile"
-    (define path (test-path "world.rkt"))
-    (define world-zo
-      (test-path "compiled" "world_rkt.zo"))
-    (module-delete-zo path)
-    (syntax-compile path
-                    #'(module world racket
-                        (provide msg)
-                        (define msg "world")))
-    (check-equal? (dynamic-require world-zo 'msg (thunk #f)) "world")
-    (module-delete-zo path))
   )

@@ -13,7 +13,7 @@
   (pretty-print targets*)
   (pretty-print (map syntax->datum stxs))
   #;(displayln stxs)
-  (displayln (verify-modules targets* stxs))
+  #;(displayln (verify-modules targets* stxs))
   (if (verify-off)
       stxs
       stxs))

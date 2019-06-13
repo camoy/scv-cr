@@ -105,7 +105,7 @@
     #:datum-literals (require/typed require/typed/check)
     [(~or* (require/typed m _ ...)
            (require/typed/check m _ ...))
-     (values #'(require m)
+     (values #'(void)
              (list #'(require m)))]
     [(x ...)
      (define-values (stxs* requires)
