@@ -1,4 +1,4 @@
-#lang racket/base
+#lang errortrace racket/base
 
 (require racket/require
          (multi-in racket (list match contract))
@@ -16,7 +16,7 @@
 
 (struct contract-data (provide require))
 (struct contract-bundle (defns outs deps
-                         i/c-hash p/c-hash s/c-hash))
+                         i/c-hash p/c-hash s/o-hash))
 
 ;;
 ;; extraction function
@@ -29,16 +29,46 @@
 (define (contract-extract stx)
   (contract-data (hashes->bundle (provide-ctc-defns stx)
                                  (provide-ctc-outs stx)
-                                 #f)
+                                 'provide
+                                 stx)
                  (hashes->bundle (require-ctc-defns stx)
                                  (require-ctc-outs stx)
-                                 #f)))
+                                 'require-rename
+                                 stx)))
 
-;; I/C-Hash P/C-Hash S/C-Hash -> Contract-Bundle
+;; I/C-Hash P/C-Hash Symbol Syntax -> Contract-Bundle
 ;; convert hashes to contract bundle
-(define (hashes->bundle i/c-hash p/c-hash s/c-hash)
-  (contract-bundle '() '() '()
-                   i/c-hash p/c-hash s/c-hash))
+(define (hashes->bundle i/c-hash p/c-hash key stx)
+  (define s/o-hash
+    (p/c-remove-structs! i/c-hash p/c-hash key stx))
+  (contract-bundle (hashes->defns i/c-hash p/c-hash s/o-hash)
+                   (hashes->outs i/c-hash p/c-hash s/o-hash)
+                   (hashes->deps i/c-hash p/c-hash s/o-hash)
+                   i/c-hash
+                   p/c-hash
+                   s/o-hash))
+
+;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
+(define (hashes->defns i/c-hash p/c-hash s/o-hash)
+  (hash-map i/c-hash (λ (k v) #`(define #,k #,v))))
+
+;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
+(define (hashes->outs i/c-hash p/c-hash s/o-hash)
+  (append
+   (hash-map
+    p/c-hash
+    (λ (k v) #`(#,k #,v)))
+   (hash-map
+    s/o-hash
+    (λ (k v) v))))
+
+;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
+(define (hashes->deps i/c-hash p/c-hash s/o-hash)
+  (define deps
+    (hash-map
+     i/c-hash
+     (λ (k v) (syntax-dependencies v))))
+  (apply append deps))
 
 ;;
 ;; contract definition function
@@ -164,7 +194,7 @@
             (hash-keys (contract-bundle-p/c-hash bundle)))
       (memf (λ (x) (equal? (struct-name id)
                            (syntax-e x)))
-            (hash-keys (contract-bundle-s/c-hash bundle)))))
+            (hash-keys (contract-bundle-s/o-hash bundle)))))
 
 (define struct-name
   (syntax-parser

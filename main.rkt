@@ -43,8 +43,8 @@
   (define stx (syntax-fetch target))
   (if (module-typed? target)
       (let* ([stx-expand (expand/base+dir stx target)]
-             [ctc-quads  (contract-extract stx stx-expand)]
-             [stx-ctc    (contract-inject stx ctc-quads)])
+             [ctc-data   (contract-extract stx-expand)]
+             [stx-ctc    (contract-inject stx ctc-data)])
         stx-ctc)
       stx))
 
@@ -84,7 +84,7 @@
                 (displayln long-line)
                 (displayln target)
                 (displayln long-line)
-                (displayln (syntax->string stx)))
+                (displayln (syntax->pretty stx)))
               stxs-opt
               targets*))
 

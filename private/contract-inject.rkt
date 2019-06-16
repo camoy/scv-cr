@@ -43,21 +43,21 @@
 ;; to inject provide contracts into the unexpanded syntax
 (define (inject-provide forms data)
   (define bundle (contract-data-provide data))
-  (define forms* (munge-provides forms data))
-  #`(#,@(contract-bundle-deps bundle)
+  (define forms* (munge-provides forms bundle))
+  #`((require #,@(contract-bundle-deps bundle))
      #,@(contract-bundle-defns bundle)
-     #,@(contract-bundle-outs bundle)
+     (provide (contract-out #,@(contract-bundle-outs bundle)))
      #,@forms*))
 
 ;; Syntax Contract-Data -> Syntax
 ;; removes already provided identifiers from provide forms
-(define (munge-provides stx data)
+(define (munge-provides stx bundle)
   (define not-provided
     (syntax-parser
       #:datum-literals (provide)
       [(provide x ...)
        (define xs*
-         (filter (λ (x) (not (contract-bundle-provided? data x)))
+         (filter (λ (x) (not (contract-bundle-provided? bundle x)))
                  (syntax-e #'(x ...))))
        #`(provide #,@xs*)]
        [x #'x]))
@@ -66,7 +66,7 @@
      (define provides*
        (map not-provided (syntax-e #'(x ...))))
      (define provides**
-       (map (λ (x) (munge-provides x data)) provides*))
+       (map (λ (x) (munge-provides x bundle)) provides*))
      (datum->syntax stx provides**)]
     [x #'x]))
 
@@ -79,11 +79,11 @@
 ;; to inject require contracts into the unexpanded syntax
 (define (inject-require forms data)
   (define bundle (contract-data-require data))
-  (define forms* (munge-requires forms data))
+  (define forms* (munge-requires forms))
   #`((module require/contracts racket/base
-       #,@(contract-bundle-deps bundle)
+       (require #,@(contract-bundle-deps bundle))
        #,@(contract-bundle-defns bundle)
-       #,@(contract-bundle-outs bundle))
+       (provide (contract-out #,@(contract-bundle-outs bundle))))
      (require 'require/contracts)
      #,@forms*))
 

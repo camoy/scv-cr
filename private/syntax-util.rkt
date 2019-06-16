@@ -3,6 +3,7 @@
 (provide syntax-property-values
          module-typed?
          module-delete-zo
+         syntax->pretty
          syntax->string
          syntax-overwrite
          syntax-fetch
@@ -77,7 +78,7 @@
 
 ;; Syntax -> String
 ;; converts syntax to nicer printable representation
-(define syntax->string
+(define syntax->pretty
   (syntax-parser
     #:datum-literals (module #%module-begin)
     [(module _ lang (#%module-begin forms ...))
@@ -92,7 +93,7 @@
 (define (syntax-overwrite stx target)
   (with-output-to-file target
     #:exists 'replace
-    (thunk (displayln (syntax->string stx)))))
+    (thunk (displayln (syntax->pretty stx)))))
 
 ;; Module-Path -> Syntax
 ;; retrieves syntax object from module path
@@ -110,6 +111,9 @@
          racket/path)
 
 (provide syntax-dependencies)
+
+(define (syntax->string stx)
+  (symbol->string (syntax->datum stx)))
 
 ;; TODO may not be relative to current-directory
 

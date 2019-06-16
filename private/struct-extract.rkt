@@ -1,4 +1,4 @@
-#lang racket/base
+#lang errortrace racket/base
 
 (require racket/require
          (multi-in racket (list set syntax string function))
@@ -87,10 +87,14 @@
 ;; Struct-Hash -> [List-of Syntax]
 ;; returns list of struct-out declarations for contract-out
 (define (s/o-make s/c-hash)
-  (hash-map
+  (define s/o-hash (make-hash))
+  (hash-for-each
    s/c-hash
    (λ (name f/c-hash)
-     #`(struct #,name #,(hash-map list f/c-hash)))))
+     (hash-set! s/o-hash
+                name
+                #`(struct #,name #,(hash-map list f/c-hash)))))
+  s/o-hash)
 
 ;;
 ;; name helpers
@@ -104,15 +108,18 @@
 ;; if an identifier a certain type of struct export and returns
 ;; the corresponding struct name or #f.
 
-;; Struct-Pred defininitions
-
-(define ((s/f-export? s/f-hash) id)
-  (or (((struct-proc->struct-pred struct-exports) s/f-hash) id)
-      (unstrange s/f-hash id)))
-(define s/f-accessor?
-  (struct-proc->struct-pred struct-accessors))
-(define s/f-mutator?
-  (struct-proc->struct-pred struct-mutators))
+;; Struct-Proc -> S/F-Hash -> Stuct-Pred
+;; returns a predicate that can determine if an identifier is
+;; that kind of export for the given mapping, returning which
+;; struct it belonged to or #f
+(define ((struct-proc->struct-pred sp) s/f-hash)
+  (define exports
+    (hash-map s/f-hash
+              (λ (name flds)
+                (map (λ (fld) (cons fld name))
+                     (sp name flds)))))
+  (define exports* (apply append exports))
+  (dict->procedure exports* #:failure #f))
 
 ;; Struct-Proc definitions
 
@@ -131,18 +138,15 @@
   (map (λ (fld) (format-id id "set-~a-~a!" id fld))
        flds))
 
-;; Struct-Proc -> S/F-Hash -> Stuct-Pred
-;; returns a predicate that can determine if an identifier is
-;; that kind of export for the given mapping, returning which
-;; struct it belonged to or #f
-(define ((struct-proc->struct-pred sp) s/f-hash)
-  (define exports
-    (hash-map s/f-hash
-              (λ (name flds)
-                (map (λ (fld) (cons fld name))
-                     (sp name flds)))))
-  (define exports* (apply append exports))
-  (dict->procedure exports* #:failure #f))
+;; Struct-Pred defininitions
+
+(define ((s/f-export? s/f-hash) id)
+  (or (((struct-proc->struct-pred struct-exports) s/f-hash) id)
+      (unstrange s/f-hash id)))
+(define s/f-accessor?
+  (struct-proc->struct-pred struct-accessors))
+(define s/f-mutator?
+  (struct-proc->struct-pred struct-mutators))
 
 ;;
 ;; other helpers
