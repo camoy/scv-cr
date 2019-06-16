@@ -26,21 +26,21 @@
 
 ;; Syntax -> Contract-Data
 ;; extracts and collects contract information from expanded syntax
-(define (contract-extract stx)
+(define (contract-extract stx stx-raw)
   (contract-data (hashes->bundle (provide-ctc-defns stx)
                                  (provide-ctc-outs stx)
                                  'provide
-                                 stx)
+                                 stx-raw)
                  (hashes->bundle (require-ctc-defns stx)
                                  (require-ctc-outs stx)
                                  'require-rename
-                                 stx)))
+                                 stx-raw)))
 
-;; I/C-Hash P/C-Hash Symbol Syntax -> Contract-Bundle
+;; I/C-Hash P/C-Hash Symbol Syntax Syntax -> Contract-Bundle
 ;; convert hashes to contract bundle
-(define (hashes->bundle i/c-hash p/c-hash key stx)
+(define (hashes->bundle i/c-hash p/c-hash key stx-raw)
   (define s/o-hash
-    (p/c-remove-structs! i/c-hash p/c-hash key stx))
+    (p/c-remove-structs! i/c-hash p/c-hash key stx-raw))
   (contract-bundle (hashes->defns i/c-hash p/c-hash s/o-hash)
                    (hashes->outs i/c-hash p/c-hash s/o-hash)
                    (hashes->deps i/c-hash p/c-hash s/o-hash)
@@ -68,7 +68,8 @@
     (hash-map
      i/c-hash
      (λ (k v) (syntax-dependencies v))))
-  (apply append deps))
+  (define deps* (remove-duplicates deps))
+  (apply append deps*))
 
 ;;
 ;; contract definition function

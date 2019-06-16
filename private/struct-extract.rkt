@@ -15,8 +15,8 @@
 ;; I/C-Hash P/C-Hash Symbol Syntax -> S/O-Hash
 ;; modifies p/c-hash removing struct-related exports and returns
 ;; s/o-hash
-(define (p/c-remove-structs! i/c-hash p/c-hash key stx)
-  (let* ([s/f-hash (s/f-make key stx)]
+(define (p/c-remove-structs! i/c-hash p/c-hash key stx-raw)
+  (let* ([s/f-hash (s/f-make key stx-raw)]
          [export?  (s/f-export? s/f-hash)]
          [ctor?    (curry unstrange s/f-hash)]
          [s/c-hash (make-hash)])
@@ -39,9 +39,9 @@
 ;; Symbol Syntax -> S/F-hash
 ;; takes Typed Racket syntax and returns hash that maps struct names
 ;; to their fields
-(define (s/f-make key stx)
+(define (s/f-make key stx-raw)
   (define s/f-hash (make-hash))
-  (let go ([stx stx])
+  (let go ([stx stx-raw])
     (syntax-parse stx
       #:datum-literals (struct struct: :)
       [((~or struct struct:) name ((fld : type) ...))
@@ -93,7 +93,7 @@
    (λ (name f/c-hash)
      (hash-set! s/o-hash
                 name
-                #`(struct #,name #,(hash-map list f/c-hash)))))
+                #`(struct #,name #,(hash-map f/c-hash list)))))
   s/o-hash)
 
 ;;
@@ -116,10 +116,12 @@
   (define exports
     (hash-map s/f-hash
               (λ (name flds)
-                (map (λ (fld) (cons fld name))
+                (map (λ (fld) (cons (syntax-e fld)
+                                    (syntax-e name)))
                      (sp name flds)))))
   (define exports* (apply append exports))
-  (dict->procedure exports* #:failure #f))
+  (λ (id)
+    (assoc (syntax-e id) exports*)))
 
 ;; Struct-Proc definitions
 
@@ -159,7 +161,7 @@
   (syntax-parse i
     #:datum-literals (->)
     [(-> x ... _) (syntax-e #'(x ...))]
-    [x            (chase-domain (hash-ref i/c-hash i) i/c-hash)]))
+    [x            (chase-domain (hash-ref-stx i/c-hash i) i/c-hash)]))
 
 (define (unstrange s/f-hash id)
   (define id* (syntax->string id))
@@ -169,6 +171,13 @@
                (and (string-prefix? id* name*)
                     (string->number (substring id* (string-length name*))))))
          (hash-keys s/f-hash)))
+
+(define (hash-ref-stx h k)
+  (define p
+   (assoc (syntax->datum k)
+          (hash-map h (λ (k v) (cons (syntax->datum k) v)))))
+  (and p (cdr p)))
+
 
 ;;
 ;; test helpers
