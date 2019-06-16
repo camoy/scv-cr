@@ -1,59 +1,18 @@
 #lang racket/base
 
+(require
+ racket/require
+ (multi-in racket (syntax function))
+ (multi-in syntax (parse modresolve))
+ (multi-in scv-gt private (contract-extract
+                           configure
+                           syntax-util)))
+
+;;
+;; injection function
+;;
+
 (provide contract-inject)
-
-;;
-;; functions
-;;
-
-(require scv-gt/private/contract-extract
-         scv-gt/private/configure
-         scv-gt/private/syntax-util
-         syntax/parse
-         syntax/modresolve
-         racket/syntax
-         racket/function)
-
-;; [Listof Syntax]
-;; modules that provide bindings for contract definitions
-(define ctc-dependencies
-  '(racket/contract
-    typed-racket/utils/struct-type-c
-    typed-racket/utils/any-wrap
-    (submod typed-racket/private/type-contract predicates)))
-
-;; Syntax -> Syntax
-;; changes Typed Racket #lang to the no-check variant
-(define (as-no-check lang)
-  (format-id lang "~a/no-check" (syntax-e lang)))
-
-;; Syntax Contract-Data -> Syntax
-;; takes original syntax and contract data and uses contract information
-;; to inject provide contracts into the unexpanded syntax
-(define (inject-provide forms data)
-  (define forms* (transform-provide forms data))
-  #`((require racket/contract
-              #,@(contract-data-provide-deps data))
-     #,@(contract-data-provide-defns data)
-     #,(contract-data-provide-out data)
-     #,@forms*))
-
-;; Syntax Contract-Data -> Syntax
-;; takes original syntax and contract data and uses contract information
-;; to inject require contracts into the unexpanded syntax
-(define (inject-require forms data)
-  (define-values (forms* requires)
-    (transform-require forms))
-  #`((module require/contracts racket/base
-       (require racket/contract
-                #,@(contract-data-require-deps data))
-       #,@requires
-       #,@(contract-data-require-defns data)
-       #,(contract-data-require-out data))
-     (require 'require/contracts)
-     #,@forms*))
-
-(require syntax/strip-context)
 
 ;; Syntax Contract-Data -> Syntax
 ;; takes original syntax and contract data and uses contract information
@@ -63,61 +22,80 @@
     #:datum-literals (module)
     [(module name lang (mb forms ...))
      (define forms*
-       (for/fold ([stx #'(forms ...)])
-                 ([flag      (list (provide-off)
-                                   (require-off))]
-                  [injection (list inject-provide
+       (for/fold ([stx       #'(forms ...)])
+                 ([injection (list inject-provide
                                    inject-require)])
-         (if (not flag)
-             (injection stx data)
-             stx)))
-     (define stx*
-       #`(module name #,(as-no-check #'lang)
-           (mb #,@(strip-context forms*))))
-     stx*]))
+         (injection stx data)))
+     #`(module name #,(no-check #'lang)
+         (mb #,@forms*))]))
+
+;; Syntax -> Syntax
+;; changes Typed Racket #lang to the no-check variant
+(define (no-check lang)
+  (format-id lang "~a/no-check" (syntax-e lang)))
+
+;;
+;; provide injection
+;;
 
 ;; Syntax Contract-Data -> Syntax
-;; removes provide forms
-(define (transform-provide stx data)
-  (define extract-struct-name
-    (syntax-parser
-      #:datum-literals (struct-out)
-      [(struct-out y) (syntax-e #'y)]
-      [_ #f]))
-  (define (already-provided? id)
-    (or (memf (λ (x) (equal? (syntax-e id) x))
-              (contract-data-provide-ids data))
-        (memf (λ (x) (equal? (extract-struct-name id) x))
-              (contract-data-provide-struct-ids data))))
-  (define filter-provide
+;; takes original syntax and contract data and uses contract information
+;; to inject provide contracts into the unexpanded syntax
+(define (inject-provide forms data)
+  (define bundle (contract-data-provide data))
+  (define forms* (munge-provides forms data))
+  #`(#,@(contract-bundle-deps bundle)
+     #,@(contract-bundle-defns bundle)
+     #,@(contract-bundle-outs bundle)
+     #,@forms*))
+
+;; Syntax Contract-Data -> Syntax
+;; removes already provided identifiers from provide forms
+(define (munge-provides stx data)
+  (define not-provided
     (syntax-parser
       #:datum-literals (provide)
       [(provide x ...)
-       #`(provide #,@(filter (negate already-provided?)
-                             (syntax-e #'(x ...))))]
-      [x #'x]))
+       (define xs*
+         (filter (λ (x) (not (contract-bundle-provided? data x)))
+                 (syntax-e #'(x ...))))
+       #`(provide #,@xs*)]
+       [x #'x]))
   (syntax-parse stx
     [(x ...)
      (define provides*
-       (map filter-provide (syntax-e #'(x ...))))
-     (datum->syntax stx (map (λ (x) (transform-provide x data))
-                             provides*))]
+       (map not-provided (syntax-e #'(x ...))))
+     (define provides**
+       (map (λ (x) (munge-provides x data)) provides*))
+     (datum->syntax stx provides**)]
     [x #'x]))
 
-;; Syntax -> Syntax [List-of Syntax]
+;;
+;; require injection
+;;
+
+;; Syntax Contract-Data -> Syntax
+;; takes original syntax and contract data and uses contract information
+;; to inject require contracts into the unexpanded syntax
+(define (inject-require forms data)
+  (define bundle (contract-data-require data))
+  (define forms* (munge-requires forms data))
+  #`((module require/contracts racket/base
+       #,@(contract-bundle-deps bundle)
+       #,@(contract-bundle-defns bundle)
+       #,@(contract-bundle-outs bundle))
+     (require 'require/contracts)
+     #,@forms*))
+
+;; Syntax -> Syntax
 ;; extracts and munges require forms
-(define (transform-require stx)
+(define (munge-requires stx)
   (syntax-parse stx
     #:datum-literals (require/typed require/typed/check)
     [(~or* (require/typed m _ ...)
            (require/typed/check m _ ...))
-     (values #'(void)
-             (list #'(require m)))]
+     #'(void)]
     [(x ...)
-     (define-values (stxs* requires)
-       (for/lists (stxs* requires)
-                  ([stx (syntax-e #'(x ...))])
-         (transform-require stx)))
-     (values (datum->syntax stx stxs*)
-             (apply append requires))]
-    [x (values #'x '())]))
+     (datum->syntax stx (map munge-requires
+                             (syntax-e #'(x ...))))]
+    [x #'x]))

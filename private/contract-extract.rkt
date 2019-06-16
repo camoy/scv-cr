@@ -1,28 +1,22 @@
 #lang racket/base
 
 (require racket/require
-         syntax/parse
          (multi-in racket (list match contract))
+         syntax/parse
          (multi-in scv-gt private (syntax-util
-                                   struct-extract
-                                   provide-munge
-                                   require-munge)))
+                                   contract-munge
+                                   struct-extract)))
 
 ;;
 ;; data
 ;;
 
-(provide (struct-out contract-data))
-(struct contract-data (provide-defns
-                       provide-ids
-                       provide-out
-                       provide-struct-ids
-                       provide-deps
-                       require-defns
-                       require-ids
-                       require-out
-                       require-struct-ids
-                       require-deps) #:transparent)
+(provide (struct-out contract-data)
+         (struct-out contract-bundle))
+
+(struct contract-data (provide require))
+(struct contract-bundle (defns outs deps
+                         i/c-hash p/c-hash s/c-hash))
 
 ;;
 ;; extraction function
@@ -30,109 +24,110 @@
 
 (provide contract-extract)
 
-;; Syntax Syntax -> Contract-Quad
+;; Syntax -> Contract-Data
 ;; extracts and collects contract information from expanded syntax
-(define (contract-extract stx-raw stx)
-  (define-values (provide-defn-map provide-defns provide-deps)
-    (provide-ctc-defns stx))
-  (define-values (require-defn-map require-defns require-deps)
-    (require-ctc-defns stx))
-  (define-values (provide-ids provide-out provide-struct-ids)
-    (provide-ctc-out stx-raw stx provide-defn-map))
-  (define-values (require-ids require-out require-struct-ids)
-    (require-ctc-out stx-raw stx require-defn-map))
-  (contract-data provide-defns
-                 provide-ids
-                 provide-out
-                 provide-struct-ids
-                 provide-deps
-                 require-defns
-                 require-ids
-                 require-out
-                 require-struct-ids
-                 require-deps))
+(define (contract-extract stx)
+  (contract-data (hashes->bundle (provide-ctc-defns stx)
+                                 (provide-ctc-outs stx)
+                                 #f)
+                 (hashes->bundle (require-ctc-defns stx)
+                                 (require-ctc-outs stx)
+                                 #f)))
+
+;; I/C-Hash P/C-Hash S/C-Hash -> Contract-Bundle
+;; convert hashes to contract bundle
+(define (hashes->bundle i/c-hash p/c-hash s/c-hash)
+  (contract-bundle '() '() '()
+                   i/c-hash p/c-hash s/c-hash))
 
 ;;
-;; contract definition functions
+;; contract definition function
 ;;
 
-(provide provide-ctc-defns
-         require-ctc-defns)
-
-;; A I/C-Hash is a [Hash Symbol Syntax] mapping
+;; A I/C-Hash is a [Hash Syntax Syntax] mapping
 ;; from identifiers to contract definitions.
 
-;; Symbol (Syntax -> Syntax) -> (Syntax -> I/C-Hash Syntax [List-of Syntax])
-;; makes a munged definition function
+;; A Munger is a [Syntax -> [List-of [Cons Syntax Syntax]]]
+;; that maps a syntax object to an associative list between
+;; identifiers and their contract definition.
+
+;; Symbol Munger -> (Syntax -> I/C-Hash)
+;; makes a munged definition function where key is the syntax property
+;; we inspect and munger is the function we use to munge the contract
+;; definitions
 (define ((make-ctc-defns key munger) stx)
-  (define (compare-pair x y)
-    (symbol<? (car x) (car y)))
-  (define (pair->defn pair)
-    #`(define
-        #,(car pair)
-        #,(syntax-property
-           (syntax-scope-external (cdr pair))
-           'preserve-context
-           #t)))
-  (define (pair->dep pair)
-    (syntax-dependencies (cdr pair)))
-  (let* ([i/c-list (append-map munger (syntax-property-values stx key))]
-         [i/c-list* (sort i/c-list compare-pair)])
-    (values (make-hash i/c-list*)
-            (map pair->defn i/c-list*)
-            (remove-duplicates (append-map pair->dep i/c-list*)))))
+  (define (compare x y)
+    (symbol<? (syntax-e (car x))
+              (syntax-e (car y))))
+  (let* ([i/c-raw         (syntax-property-values stx key)]
+         [i/c-assoc-list  (append-map munger i/c-raw)]
+         [i/c-assoc-list* (sort i/c-assoc-list compare)])
+    (make-hash i/c-assoc-list*)))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions
 (define provide-ctc-defns
-  (make-ctc-defns 'provide provide-munge))
+  (make-ctc-defns
+   'provide
+   (syntax-parser
+     #:datum-literals (begin
+                        define
+                        define-values
+                        define-module-boundary-contract)
+     [(begin (define xs xs-def) ...
+             (define-values (y) y-def)
+             (define-module-boundary-contract
+               _ ...))
+      (with-syntax ([(xs-def* ...)
+                     (map contract-munge
+                          (syntax-e #'(xs ...))
+                          (syntax-e #'(xs-def ...)))]
+                    [y-def*
+                     (contract-munge #'y #'y-def)])
+        (map cons
+             (syntax-e #'(xs ... y))
+             (syntax-e #'(xs-def* ... y-def*))))])))
 
 ;; Syntax -> Syntax
 ;; yields munged require contract definitions
 (define require-ctc-defns
-  (make-ctc-defns 'require require-munge))
+  (make-ctc-defns
+   'require
+   (syntax-parser
+     #:datum-literals (begin define define-values)
+     [(begin (define xs xs-def) ...
+             (define-values (y) y-def))
+      (with-syntax ([(xs-def* ...)
+                     (map contract-munge
+                          (syntax-e #'(xs ...))
+                          (syntax-e #'(xs-def ...)))]
+                    [y-def*
+                     (contract-munge #'y #'y-def)])
+        (map cons
+             (syntax-e #'(xs ... y))
+             (syntax-e #'(xs-def* ... y-def*))))])))
 
 ;;
-;; contract out functions
+;; contract outs function
 ;;
 
-(provide provide-ctc-out
-         require-ctc-out)
-
-;; A P/C-Hash is a [Hash Symbol Syntax] mapping
+;; A P/C-Hash is a [Hash Syntax Syntax] mapping
 ;; provided identifiers to contract definitions.
 
-;; P/C-Hash -> Syntax
-;; constructs a provide form from a mapping
-;; between identifiers and contract definitions
-(define (provide-wrapper stx-raw p/c-hash struct-outs)
-  (define stx* (syntax-fresh-scope stx-raw))
-  (define (list/context k v)
-    (list (datum->syntax stx* k)
-          (datum->syntax stx* v)))
-  #`(provide
-     (contract-out
-      #,@(hash-map p/c-hash list/context)
-      #,@struct-outs)))
-
-;; Symbol (Syntax -> [Cons Syntax Syntax]) -> (Syntax I/C-Hash -> P/C-Hash)
-;; takes a key for searching syntax properties and a syntax parser that yields
-;; associations between bindings and contract definitions and constructs a
-;; binding+ctc function
-(define ((make-ctc-out key transform) stx-raw stx i/c-hash)
-  (define p/c-hash
-    (make-hash (map transform (syntax-property-values stx key))))
-  (define-values (struct-outs struct-ids)
-    (struct-munge! p/c-hash i/c-hash key stx-raw))
-  (values (hash-keys p/c-hash)
-          (provide-wrapper stx-raw p/c-hash struct-outs)
-          struct-ids))
+;; Symbol Munger -> (Syntax -> P/C-Hash)
+;; makes a munged out function where key is the syntax property
+;; we inspect and munger is the function we use to munge the identifier
+;; contract associations
+(define ((make-ctc-outs key munger) stx)
+  (let* ([p/c-raw         (syntax-property-values stx key)]
+         [p/c-assoc-list  (map munger p/c-raw)])
+    (make-hash p/c-assoc-list)))
 
 ;; Syntax -> P/C-Hash
 ;; takes syntax from Typed Racket and yields a hash
 ;; mapping exported identifiers to contract definitions
-(define provide-ctc-out
-  (make-ctc-out
+(define provide-ctc-outs
+  (make-ctc-outs
    'provide
    (syntax-parser
      #:datum-literals (begin define define-values
@@ -141,13 +136,13 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (cons (syntax-e #'k) #'v)])))
+      (cons #'k #'v)])))
 
 ;; Syntax -> P/C-Hash
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
 ;; identifiers to contract definitions
-(define require-ctc-out
-  (make-ctc-out
+(define require-ctc-outs
+  (make-ctc-outs
    'require-rename
    (syntax-parser
      #:datum-literals (begin require rename-without-provide
@@ -155,4 +150,24 @@
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (cons (syntax-e #'k) #'v)])))
+      (cons #'k #'v)])))
+
+;;
+;; contract bundle utils
+;;
+
+(provide contract-bundle-provided?)
+
+(define (contract-bundle-provided? bundle id)
+  (or (memf (λ (x) (equal? (syntax-e id)
+                           (syntax-e x)))
+            (hash-keys (contract-bundle-p/c-hash bundle)))
+      (memf (λ (x) (equal? (struct-name id)
+                           (syntax-e x)))
+            (hash-keys (contract-bundle-s/c-hash bundle)))))
+
+(define struct-name
+  (syntax-parser
+    #:datum-literals (struct-out)
+    [(struct-out y) (syntax-e #'y)]
+    [_ #f]))
