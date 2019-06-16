@@ -6,8 +6,9 @@
          syntax->string
          syntax-overwrite
          syntax-fetch
+         syntax-attach-scope
          syntax-fresh-scope
-         syntax-scope-expanded)
+         syntax-scope-external)
 
 ;;
 ;; syntax properties
@@ -101,28 +102,78 @@
     (thunk
      (read-syntax (object-name port) port))))
 
+;;
+;; TODO: CLEANUP
+;;
+
+(require syntax/modcollapse
+         racket/path)
+
+(provide syntax-dependencies)
+
+;; TODO may not be relative to current-directory
+
+(define (module-path-index->relative-path mpi)
+  (define p (collapse-module-path-index mpi))
+  (if (path? p)
+      (path->string (find-relative-path (current-directory) p))
+      p))
+
+(define (syntax-dependencies e)
+  (cond
+    [(syntax? e)
+     (if (and (identifier? e) (identifier-binding e))
+         (let* ([binding (identifier-binding e)]
+                [mpi     (third binding)]
+                [dep     (module-path-index->relative-path mpi)])
+           (if dep (list dep) '()))
+         (syntax-dependencies (syntax-e e)))]
+    [(pair? e)
+     (append (syntax-dependencies (car e))
+             (syntax-dependencies (cdr e)))]
+    [else '()]))
+
+(define syntax-attach-scope
+  (make-syntax-introducer))
+
+(define (strip-context* e)
+  (cond
+    [(syntax? e)
+     (if (syntax-property e 'preserve-context)
+         e
+         (datum->syntax #f (strip-context* (syntax-e e)) e e))]
+    [(pair? e) (cons (strip-context* (car e))
+                     (strip-context* (cdr e)))]
+    [else e]))
+
 ;; Syntax -> Syntax
 ;; strips syntax of lexical context and attaches fresh scope
 (define syntax-fresh-scope
-  (let ([introducer (make-syntax-introducer)])
-    (compose introducer strip-context)))
+  (compose syntax-attach-scope strip-context*))
 
 ;; Syntax -> Syntax
 ;; places a fresh scope on syntax that came from expansion
-(define (syntax-scope-expanded stx)
+(define (syntax-scope-external stx)
   (let go ([e stx])
     (cond [(syntax? e)
-           (let* ([binding (and (identifier? e) (identifier-binding e))]
+           (let* ([id? (identifier? e)]
+                  [binding (and id? (identifier-binding e))]
                   [src (and binding (first binding))]
                   [resolved (and src (module-path-index-resolve src))]
                   [name (and resolved (resolved-module-path-name resolved))]
                   [from-expansion? (equal? '|expanded module| name)]
-                  [introducer (if from-expansion? syntax-fresh-scope values)]
+                  [introducer (cond
+                                [(not id?) (λ (x) (datum->syntax #f (syntax-e x)))]
+                                [(or from-expansion? (not binding))
+                                  strip-context]
+                                [else syntax-attach-scope])]
                   [e* (go (syntax-e e))])
              (introducer (datum->syntax e e* e e)))]
           [(pair? e)
            (cons (go (car e)) (go (cdr e)))]
           [else e])))
+
+;; END CLEANUP
 
 ;;
 ;; syntax properties test

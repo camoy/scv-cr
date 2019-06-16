@@ -32,7 +32,8 @@
 ;; to inject provide contracts into the unexpanded syntax
 (define (inject-provide forms data)
   (define forms* (transform-provide forms data))
-  #`((require #,@ctc-dependencies)
+  #`((require racket/contract
+              #,@(contract-data-provide-deps data))
      #,@(contract-data-provide-defns data)
      #,(contract-data-provide-out data)
      #,@forms*))
@@ -44,18 +45,21 @@
   (define-values (forms* requires)
     (transform-require forms))
   #`((module require/contracts racket/base
-       (require #,@ctc-dependencies)
+       (require racket/contract
+                #,@(contract-data-require-deps data))
        #,@requires
        #,@(contract-data-require-defns data)
        #,(contract-data-require-out data))
      (require 'require/contracts)
      #,@forms*))
 
+(require syntax/strip-context)
+
 ;; Syntax Contract-Data -> Syntax
 ;; takes original syntax and contract data and uses contract information
 ;; to inject provide and require contracts into the unexpanded syntax
 (define (contract-inject stx data)
-  (syntax-parse (syntax-fresh-scope stx)
+  (syntax-parse stx
     #:datum-literals (module)
     [(module name lang (mb forms ...))
      (define forms*
@@ -64,11 +68,13 @@
                                    (require-off))]
                   [injection (list inject-provide
                                    inject-require)])
-         (if (not flag) (injection stx data) stx)))
+         (if (not flag)
+             (injection stx data)
+             stx)))
      (define stx*
        #`(module name #,(as-no-check #'lang)
-           (mb #,@forms*)))
-     (syntax-scope-expanded stx*)]))
+           (mb #,@(strip-context forms*))))
+     stx*]))
 
 ;; Syntax Contract-Data -> Syntax
 ;; removes provide forms

@@ -17,10 +17,12 @@
                        provide-ids
                        provide-out
                        provide-struct-ids
+                       provide-deps
                        require-defns
                        require-ids
                        require-out
-                       require-struct-ids) #:transparent)
+                       require-struct-ids
+                       require-deps) #:transparent)
 
 ;;
 ;; extraction function
@@ -31,9 +33,9 @@
 ;; Syntax Syntax -> Contract-Quad
 ;; extracts and collects contract information from expanded syntax
 (define (contract-extract stx-raw stx)
-  (define-values (provide-defn-map provide-defns)
+  (define-values (provide-defn-map provide-defns provide-deps)
     (provide-ctc-defns stx))
-  (define-values (require-defn-map require-defns)
+  (define-values (require-defn-map require-defns require-deps)
     (require-ctc-defns stx))
   (define-values (provide-ids provide-out provide-struct-ids)
     (provide-ctc-out stx-raw stx provide-defn-map))
@@ -43,10 +45,12 @@
                  provide-ids
                  provide-out
                  provide-struct-ids
+                 provide-deps
                  require-defns
                  require-ids
                  require-out
-                 require-struct-ids))
+                 require-struct-ids
+                 require-deps))
 
 ;;
 ;; contract definition functions
@@ -58,18 +62,25 @@
 ;; A I/C-Hash is a [Hash Symbol Syntax] mapping
 ;; from identifiers to contract definitions.
 
-;; Symbol (Syntax -> Syntax) -> (Syntax -> I/C-Hash Syntax)
+;; Symbol (Syntax -> Syntax) -> (Syntax -> I/C-Hash Syntax [List-of Syntax])
 ;; makes a munged definition function
 (define ((make-ctc-defns key munger) stx)
   (define (compare-pair x y)
     (symbol<? (car x) (car y)))
   (define (pair->defn pair)
-    #`(define #,(datum->syntax stx (car pair))
-              #,(datum->syntax stx (cdr pair))))
+    #`(define
+        #,(car pair)
+        #,(syntax-property
+           (syntax-scope-external (cdr pair))
+           'preserve-context
+           #t)))
+  (define (pair->dep pair)
+    (syntax-dependencies (cdr pair)))
   (let* ([i/c-list (append-map munger (syntax-property-values stx key))]
          [i/c-list* (sort i/c-list compare-pair)])
     (values (make-hash i/c-list*)
-            (map pair->defn i/c-list*))))
+            (map pair->defn i/c-list*)
+            (remove-duplicates (append-map pair->dep i/c-list*)))))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions
