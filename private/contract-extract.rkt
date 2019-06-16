@@ -50,7 +50,13 @@
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
 (define (hashes->defns i/c-hash p/c-hash s/o-hash)
-  (hash-map i/c-hash (λ (k v) #`(define #,k #,v))))
+  (define (compare x y)
+    (symbol<? (syntax-e (car x))
+              (syntax-e (car y))))
+  (let* ([i/c-assoc-list (hash->list i/c-hash)]
+         [i/c-assoc-list* (sort i/c-assoc-list compare)])
+    (map (λ (p)  #`(define #,(car p) #,(cdr p)))
+         i/c-assoc-list*)))
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
 (define (hashes->outs i/c-hash p/c-hash s/o-hash)
@@ -87,13 +93,9 @@
 ;; we inspect and munger is the function we use to munge the contract
 ;; definitions
 (define ((make-ctc-defns key munger) stx)
-  (define (compare x y)
-    (symbol<? (syntax-e (car x))
-              (syntax-e (car y))))
   (let* ([i/c-raw         (syntax-property-values stx key)]
-         [i/c-assoc-list  (append-map munger i/c-raw)]
-         [i/c-assoc-list* (sort i/c-assoc-list compare)])
-    (make-hash i/c-assoc-list*)))
+         [i/c-assoc-list  (append-map munger i/c-raw)])
+    (make-hash i/c-assoc-list)))
 
 ;; Syntax -> Syntax
 ;; yields munged provide contract definitions

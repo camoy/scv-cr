@@ -13,6 +13,7 @@
 ;;
 
 (provide contract-inject)
+(require syntax/strip-context)
 
 ;; Syntax Contract-Data -> Syntax
 ;; takes original syntax and contract data and uses contract information
@@ -27,7 +28,7 @@
                                    inject-require)])
          (injection stx data)))
      #`(module name #,(no-check #'lang)
-         (mb #,@forms*))]))
+         (mb #,@(strip-context forms*)))]))
 
 ;; Syntax -> Syntax
 ;; changes Typed Racket #lang to the no-check variant
