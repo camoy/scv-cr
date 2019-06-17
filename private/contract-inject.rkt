@@ -28,12 +28,13 @@
                                    inject-provide)])
          (injection stx data)))
      #`(module name #,(no-check #'lang)
-         (mb #,@(syntax-fresh-scope forms*)))]))
+         (#,(syntax-attach-scope #'mb)
+          #,@(syntax-fresh-scope forms*)))]))
 
 ;; Syntax -> Syntax
 ;; changes Typed Racket #lang to the no-check variant
 (define (no-check lang)
-  (format-id lang "~a/no-check" (syntax-e lang)))
+  (syntax-attach-scope (format-id lang "~a/no-check" (syntax-e lang))))
 
 ;;
 ;; provide injection

@@ -55,7 +55,9 @@
               (syntax-e (car y))))
   (let* ([i/c-assoc-list (hash->list i/c-hash)]
          [i/c-assoc-list* (sort i/c-assoc-list compare)])
-    (map (λ (p)  #`(define #,(car p) #,(cdr p)))
+    (map (λ (p)
+           #`(define #,(car p)
+               #,(syntax-scope-external (cdr p))))
          i/c-assoc-list*)))
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]

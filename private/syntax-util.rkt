@@ -173,8 +173,8 @@
                   [introducer (cond
                                 [(not id?) (λ (x) (datum->syntax #f (syntax-e x)))]
                                 [(or from-expansion? (not binding))
-                                  strip-context]
-                                [else syntax-attach-scope])]
+                                 strip-context]
+                                [else (compose syntax-preserve syntax-attach-scope)])]
                   [e* (go (syntax-e e))])
              (introducer (datum->syntax e e* e e)))]
           [(pair? e)
