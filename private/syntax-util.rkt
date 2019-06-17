@@ -130,6 +130,7 @@
          (let* ([binding (identifier-binding e)]
                 [mpi     (third binding)]
                 [dep     (module-path-index->relative-path mpi)])
+           (displayln e)
            (if dep (list dep) '()))
          (syntax-dependencies (syntax-e e)))]
     [(pair? e)

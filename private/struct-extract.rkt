@@ -62,7 +62,7 @@
 ;; S/C-Hash functions
 ;;
 
-;; A S/C-Hash is a [Hash Syntax [Hash Syntax Syntax]]
+;; A S/C-Hash is a [Hash Syntax [List-of [List-of Syntax Syntax]]]
 ;; maps struct to its field-contract mapping
 
 ;; S/C-Hash I/C-Hash S/F-Hash Syntax Syntax -> Void
@@ -71,11 +71,10 @@
 (define (s/c-add! s/c-hash i/c-hash s/f-hash id ctc)
   (let* ([id*      (unstrange s/f-hash id)]
          [fld-ctcs (chase-domain ctc i/c-hash)]
-         [fld+ctcs (map cons
+         [f/c-list (map list
                         (hash-ref s/f-hash id*)
-                        fld-ctcs)]
-         [f/c-hash (make-hash fld+ctcs)])
-    (hash-set! s/c-hash id* f/c-hash)))
+                        fld-ctcs)])
+    (hash-set! s/c-hash id* f/c-list)))
 
 ;;
 ;; S/O-Hash functions
@@ -90,10 +89,10 @@
   (define s/o-hash (make-hash))
   (hash-for-each
    s/c-hash
-   (λ (name f/c-hash)
+   (λ (name f/c)
      (hash-set! s/o-hash
                 name
-                #`(struct #,name #,(hash-map f/c-hash list)))))
+                #`(struct #,name #,f/c))))
   s/o-hash)
 
 ;;

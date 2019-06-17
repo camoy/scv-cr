@@ -2,7 +2,7 @@
 
 (require
  racket/require
- (multi-in racket (syntax function))
+ (multi-in racket (syntax function set))
  (multi-in syntax (parse modresolve))
  (multi-in scv-gt private (contract-extract
                            configure
@@ -28,7 +28,7 @@
                                    inject-require)])
          (injection stx data)))
      #`(module name #,(no-check #'lang)
-         (mb #,@(strip-context forms*)))]))
+         (mb #,@forms*))]))
 
 ;; Syntax -> Syntax
 ;; changes Typed Racket #lang to the no-check variant
@@ -45,7 +45,8 @@
 (define (inject-provide forms data)
   (define bundle (contract-data-provide data))
   (define forms* (munge-provides forms bundle))
-  #`((require #,@(contract-bundle-deps bundle))
+  #`((require racket/contract
+              #,@(contract-bundle-deps bundle))
      #,@(contract-bundle-defns bundle)
      (provide (contract-out #,@(contract-bundle-outs bundle)))
      #,@forms*))
@@ -80,9 +81,12 @@
 ;; to inject require contracts into the unexpanded syntax
 (define (inject-require forms data)
   (define bundle (contract-data-require data))
-  (define forms* (munge-requires forms))
+  (define required-set (mutable-set))
+  (define forms* ((munge-requires required-set) forms))
   #`((module require/contracts racket/base
-       (require #,@(contract-bundle-deps bundle))
+       (require racket/contract
+                #,@(set->list required-set)
+                #,@(contract-bundle-deps bundle))
        #,@(contract-bundle-defns bundle)
        (provide (contract-out #,@(contract-bundle-outs bundle))))
      (require 'require/contracts)
@@ -90,13 +94,14 @@
 
 ;; Syntax -> Syntax
 ;; extracts and munges require forms
-(define (munge-requires stx)
+(define ((munge-requires required-set) stx)
   (syntax-parse stx
     #:datum-literals (require/typed require/typed/check)
     [(~or* (require/typed m _ ...)
            (require/typed/check m _ ...))
+     (set-add! required-set #'m)
      #'(void)]
     [(x ...)
-     (datum->syntax stx (map munge-requires
+     (datum->syntax stx (map (munge-requires required-set)
                              (syntax-e #'(x ...))))]
     [x #'x]))

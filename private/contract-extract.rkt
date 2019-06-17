@@ -74,8 +74,7 @@
     (hash-map
      i/c-hash
      (λ (k v) (syntax-dependencies v))))
-  (define deps* (remove-duplicates deps))
-  (apply append deps*))
+  (remove-duplicates (apply append deps)))
 
 ;;
 ;; contract definition function
