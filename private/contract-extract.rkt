@@ -74,7 +74,9 @@
     (hash-map
      i/c-hash
      (λ (k v) (syntax-dependencies v))))
-  (remove-duplicates (apply append deps)))
+  (define (fresh x)
+    (syntax-preserve ((make-syntax-introducer) (datum->syntax #f x))))
+  (map fresh (remove-duplicates (apply append deps))))
 
 ;;
 ;; contract definition function

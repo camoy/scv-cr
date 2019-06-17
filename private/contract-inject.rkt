@@ -24,11 +24,11 @@
     [(module name lang (mb forms ...))
      (define forms*
        (for/fold ([stx       #'(forms ...)])
-                 ([injection (list inject-provide
-                                   inject-require)])
+                 ([injection (list inject-require
+                                   inject-provide)])
          (injection stx data)))
      #`(module name #,(no-check #'lang)
-         (mb #,@forms*))]))
+         (mb #,@(syntax-fresh-scope forms*)))]))
 
 ;; Syntax -> Syntax
 ;; changes Typed Racket #lang to the no-check variant
@@ -69,7 +69,7 @@
        (map not-provided (syntax-e #'(x ...))))
      (define provides**
        (map (λ (x) (munge-provides x bundle)) provides*))
-     (datum->syntax stx provides**)]
+     (datum->syntax stx provides** stx stx)]
     [x #'x]))
 
 ;;
@@ -102,6 +102,9 @@
      (set-add! required-set #'m)
      #'(void)]
     [(x ...)
-     (datum->syntax stx (map (munge-requires required-set)
-                             (syntax-e #'(x ...))))]
+     (datum->syntax stx
+                    (map (munge-requires required-set)
+                         (syntax-e #'(x ...)))
+                    stx
+                    stx)]
     [x #'x]))

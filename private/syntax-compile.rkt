@@ -58,7 +58,6 @@
                                             target->deps))))
   (define target->stx
     (make-hash (map cons targets stxs)))
-  (displayln sorted-targets)
   (for ([target sorted-targets])
     (syntax-compile target
                     (hash-ref target->stx target))))

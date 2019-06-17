@@ -130,13 +130,16 @@
          (let* ([binding (identifier-binding e)]
                 [mpi     (third binding)]
                 [dep     (module-path-index->relative-path mpi)])
-           (displayln e)
            (if dep (list dep) '()))
          (syntax-dependencies (syntax-e e)))]
     [(pair? e)
      (append (syntax-dependencies (car e))
              (syntax-dependencies (cdr e)))]
     [else '()]))
+
+(provide syntax-preserve)
+(define (syntax-preserve stx)
+  (syntax-property stx 'preserve-context #t))
 
 (define syntax-attach-scope
   (make-syntax-introducer))

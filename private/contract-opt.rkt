@@ -13,9 +13,7 @@
   (define targets* (map path->string targets))
   #;(pretty-print targets*)
   #;(pretty-print (map syntax->datum stxs))
-  (displayln stxs)
-  (for ([stx stxs])
-    (displayln (+scopes stx)))
+  (for ([stx stxs]) (displayln (+scopes stx)))
   #;(displayln (verify-modules targets* stxs))
   (if (verify-off)
       stxs
