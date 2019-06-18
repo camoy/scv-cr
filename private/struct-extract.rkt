@@ -1,4 +1,4 @@
-#lang errortrace racket/base
+#lang racket/base
 
 (require racket/require
          (multi-in racket (list set syntax string function))

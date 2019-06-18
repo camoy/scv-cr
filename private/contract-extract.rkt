@@ -1,7 +1,7 @@
-#lang errortrace racket/base
+#lang racket/base
 
 (require racket/require
-         (multi-in racket (list match contract))
+         (multi-in racket (list match contract string))
          syntax/parse
          (multi-in scv-gt private (syntax-util
                                    contract-munge
@@ -26,38 +26,62 @@
 
 ;; Syntax -> Contract-Data
 ;; extracts and collects contract information from expanded syntax
-(define (contract-extract stx stx-raw)
-  (contract-data (hashes->bundle (provide-ctc-defns stx)
+(define (contract-extract targets stx stx-raw)
+  (contract-data (hashes->bundle targets
+                                 (provide-ctc-defns stx)
                                  (provide-ctc-outs stx)
                                  'provide
                                  stx-raw)
-                 (hashes->bundle (require-ctc-defns stx)
+                 (hashes->bundle targets
+                                 (require-ctc-defns stx)
                                  (require-ctc-outs stx)
                                  'require-rename
                                  stx-raw)))
 
-;; I/C-Hash P/C-Hash Symbol Syntax Syntax -> Contract-Bundle
+;; [List-of Path] I/C-Hash P/C-Hash Symbol Syntax Syntax -> Contract-Bundle
 ;; convert hashes to contract bundle
-(define (hashes->bundle i/c-hash p/c-hash key stx-raw)
+(define (hashes->bundle targets i/c-hash p/c-hash key stx-raw)
   (define s/o-hash
     (p/c-remove-structs! i/c-hash p/c-hash key stx-raw))
-  (contract-bundle (hashes->defns i/c-hash p/c-hash s/o-hash)
+  (define-values (deps d/i-hash)
+    (hashes->deps i/c-hash p/c-hash s/o-hash))
+  (contract-bundle (hashes->defns targets i/c-hash p/c-hash s/o-hash d/i-hash)
                    (hashes->outs i/c-hash p/c-hash s/o-hash)
-                   (hashes->deps i/c-hash p/c-hash s/o-hash)
+                   deps
                    i/c-hash
                    p/c-hash
                    s/o-hash))
 
-;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
-(define (hashes->defns i/c-hash p/c-hash s/o-hash)
-  (define (compare x y)
-    (symbol<? (syntax-e (car x))
-              (syntax-e (car y))))
+(define ((make-get-number t) x)
+  (define x* (symbol->string x))
+  (and (string-prefix? x* t)
+       (string->number (substring x* (string-length t)))))
+
+(define g? (make-get-number "g"))
+(define generated-contract? (make-get-number "generated-contract"))
+(define lifted? (make-get-number "lifted/"))
+
+(define (compare x y)
+  (define-values (x* y*)
+    (values (syntax-e (car x))
+            (syntax-e (car y))))
+  (let go ([orders
+            (list g? generated-contract? lifted?)])
+    (if (empty? orders)
+        (symbol<? x* y*)
+        (let ([x** ((car orders) x*)]
+              [y** ((car orders) y*)])
+          (if (and x** y**)
+              (< x** y**)
+              (go (cdr orders)))))))
+
+;; [List-of Path] I/C-Hash P/C-Hash S/O-Hash D/I-Hash -> [List-of Syntax]
+(define (hashes->defns targets i/c-hash p/c-hash s/o-hash d/i-hash)
   (let* ([i/c-assoc-list (hash->list i/c-hash)]
          [i/c-assoc-list* (sort i/c-assoc-list compare)])
     (map (λ (p)
            #`(define #,(car p)
-               #,(syntax-scope-external (cdr p))))
+               #,(syntax-scope-external targets d/i-hash (cdr p))))
          i/c-assoc-list*)))
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
@@ -70,15 +94,21 @@
     s/o-hash
     (λ (k v) v))))
 
-;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
+;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax] D/I-Hash
 (define (hashes->deps i/c-hash p/c-hash s/o-hash)
   (define deps
     (hash-map
      i/c-hash
      (λ (k v) (syntax-dependencies v))))
+  (define d/i-hash
+    (make-hash))
   (define (fresh x)
-    (syntax-preserve ((make-syntax-introducer) (datum->syntax #f x))))
-  (map fresh (remove-duplicates (apply append deps))))
+    (define introducer (make-syntax-introducer))
+    (hash-set! d/i-hash x introducer)
+    ((compose syntax-preserve introducer)
+     (datum->syntax #f x)))
+  (values (map fresh (remove-duplicates (apply append deps)))
+          d/i-hash))
 
 ;;
 ;; contract definition function

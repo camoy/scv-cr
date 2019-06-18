@@ -159,22 +159,39 @@
 (define syntax-fresh-scope
   (compose syntax-attach-scope strip-context*))
 
-;; Syntax -> Syntax
+(define (from-dependency? targets name)
+  (member (path->string name)
+          (map path->string targets)
+          string=?))
+
+(define ((dependency-introducer d/i-hash) stx)
+  (define dep
+    (car (syntax-dependencies stx)))
+  ((compose syntax-preserve
+           (hash-ref d/i-hash dep)
+           strip-context)
+   stx))
+
+;; [List-of Path] D/I-Hash Syntax -> Syntax
 ;; places a fresh scope on syntax that came from expansion
-(define (syntax-scope-external stx)
+(define (syntax-scope-external targets d/i-hash stx)
   (let go ([e stx])
     (cond [(syntax? e)
            (let* ([id? (identifier? e)]
                   [binding (and id? (identifier-binding e))]
-                  [src (and binding (first binding))]
-                  [resolved (and src (module-path-index-resolve src))]
+                  [mpi (and binding (third binding))]
+                  [resolved (and mpi (module-path-index-resolve mpi))]
                   [name (and resolved (resolved-module-path-name resolved))]
                   [from-expansion? (equal? '|expanded module| name)]
                   [introducer (cond
-                                [(not id?) (λ (x) (datum->syntax #f (syntax-e x)))]
+                                [(not id?)
+                                 (λ (x) (datum->syntax #f (syntax-e x)))]
                                 [(or from-expansion? (not binding))
                                  strip-context]
-                                [else (compose syntax-preserve syntax-attach-scope)])]
+                                [(and (from-dependency? targets name))
+                                 (dependency-introducer d/i-hash)]
+                                [else
+                                 (compose syntax-preserve syntax-attach-scope)])]
                   [e* (go (syntax-e e))])
              (introducer (datum->syntax e e* e e)))]
           [(pair? e)

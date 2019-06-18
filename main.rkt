@@ -39,11 +39,11 @@
 
 ;; Module-Path -> Syntax
 ;; takes a target and returns syntax object with full contracts
-(define (pipeline target)
+(define ((pipeline targets) target)
   (define stx (syntax-fetch target))
   (if (module-typed? target)
       (let* ([stx-expand (expand/base+dir stx target)]
-             [ctc-data   (contract-extract stx-expand stx)]
+             [ctc-data   (contract-extract targets stx-expand stx)]
              [stx-ctc    (contract-inject stx ctc-data)])
         stx-ctc)
       stx))
@@ -73,7 +73,7 @@
     (map path->complete-path targets))
   (for-each module-delete-zo targets*)
   (define stxs-opt
-    (contract-opt targets* (map pipeline targets*)))
+    (contract-opt targets* (map (pipeline targets*) targets*)))
 
   ;; flags
   (when (overwrite)
