@@ -40,9 +40,8 @@
   (map (curryr resolve-module-path-index target)
        mpis))
 
-;; [List-of Module-Path] [List-of Syntax] -> Void
-;; compiles targets in the correct order
-(define (syntax-compile-all targets stxs)
+(provide sort-by-dependency)
+(define (sort-by-dependency targets)
   (define (clean-deps dependencies)
     (filter-map (λ (x) (and (member x targets)
                             (path->symbol x)))
@@ -51,16 +50,17 @@
     (for/list ([target targets])
       (cons (path->symbol target)
             (clean-deps (get-dependencies target)))))
-  (define sorted-targets
-    (map symbol->path
-         (topological-sort (map path->symbol targets)
-                           (dict->procedure #:failure (const empty)
-                                            target->deps))))
-  (define target->stx
-    (make-hash (map cons targets stxs)))
-  (for ([target sorted-targets])
-    (syntax-compile target
-                    (hash-ref target->stx target))))
+  (map symbol->path
+       (topological-sort (map path->symbol targets)
+                         (dict->procedure #:failure (const empty)
+                                          target->deps))))
+
+;; [List-of Module-Path] [List-of Syntax] -> Void
+;; compiles targets in the correct order
+(define (syntax-compile-all targets stxs)
+  (for ([target targets]
+        [stx    stxs])
+    (syntax-compile target stx)))
 
 ;;
 ;; test
