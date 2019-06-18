@@ -160,9 +160,10 @@
   (compose syntax-attach-scope strip-context*))
 
 (define (from-dependency? targets name)
-  (member (path->string name)
-          (map path->string targets)
-          string=?))
+  (and (path? name)
+       (member (path->string name)
+               (map path->string targets)
+               string=?)))
 
 (define ((dependency-introducer d/i-hash) stx)
   (define dep
