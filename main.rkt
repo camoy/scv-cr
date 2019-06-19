@@ -38,14 +38,15 @@
 
 (provide optimize)
 
-;; Module-Path -> Syntax
-;; takes a target and returns syntax object with full contracts
+;; Module-Path -> Contract-Data
+;; takes a target and returns contract data
 (define ((pipeline targets) target)
-  (define stx (syntax-fetch target))
-  (let* ([stx-expand (expand/base+dir stx target)]
-         [ctc-data   (contract-extract targets stx-expand stx)]
-         [stx-ctc    (contract-inject stx ctc-data)])
-    stx-ctc))
+  (if (module-typed? target)
+      (let* ([stx        (syntax-fetch target)]
+             [stx-expand (expand/base+dir stx target)]
+             [ctc-data   (contract-extract targets stx-expand stx)])
+        ctc-data)
+      #f))
 
 ;; [List-of Module-Path] -> Void
 ;; optimizes target modules, see documentation for the purpose of
@@ -70,26 +71,27 @@
   ;; acquiring targets
   (define targets*
     (map path->complete-path targets))
-  (define-values (unsorted-typed-targets untyped-targets)
-    (partition module-typed? targets*))
-  (define typed-targets
-    (sort-by-dependency unsorted-typed-targets))
 
   ;; clean old zo
   (for-each module-delete-zo targets*)
 
-  ;; prepare for verification
-  (define all-targets
-    (append typed-targets untyped-targets))
-  (define all-stxs
-    (append (map (pipeline typed-targets) typed-targets)
-            (map syntax-fetch untyped-targets)))
+  ;; extract data
+  (define ctc-data
+    (map (pipeline targets*) targets*))
+  (define t/d-hash
+    (make-hash (map cons targets* ctc-data)))
+
+  ;; verify
+  (define sorted-targets
+    (sort-by-dependency targets*))
+  (define sorted-data
+    (map (λ (t) (hash-ref t/d-hash t)) sorted-targets))
   (define stxs-opt
-    (contract-opt all-targets all-stxs))
+    (contract-opt sorted-targets sorted-data))
 
   ;; flags
   (when (overwrite)
-    (for-each syntax-overwrite stxs-opt all-targets))
+    (for-each syntax-overwrite stxs-opt sorted-targets))
 
   (when (show-contract)
     (for-each (λ (stx target)
@@ -98,10 +100,10 @@
                 (displayln long-line)
                 (displayln (syntax->pretty stx)))
               stxs-opt
-              all-targets))
+              sorted-targets))
 
   (unless (compiler-off)
-    (syntax-compile-all all-targets stxs-opt))
+    (syntax-compile-all sorted-targets stxs-opt))
 
   )
 

@@ -16,7 +16,7 @@
 
 (struct contract-data (provide require))
 (struct contract-bundle (defns outs deps
-                         i/c-hash p/c-hash s/o-hash))
+                          i/c-hash p/c-hash s/o-hash) #:mutable)
 
 ;;
 ;; extraction function
