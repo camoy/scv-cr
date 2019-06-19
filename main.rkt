@@ -3,6 +3,7 @@
 (require racket/require
          (multi-in racket (cmdline
                            function
+                           list
                            pretty))
          (multi-in scv-gt
                    private
@@ -66,17 +67,29 @@
   (compiler-off c)
   (verify-off v)
 
-  ;; optimize
+  ;; acquiring targets
   (define targets*
-    (sort-by-dependency
-     (filter module-typed? (map path->complete-path targets))))
+    (map path->complete-path targets))
+  (define-values (unsorted-typed-targets untyped-targets)
+    (partition module-typed? targets*))
+  (define typed-targets
+    (sort-by-dependency unsorted-typed-targets))
+
+  ;; clean old zo
   (for-each module-delete-zo targets*)
+
+  ;; prepare for verification
+  (define all-targets
+    (append typed-targets untyped-targets))
+  (define all-stxs
+    (append (map (pipeline typed-targets) typed-targets)
+            (map syntax-fetch untyped-targets)))
   (define stxs-opt
-    (contract-opt targets* (map (pipeline targets*) targets*)))
+    (contract-opt all-targets all-stxs))
 
   ;; flags
   (when (overwrite)
-    (for-each syntax-overwrite stxs-opt targets*))
+    (for-each syntax-overwrite stxs-opt all-targets))
 
   (when (show-contract)
     (for-each (λ (stx target)
@@ -85,10 +98,10 @@
                 (displayln long-line)
                 (displayln (syntax->pretty stx)))
               stxs-opt
-              targets*))
+              all-targets))
 
   (unless (compiler-off)
-    (syntax-compile-all targets* stxs-opt))
+    (syntax-compile-all all-targets stxs-opt))
 
   )
 

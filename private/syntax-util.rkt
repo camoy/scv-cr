@@ -99,6 +99,7 @@
 ;; retrieves syntax object from module path
 (define (syntax-fetch target)
   (define port (open-input-file target))
+  (port-count-lines! port)
   (with-module-reading-parameterization
     (thunk
      (read-syntax (object-name port) port))))
