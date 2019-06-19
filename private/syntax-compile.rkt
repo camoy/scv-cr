@@ -36,7 +36,8 @@
 ;; gets a module's dependencies
 (define (get-dependencies target)
   (define mpis
-    (cdr (assoc 0 (module-compiled-imports (get-module-code target)))))
+    (parameterize ([current-module-name-resolver (get-module-name-resolver)])
+      (cdr (assoc 0 (module-compiled-imports (get-module-code target))))))
   (map (curryr resolve-module-path-index target)
        mpis))
 

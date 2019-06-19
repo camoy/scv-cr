@@ -66,7 +66,8 @@
 (define (module-typed? target)
   (unless (file-exists? target)
     (error 'module-typed? "file ~a doesn't exist" target))
-  (in-dir target (dynamic-rerequire target))
+  (parameterize ([current-module-name-resolver (get-module-name-resolver)])
+    (in-dir target (dynamic-rerequire target)))
   (module-declared? `(submod ,target #%type-decl) #t))
 
 ;; Module-Path -> Void
