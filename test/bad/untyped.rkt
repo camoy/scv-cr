@@ -1,6 +1,10 @@
 #lang racket/base
 
 (require "typed.rkt")
-(if #t
-    (adder 0)
-    (adder "bad"))
+
+(define (probably-ok x)
+  (if (< x 0.001)
+      (adder "bad")
+      (adder 0)))
+
+(probably-ok (random))

@@ -49,14 +49,21 @@
   #;(test-case
     "basic posn"
     (test-optimize "basic/posn-typed-client.rkt"
-                   '("basic/posn-typed-client.rkt" "basic/posn-untyped-server.rkt")))
+                   '("basic/posn-typed-client.rkt"
+                     "basic/posn-untyped-server.rkt")))
+
+  #;(test-case
+    "bad adder"
+    (test-optimize "bad/untyped.rkt"
+                   '("bad/untyped.rkt"
+                     "bad/typed.rkt")))
 
   ;; success
   #;(test-benchmark "sieve")
   #;(test-benchmark "snake")
   #;(test-benchmark "zombie")
   #;(test-benchmark "tetris")
-  (test-benchmark "synth")
+  #;(test-benchmark "synth")
 
   ;; error
   #;(test-benchmark "morsecode")
