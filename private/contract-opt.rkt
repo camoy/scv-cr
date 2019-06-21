@@ -37,11 +37,14 @@
 (define (contract-opt targets data)
   (define targets*
     (map path->string targets))
+  (define raw-stxs
+    (map syntax-fetch targets))
   (define stxs
-    (for/list ([target targets]
-               [datum  data])
-      (contract-inject (syntax-fetch target)
-                       datum)))
+    (for/list ([raw-stx raw-stxs]
+               [datum   data])
+      (if datum
+          (contract-inject raw-stx datum)
+          raw-stx)))
   #;(pretty-print (map syntax->datum stxs))
   #;(for ([stx stxs]) (displayln (+scopes stx)))
   #;(displayln stxs)
@@ -49,8 +52,11 @@
       stxs
       (let ([blames (verify-modules targets* stxs)])
         (displayln blames)
-        (for/list ([target targets]
-                   [datum  data])
-          (erase-contracts! target datum blames)
-          (contract-inject (syntax-fetch target)
-                           datum)))))
+        (for/list ([target  targets]
+                   [raw-stx raw-stxs]
+                   [datum   data])
+          (if datum
+              (begin
+                (erase-contracts! target datum blames)
+                (contract-inject raw-stx datum))
+              raw-stx)))))
