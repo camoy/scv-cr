@@ -20,7 +20,8 @@
          racket/match
          racket/string
          racket/pretty
-         syntax/parse)
+         syntax/parse
+         lang-file/read-lang-file)
 
 ;; Syntax Symbol -> [Set Any]
 ;; retrieves a set of all the values associated with the key within the given
@@ -55,7 +56,6 @@
 ;;
 
 (require racket/function
-         racket/rerequire
          syntax/modread
          compiler/compilation-path
          syntax/strip-context
@@ -64,11 +64,7 @@
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
 (define (module-typed? target)
-  (unless (file-exists? target)
-    (error 'module-typed? "file ~a doesn't exist" target))
-  (parameterize ([current-module-name-resolver (get-module-name-resolver)])
-    (in-dir target (dynamic-rerequire target)))
-  (module-declared? `(submod ,target #%type-decl) #t))
+  (string-prefix? (lang-file-lang target) "typed/racket"))
 
 ;; Module-Path -> Void
 ;; deletes zo associated with target if exists
