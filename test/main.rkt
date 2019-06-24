@@ -15,10 +15,12 @@
   ;; an issue; runs the main target
   (define (test-optimize main targets)
     (after
+     (define main* (path->complete-path main))
+     (in-dir main*
+       (dynamic-rerequire main*))
      (optimize targets
                #:ignore-check #t
                #:verify-off #t)
-     (define main* (path->complete-path main))
      (in-dir main*
        (check-not-exn (thunk (dynamic-rerequire main*))))
      (for-each module-delete-zo targets)))
