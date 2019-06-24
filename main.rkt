@@ -52,17 +52,13 @@
 ;; optimizes target modules, see documentation for the purpose of
 ;; the flags
 (define (optimize targets
-                  #:show-contract [s (show-contract)]
-                  #:provide-off [p (provide-off)]
-                  #:require-off [r (require-off)]
+                  #:show-contracts [s (show-contracts)]
                   #:ignore-check [i (ignore-check)]
                   #:overwrite [o (overwrite)]
                   #:compiler-off [c (compiler-off)]
                   #:verify-off [v (verify-off)])
   ;; set parameters
-  (show-contract s)
-  (provide-off p)
-  (require-off r)
+  (show-contracts s)
   (ignore-check i)
   (overwrite o)
   (compiler-off c)
@@ -93,7 +89,7 @@
   (when (overwrite)
     (for-each syntax-overwrite stxs-opt sorted-targets))
 
-  (when (show-contract)
+  (when (show-contracts)
     (for-each (λ (stx target)
                 (displayln long-line)
                 (displayln target)
@@ -116,12 +112,8 @@
    #:program "scv-gt"
    #:argv argv
    #:once-each
-   [("-s" "--show-contract")  "dump modules with contracts"
-                              (show-contract #t)]
-   [("-p" "--provide-off")    "don't attach contracts to provided bindings"
-                              (provide-off #t)]
-   [("-r" "--require-off")    "don't attach contracts to required bindings"
-                              (require-off #t)]
+   [("-s" "--show-contracts") "dump modules with contracts"
+                              (show-contracts #t)]
    [("-i" "--ignore-check")   "ignore require-typed/check (for debugging)"
                               (ignore-check #t)]
    [("-o" "--overwrite")      "overwrite source files (for debugging)"

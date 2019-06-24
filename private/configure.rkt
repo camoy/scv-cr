@@ -10,16 +10,12 @@
 ;; parameter
 ;;
 
-(define-values (show-contract
-                provide-off
-                require-off
+(define-values (show-contracts
                 ignore-check
                 overwrite
                 compiler-off
                 verify-off)
   (values (make-parameter #f)
-          (make-parameter #f)
-          (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)

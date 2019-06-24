@@ -19,18 +19,8 @@ command-line flags:
 
 @itemlist[
 @item{
-  @exec{-s} or @exec{--show-contract} --- print the target
+  @exec{-s} or @exec{--show-contracts} --- print the target
   modules with their contracts attached.
-}
-
-@item{
-  @exec{-p} or @exec{--provide-off} --- do not attach
-  contracts to provide forms.
-}
-
-@item{
-  @exec{-r} or @exec{--require-off} --- do not attach
-  contracts to require forms.
 }
 
 @item{

@@ -1,14 +1,12 @@
 #lang racket/base
 
 (module+ test
-  (require rackunit
-           racket/function
-           racket/list
-           racket/path
-           racket/rerequire
-           scv-gt
-           scv-gt/private/syntax-util
-           scv-gt/private/proxy-resolver)
+  (require
+   racket/require
+   rackunit
+   (multi-in racket (function list path rerequire))
+   scv-gt
+   (multi-in scv-gt private (syntax-util proxy-resolver)))
 
   ;; Module-Path -> Void
   ;; checks to make sure running optimization on the modules does not yield
@@ -19,8 +17,7 @@
      (in-dir main*
        (dynamic-rerequire main*))
      (optimize targets
-               #:ignore-check #t
-               #:verify-off #t)
+               #:ignore-check #t)
      (in-dir main*
        (check-not-exn (thunk (dynamic-rerequire main*))))
      (for-each module-delete-zo targets)))
@@ -43,26 +40,26 @@
         benchmark
         (test-optimize main benchmark-files*))))
 
-  #;(test-case
+  (test-case
     "basic programs"
     (test-optimize "basic/abs.rkt"
                    '("basic/abs.rkt")))
 
-  #;(test-case
+  (test-case
     "basic posn"
     (test-optimize "basic/posn-typed-client.rkt"
                    '("basic/posn-typed-client.rkt"
                      "basic/posn-untyped-server.rkt")))
 
-  #;(test-case
+  (test-case
     "bad adder"
     (test-optimize "bad/untyped.rkt"
                    '("bad/untyped.rkt"
                      "bad/typed.rkt")))
 
   ;; success
-  #;(test-benchmark "sieve")
-  #;(test-benchmark "snake")
+  (test-benchmark "sieve")
+  (test-benchmark "snake")
   #;(test-benchmark "zombie")
   #;(test-benchmark "tetris")
   #;(test-benchmark "synth")
