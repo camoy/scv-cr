@@ -64,6 +64,8 @@
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
 (define (module-typed? target)
+  (unless (file-exists? target)
+    (error 'module-typed? "file ~a doesn't exist" target))
   (string-prefix? (lang-file-lang target) "typed/racket"))
 
 ;; Module-Path -> Void

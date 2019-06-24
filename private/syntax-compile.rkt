@@ -32,14 +32,14 @@
     (thunk (write (compile/dir stx target))))
   (file-or-directory-modify-seconds target (current-seconds)))
 
-;; Module-Path -> [List-of Module-Path]
-;; gets a module's dependencies
+(require syntax/modcollapse)
+
+ ;; Module-Path -> [List-of Module-Path]
+ ;; gets a module's dependencies
 (define (get-dependencies target)
   (define mpis
-    (parameterize ([current-module-name-resolver (get-module-name-resolver)])
-      (cdr (assoc 0 (module-compiled-imports (get-module-code target))))))
-  (map (curryr resolve-module-path-index target)
-       mpis))
+    (cdr (assoc 0 (module-compiled-imports (get-module-code target)))))
+  (map (λ (x) (collapse-module-path-index x target)) mpis))
 
 (provide sort-by-dependency)
 (define (sort-by-dependency targets)
