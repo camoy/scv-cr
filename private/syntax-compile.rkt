@@ -51,11 +51,10 @@
     (for/list ([target targets])
       (cons (path->symbol target)
             (clean-deps (get-dependencies target)))))
-  (reverse
-   (map symbol->path
-        (topological-sort (map path->symbol targets)
-                          (dict->procedure #:failure (const empty)
-                                           target->deps)))))
+  (map symbol->path
+       (topological-sort (map path->symbol targets)
+                         (dict->procedure #:failure (const empty)
+                                          target->deps))))
 
 ;; [List-of Module-Path] [List-of Syntax] -> Void
 ;; compiles targets in the correct order
