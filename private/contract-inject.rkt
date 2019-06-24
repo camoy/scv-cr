@@ -2,7 +2,7 @@
 
 (require
  racket/require
- (multi-in racket (syntax function set))
+ (multi-in racket (syntax function set path))
  (multi-in syntax (parse modresolve))
  (multi-in scv-gt private (contract-extract
                            configure
@@ -15,16 +15,16 @@
 (provide contract-inject)
 (require syntax/strip-context)
 
-;; Syntax Contract-Data -> Syntax
+;; Path Syntax Contract-Data -> Syntax
 ;; takes original syntax and contract data and uses contract information
 ;; to inject provide and require contracts into the unexpanded syntax
-(define (contract-inject stx data)
+(define (contract-inject target stx data)
   (syntax-parse stx
     #:datum-literals (module)
     [(module name lang (mb forms ...))
      (define forms*
        (for/fold ([stx       #'(forms ...)])
-                 ([injection (list inject-require
+                 ([injection (list (inject-require target)
                                    inject-provide)])
          (injection stx data)))
      #`(module name #,(no-check #'lang)
@@ -77,13 +77,13 @@
 ;; require injection
 ;;
 
-;; Syntax Contract-Data -> Syntax
+;; Path -> Syntax Contract-Data -> Syntax
 ;; takes original syntax and contract data and uses contract information
 ;; to inject require contracts into the unexpanded syntax
-(define (inject-require forms data)
+(define ((inject-require target) forms data)
   (define bundle (contract-data-require data))
   (define required-set (mutable-set))
-  (define forms* ((munge-requires required-set) forms))
+  (define forms* ((munge-requires target required-set) forms))
   #`((module require/contracts racket/base
        (require racket/contract
                 #,@(set->list required-set)
@@ -93,18 +93,25 @@
      (require 'require/contracts)
      #,@forms*))
 
-;; Syntax -> Syntax
+;; Path Set -> Syntax -> Syntax
 ;; extracts and munges require forms
-(define ((munge-requires required-set) stx)
+(define ((munge-requires target required-set) stx)
   (syntax-parse stx
     #:datum-literals (require/typed require/typed/check)
     [(~or* (require/typed m _ ...)
            (require/typed/check m _ ...))
-     (set-add! required-set #'m)
-     #'(void)]
+     (define m-typed?
+       (parameterize ([current-directory (path-only target)])
+         (module-typed? (path->complete-path (syntax-e #'m)))))
+     (cond
+       [(and m-typed? (not (ignore-check)))
+        #'(require m)]
+       [else
+        (set-add! required-set #'m)
+        #'(void)])]
     [(x ...)
      (datum->syntax stx
-                    (map (munge-requires required-set)
+                    (map (munge-requires target required-set)
                          (syntax-e #'(x ...)))
                     stx
                     stx)]

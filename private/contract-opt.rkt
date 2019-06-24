@@ -40,10 +40,11 @@
   (define raw-stxs
     (map syntax-fetch targets))
   (define stxs
-    (for/list ([raw-stx raw-stxs]
+    (for/list ([target  targets]
+               [raw-stx raw-stxs]
                [datum   data])
       (if datum
-          (contract-inject raw-stx datum)
+          (contract-inject target raw-stx datum)
           raw-stx)))
   #;(pretty-print (map syntax->datum stxs))
   #;(for ([stx stxs]) (displayln (+scopes stx)))
@@ -58,5 +59,5 @@
           (if datum
               (begin
                 (erase-contracts! target datum blames)
-                (contract-inject raw-stx datum))
+                (contract-inject target raw-stx datum))
               raw-stx)))))
