@@ -1,17 +1,16 @@
 #lang racket/base
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (provide contract-munge)
 
-;;
-;; functions
-;;
+(require racket/function
+         racket/contract
+         syntax/parse)
 
-(require syntax/parse
-         syntax/modresolve
-         racket/function
-         racket/contract)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Syntax -> Syntax -> Syntax
+;; Syntax -> (Syntax -> Syntax)
 ;; given an id of a contract definition, munges that contract for use in
 ;; verification
 (define (contract-munge id stx)
@@ -77,23 +76,12 @@
 
     ;; Remove non-recursive recursive-contract forms (SCV)
     [(letrec ([a (recursive-contract b args ...)] [c d]) body)
-     (if (contains-id #'d #'a)
+     (if (contains-id? #'d #'a)
          #`(letrec ([a (recursive-contract #,id args ...)]
                     [c #,(contract-munge id #'d)])
              body)
          #'(let ([a d])
              body))]
-
-    ;; Struct predicates within contracts should be unprotected
-    #|
-    [f #:when (let ([function-desc (send struct-data
-    lookup-function
-    (syntax-e #'f))])
-    (and (prefix-predicates)
-    function-desc
-    (equal? (car function-desc) 'predicate)))
-    (prefix-unsafe #'f)]
-    |#
 
     ;; Distribute munge-contract to all list elements
     [(f args ...)
@@ -104,10 +92,10 @@
     [other #'other]))
 
 ;; Syntax Syntax -> Boolean
-;; whether of not stx contains the identifier id
-(define (contains-id stx id)
+;; whether or not the syntax contains the given identifier
+(define (contains-id? stx id)
   (syntax-parse stx
-    [(f x ...) (ormap (curryr contains-id id)
+    [(f x ...) (ormap (curryr contains-id? id)
                       (syntax-e #'(x ...)))]
     [x #:when (equal? (syntax-e #'x) (syntax-e id)) #t]
     [_ #f]))

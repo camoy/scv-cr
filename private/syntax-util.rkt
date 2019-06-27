@@ -1,5 +1,7 @@
 #lang racket/base
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (provide syntax-property-values
          module-typed?
          module-delete-zo
@@ -9,19 +11,17 @@
          syntax-fetch
          syntax-attach-scope
          syntax-fresh-scope
-         syntax-scope-external)
+         syntax-scope-external
+         syntax-dependencies
+         syntax-preserve)
 
-;;
-;; syntax properties
-;;
+(require compiler/compilation-path
+         lang-file/read-lang-file
+         racket/require
+         (multi-in racket (function list match path pretty set string))
+         (multi-in syntax (modcollapse modread parse strip-context)))
 
-(require racket/set
-         racket/list
-         racket/match
-         racket/string
-         racket/pretty
-         syntax/parse
-         lang-file/read-lang-file)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Syntax Symbol -> [Set Any]
 ;; retrieves a set of all the values associated with the key within the given
@@ -51,15 +51,7 @@
 (define syntax-property-values
   (compose set->list syntax-property-values*))
 
-;;
-;; syntax and modules
-;;
-
-(require racket/function
-         syntax/modread
-         compiler/compilation-path
-         syntax/strip-context
-         scv-gt/private/proxy-resolver)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Module-Path -> Boolean
 ;; whether target is a Typed Racket module
@@ -103,75 +95,7 @@
     (thunk
      (read-syntax (object-name port) port))))
 
-;;
-;; TODO: CLEANUP
-;;
-
-(require syntax/modcollapse
-         racket/path)
-
-(provide syntax-dependencies)
-
-(define (syntax->string stx)
-  (symbol->string (syntax->datum stx)))
-
-;; TODO may not be relative to current-directory
-
-(define (module-path-index->relative-path mpi)
-  (define p (collapse-module-path-index mpi))
-  (if (path? p)
-      (path->string (find-relative-path (current-directory) p))
-      p))
-
-(define (syntax-dependencies e)
-  (cond
-    [(syntax? e)
-     (if (and (identifier? e) (identifier-binding e))
-         (let* ([binding (identifier-binding e)]
-                [mpi     (third binding)]
-                [dep     (module-path-index->relative-path mpi)])
-           (if dep (list dep) '()))
-         (syntax-dependencies (syntax-e e)))]
-    [(pair? e)
-     (append (syntax-dependencies (car e))
-             (syntax-dependencies (cdr e)))]
-    [else '()]))
-
-(provide syntax-preserve)
-(define (syntax-preserve stx)
-  (syntax-property stx 'preserve-context #t))
-
-(define syntax-attach-scope
-  (make-syntax-introducer))
-
-(define (strip-context* e)
-  (cond
-    [(syntax? e)
-     (if (syntax-property e 'preserve-context)
-         e
-         (datum->syntax #f (strip-context* (syntax-e e)) e e))]
-    [(pair? e) (cons (strip-context* (car e))
-                     (strip-context* (cdr e)))]
-    [else e]))
-
-;; Syntax -> Syntax
-;; strips syntax of lexical context and attaches fresh scope
-(define syntax-fresh-scope
-  (compose syntax-attach-scope strip-context*))
-
-(define (from-dependency? targets name)
-  (and (path? name)
-       (member (path->string name)
-               (map path->string targets)
-               string=?)))
-
-(define ((dependency-introducer d/i-hash) stx)
-  (define dep
-    (car (syntax-dependencies stx)))
-  ((compose syntax-preserve
-           (hash-ref d/i-hash dep)
-           strip-context)
-   stx))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; [List-of Path] D/I-Hash Syntax -> Syntax
 ;; places a fresh scope on syntax that came from expansion
@@ -199,11 +123,82 @@
            (cons (go (car e)) (go (cdr e)))]
           [else e])))
 
-;; END CLEANUP
+;; Syntax -> [List-of String]
+;; returns relative paths to modules that identifiers in this syntax object
+;; depends on
+(define (syntax-dependencies e)
+  (cond
+    [(syntax? e)
+     (if (and (identifier? e) (identifier-binding e))
+         (let* ([binding (identifier-binding e)]
+                [mpi     (third binding)]
+                [dep     (module-path-index->relative-path mpi)])
+           (if dep (list dep) '()))
+         (syntax-dependencies (syntax-e e)))]
+    [(pair? e)
+     (append (syntax-dependencies (car e))
+             (syntax-dependencies (cdr e)))]
+    [else '()]))
 
-;;
-;; syntax properties test
-;;
+;; Syntax -> Syntax
+;; erases syntax object contexts that are not set to be preserved
+(define (strip-context* e)
+  (cond
+    [(syntax? e)
+     (if (syntax-property e 'preserve-context)
+         e
+         (datum->syntax #f (strip-context* (syntax-e e)) e e))]
+    [(pair? e) (cons (strip-context* (car e))
+                     (strip-context* (cdr e)))]
+    [else e]))
+
+;; Syntax -> Syntax
+;; attaches scope for contract definitions
+(define syntax-attach-scope
+  (make-syntax-introducer))
+
+;; Syntax -> Syntax
+;; strips syntax of lexical context and attaches fresh scope
+(define syntax-fresh-scope
+  (compose syntax-attach-scope strip-context*))
+
+;; Syntax -> Syntax
+;; protects a syntax object's context from erasure by strip-context*
+(define (syntax-preserve stx)
+  (syntax-property stx 'preserve-context #t))
+
+;; D/I-Hash -> (Syntax -> Syntax)
+;; introduces dependency scope on require specifications
+(define ((dependency-introducer d/i-hash) stx)
+  (define dep
+    (car (syntax-dependencies stx)))
+  ((compose syntax-preserve
+           (hash-ref d/i-hash dep)
+           strip-context)
+   stx))
+
+;; [List-of Path] Path -> Boolean
+;; determines if name is in the list of targets
+(define (from-dependency? targets name)
+  (and (path? name)
+       (member (path->string name)
+               (map path->string targets)
+               string=?)))
+
+;; Syntax -> String
+;; converts syntax to a string
+(define (syntax->string stx)
+  (symbol->string (syntax->datum stx)))
+
+;; Module-Path-Index -> String
+;; converts MPI to relative path string
+(define (module-path-index->relative-path mpi)
+  (define p (collapse-module-path-index mpi))
+  (if (path? p)
+      (path->string (find-relative-path (current-directory) p))
+      p))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ test
   (require rackunit
@@ -230,9 +225,7 @@
 
   )
 
-;;
-;; syntax and modules test
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ test
   (test-case

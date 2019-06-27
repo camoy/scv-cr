@@ -1,26 +1,25 @@
 #lang racket/base
 
-(provide syntax-compile-all)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require mischief/dict
-         mischief/sort
-         syntax/modcode
-         syntax/modresolve
+(provide syntax-compile-all
+         sort-by-dependency)
+
+(require racket/require
          compiler/compilation-path
-         racket/list
-         racket/file
-         racket/function
-         scv-gt/private/proxy-resolver)
+         scv-gt/private/proxy-resolver
+         (multi-in mischief (dict sort))
+         (multi-in racket (file function list))
+         (multi-in syntax (modcode modcollapse)))
 
-;; Path -> Symbol
-;; converts a path to a symbol
-(define path->symbol
-  (compose string->symbol path->string))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Symbol -> Path
-;; converts a symbol to a path
-(define symbol->path
-  (compose string->path symbol->string))
+;; [List-of Module-Path] [List-of Syntax] -> Void
+;; compiles targets in the correct order
+(define (syntax-compile-all targets stxs)
+  (for ([target targets]
+        [stx    stxs])
+    (syntax-compile target stx)))
 
 ;; Module-Path Syntax -> Void
 ;; compiles syntax and outputs to appropriate file
@@ -32,16 +31,10 @@
     (thunk (write (compile/dir stx target))))
   (file-or-directory-modify-seconds target (current-seconds)))
 
-(require syntax/modcollapse)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
- ;; Module-Path -> [List-of Module-Path]
- ;; gets a module's dependencies
-(define (get-dependencies target)
-  (define mpis
-    (cdr (assoc 0 (module-compiled-imports (get-module-code target)))))
-  (map (λ (x) (collapse-module-path-index x target)) mpis))
-
-(provide sort-by-dependency)
+;; [List-of Path] -> [List-of Path]
+;; sorts list of modules such that dependencies occur earlier in the list
 (define (sort-by-dependency targets)
   (define (clean-deps dependencies)
     (filter-map (λ (x) (and (member x targets)
@@ -56,16 +49,26 @@
                          (dict->procedure #:failure (const empty)
                                           target->deps))))
 
-;; [List-of Module-Path] [List-of Syntax] -> Void
-;; compiles targets in the correct order
-(define (syntax-compile-all targets stxs)
-  (for ([target targets]
-        [stx    stxs])
-    (syntax-compile target stx)))
+;; Module-Path -> [List-of Module-Path]
+;; gets a module's dependencies
+(define (get-dependencies target)
+  (define mpis
+    (cdr (assoc 0 (module-compiled-imports (get-module-code target)))))
+  (map (λ (x) (collapse-module-path-index x target)) mpis))
 
-;;
-;; test
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Path -> Symbol
+;; converts a path to a symbol
+(define path->symbol
+  (compose string->symbol path->string))
+
+;; Symbol -> Path
+;; converts a symbol to a path
+(define symbol->path
+  (compose string->path symbol->string))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ test
   (require rackunit

@@ -1,7 +1,11 @@
 #lang racket/base
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (provide syntax-property-self*
          syntax-property-self)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Syntax -> Syntax
 ;; helper for calling syntax-property-self from Typed Racket source
@@ -13,9 +17,7 @@
 (define (syntax-property-self stx key)
   (syntax-property stx key stx))
 
-;;
-;; syntax typed racket test
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ test
   (require rackunit

@@ -1,5 +1,9 @@
 #lang racket/base
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(provide contract-inject)
+
 (require
  racket/require
  (multi-in racket (syntax function set path))
@@ -8,14 +12,9 @@
                            configure
                            syntax-util)))
 
-;;
-;; injection function
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(provide contract-inject)
-(require syntax/strip-context)
-
-;; Path Syntax Contract-Data -> Syntax
+;; Path Syntax Ctc-Data -> Syntax
 ;; takes original syntax and contract data and uses contract information
 ;; to inject provide and require contracts into the unexpanded syntax
 (define (contract-inject target stx data)
@@ -36,23 +35,21 @@
 (define (no-check lang)
   (syntax-attach-scope (format-id lang "~a/no-check" (syntax-e lang))))
 
-;;
-;; provide injection
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Syntax Contract-Data -> Syntax
+;; Syntax Ctc-Data -> Syntax
 ;; takes original syntax and contract data and uses contract information
 ;; to inject provide contracts into the unexpanded syntax
 (define (inject-provide forms data)
-  (define bundle (contract-data-provide data))
+  (define bundle (ctc-data-provide data))
   (define forms* (munge-provides forms bundle))
   #`((require racket/contract
-              #,@(contract-bundle-deps bundle))
-     #,@(contract-bundle-defns bundle)
-     (provide (contract-out #,@(contract-bundle-outs bundle)))
+              #,@(ctc-bundle-deps bundle))
+     #,@(ctc-bundle-defns bundle)
+     (provide (contract-out #,@(ctc-bundle-outs bundle)))
      #,@forms*))
 
-;; Syntax Contract-Data -> Syntax
+;; Syntax Ctc-Data -> Syntax
 ;; removes already provided identifiers from provide forms
 (define (munge-provides stx bundle)
   (define not-provided
@@ -60,7 +57,7 @@
       #:datum-literals (provide)
       [(provide x ...)
        (define xs*
-         (filter (λ (x) (not (contract-bundle-provided? bundle x)))
+         (filter (λ (x) (not (ctc-bundle-provided? bundle x)))
                  (syntax-e #'(x ...))))
        #`(provide #,@xs*)]
        [x #'x]))
@@ -73,23 +70,21 @@
      (datum->syntax stx provides** stx stx)]
     [x #'x]))
 
-;;
-;; require injection
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Path -> Syntax Contract-Data -> Syntax
+;; Path -> (Syntax Ctc-Data -> Syntax)
 ;; takes original syntax and contract data and uses contract information
 ;; to inject require contracts into the unexpanded syntax
 (define ((inject-require target) forms data)
-  (define bundle (contract-data-require data))
+  (define bundle (ctc-data-require data))
   (define required-set (mutable-set))
   (define forms* ((munge-requires target required-set) forms))
   #`((module require/contracts racket/base
        (require racket/contract
                 #,@(set->list required-set)
-                #,@(contract-bundle-deps bundle))
-       #,@(contract-bundle-defns bundle)
-       (provide (contract-out #,@(contract-bundle-outs bundle))))
+                #,@(ctc-bundle-deps bundle))
+       #,@(ctc-bundle-defns bundle)
+       (provide (contract-out #,@(ctc-bundle-outs bundle))))
      (require 'require/contracts)
      #,@forms*))
 

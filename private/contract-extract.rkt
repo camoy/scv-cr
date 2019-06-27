@@ -1,105 +1,98 @@
 #lang racket/base
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(provide (struct-out ctc-data)
+         (struct-out ctc-bundle)
+         contract-extract
+         ctc-bundle-provided?)
+
 (require racket/require
-         (multi-in racket (list match contract string))
-         syntax/parse
-         (multi-in scv-gt private (syntax-util
-                                   contract-munge
-                                   struct-extract)))
+         (multi-in racket (list string))
+         (multi-in scv-gt/private (contract-munge struct-extract syntax-util))
+         syntax/parse)
 
-;;
-;; data
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(provide (struct-out contract-data)
-         (struct-out contract-bundle))
+;; Syntaxes is a [List-of Syntax].
 
-(struct contract-data (provide require))
-(struct contract-bundle (defns outs deps
-                          i/c-hash p/c-hash s/o-hash) #:mutable)
+;; Ctc-Data is a (ctc-data Ctc-Bundle Ctc-Bundle) containing contract
+;; information for both provided identifiers and required identifiers.
+(struct ctc-data (provide require))
 
-;;
-;; extraction function
-;;
+;; A Ctc-Bundle is a (ctc-bundle Syntaxes Syntaxes Syntaxes I/C-Hash P/C-Hash
+;; S/O-Hash) bundling together all the contract information necessary.
+(struct ctc-bundle (defns outs deps i/c-hash p/c-hash s/o-hash) #:mutable)
 
-(provide contract-extract)
+;; A I/C-Hash is a [Hash Syntax Syntax] of auxiliary contract definitions,
+;; mapping an identifier to a contract.
 
-;; Syntax -> Contract-Data
+;; A P/C-Hash is a [Hash Syntax Syntax] mapping provided identifiers to contract
+;; definitions, usually just an auxiliary identifier.
+
+;; An S/O-Hash is a [Hash Syntax Syntax] mapping struct names to their struct-out
+;; declaration for contract-out.
+
+;; A Munger is a [Syntax -> [List-of [Cons Syntax Syntax]]] that maps a syntax
+;; object to an associative list between identifiers and their contract
+;; definition.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Syntax -> Ctc-Data
 ;; extracts and collects contract information from expanded syntax
 (define (contract-extract targets stx stx-raw)
-  (contract-data (hashes->bundle targets
-                                 (provide-ctc-defns stx)
-                                 (provide-ctc-outs stx)
-                                 'provide
-                                 stx-raw)
-                 (hashes->bundle targets
-                                 (require-ctc-defns stx)
-                                 (require-ctc-outs stx)
-                                 'require-rename
-                                 stx-raw)))
+  (ctc-data (hashes->bundle targets
+                            (provide-ctc-defns stx)
+                            (provide-ctc-outs stx)
+                            'provide
+                            stx-raw)
+            (hashes->bundle targets
+                            (require-ctc-defns stx)
+                            (require-ctc-outs stx)
+                            'require-rename
+                            stx-raw)))
 
-;; [List-of Path] I/C-Hash P/C-Hash Symbol Syntax Syntax -> Contract-Bundle
+;; [List-of Path] I/C-Hash P/C-Hash Symbol Syntax -> Ctc-Bundle
 ;; convert hashes to contract bundle
-(define (hashes->bundle targets i/c-hash p/c-hash key stx-raw)
+(define (hashes->bundle targets i/c-hash p/c-hash kind stx)
   (define s/o-hash
-    (p/c-remove-structs! i/c-hash p/c-hash key stx-raw))
+    (p/c-remove-structs! i/c-hash p/c-hash kind stx))
   (define-values (deps d/i-hash)
     (hashes->deps i/c-hash p/c-hash s/o-hash))
-  (contract-bundle (hashes->defns targets i/c-hash p/c-hash s/o-hash d/i-hash)
-                   (hashes->outs i/c-hash p/c-hash s/o-hash)
-                   deps
-                   i/c-hash
-                   p/c-hash
-                   s/o-hash))
+  (ctc-bundle (hashes->defns targets i/c-hash p/c-hash s/o-hash d/i-hash)
+              (hashes->outs i/c-hash p/c-hash s/o-hash)
+              deps
+              i/c-hash
+              p/c-hash
+              s/o-hash))
 
-(define ((make-get-number t) x)
-  (define x* (symbol->string x))
-  (and (string-prefix? x* t)
-       (string->number (substring x* (string-length t)))))
-
-(define g? (make-get-number "g"))
-(define generated-contract? (make-get-number "generated-contract"))
-(define lifted? (make-get-number "lifted/"))
-
-(define (compare x y)
-  (define-values (x* y*)
-    (values (syntax-e (car x))
-            (syntax-e (car y))))
-  (let go ([orders
-            (list g? generated-contract? lifted?)])
-    (if (empty? orders)
-        (symbol<? x* y*)
-        (let ([x** ((car orders) x*)]
-              [y** ((car orders) y*)])
-          (if (and x** y**)
-              (< x** y**)
-              (go (cdr orders)))))))
-
-;; [List-of Path] I/C-Hash P/C-Hash S/O-Hash D/I-Hash -> [List-of Syntax]
+;; [List-of Path] I/C-Hash P/C-Hash S/O-Hash D/I-Hash -> Syntaxes
+;; constructs a list of define forms that provide auxiliary definitions
+;; for contracts, sorting definitions such that a dependency occurs
+;; before its usage
 (define (hashes->defns targets i/c-hash p/c-hash s/o-hash d/i-hash)
-  (let* ([i/c-assoc-list (hash->list i/c-hash)]
+  (let* ([i/c-assoc-list  (hash->list i/c-hash)]
          [i/c-assoc-list* (sort i/c-assoc-list compare)])
     (map (λ (p)
-           #`(define #,(car p)
+           #`(define
+               #,(car p)
                #,(syntax-scope-external targets d/i-hash (cdr p))))
          i/c-assoc-list*)))
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
+;; constructs forms that will be injected inside of a contract-out
 (define (hashes->outs i/c-hash p/c-hash s/o-hash)
-  (append
-   (hash-map
-    p/c-hash
-    (λ (k v) #`(#,k #,v)))
-   (hash-map
-    s/o-hash
-    (λ (k v) v))))
+  (append (hash-map p/c-hash (λ (k v) #`(#,k #,v)))
+          (hash-map s/o-hash (λ (k v) v))))
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax] D/I-Hash
+;; constructs a minimal list of dependencies for injection into a
+;; require form as well as a hash that maps module names to the
+;; syntax introducer that was used on it
 (define (hashes->deps i/c-hash p/c-hash s/o-hash)
   (define deps
-    (hash-map
-     i/c-hash
-     (λ (k v) (syntax-dependencies v))))
+    (hash-map i/c-hash (λ (k v) (syntax-dependencies v))))
   (define d/i-hash
     (make-hash))
   (define (fresh x)
@@ -110,24 +103,15 @@
   (values (map fresh (remove-duplicates (apply append deps)))
           d/i-hash))
 
-;;
-;; contract definition function
-;;
-
-;; A I/C-Hash is a [Hash Syntax Syntax] mapping
-;; from identifiers to contract definitions.
-
-;; A Munger is a [Syntax -> [List-of [Cons Syntax Syntax]]]
-;; that maps a syntax object to an associative list between
-;; identifiers and their contract definition.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Symbol Munger -> (Syntax -> I/C-Hash)
-;; makes a munged definition function where key is the syntax property
-;; we inspect and munger is the function we use to munge the contract
-;; definitions
-(define ((make-ctc-defns key munger) stx)
-  (let* ([i/c-raw         (syntax-property-values stx key)]
-         [i/c-assoc-list  (append-map munger i/c-raw)])
+;; makes a munged definition function where kind is the key of the syntax
+;; property we inspect and the munger is the function we use to munge the
+;; contract definitions
+(define ((make-ctc-defns kind munger) stx)
+  (let* ([i/c-raw        (syntax-property-values stx kind)]
+         [i/c-assoc-list (append-map munger i/c-raw)])
     (make-hash i/c-assoc-list)))
 
 ;; Syntax -> Syntax
@@ -173,12 +157,7 @@
              (syntax-e #'(xs ... y))
              (syntax-e #'(xs-def* ... y-def*))))])))
 
-;;
-;; contract outs function
-;;
-
-;; A P/C-Hash is a [Hash Syntax Syntax] mapping
-;; provided identifiers to contract definitions.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Symbol Munger -> (Syntax -> P/C-Hash)
 ;; makes a munged out function where key is the syntax property
@@ -218,22 +197,55 @@
              (define-ignored _ (contract v k _ ...)))
       (cons #'k #'v)])))
 
-;;
-;; contract bundle utils
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(provide contract-bundle-provided?)
+;; Ctc-Bundle Syntax -> Boolean
+;; determines if an identifier had already been provided with a contract-out
+(define (ctc-bundle-provided? bundle id)
+  (or (memf (λ (x) (equal? (syntax-e id) (syntax-e x)))
+            (hash-keys (ctc-bundle-p/c-hash bundle)))
+      (memf (λ (x) (equal? (struct-out->name id) (syntax-e x)))
+            (hash-keys (ctc-bundle-s/o-hash bundle)))))
 
-(define (contract-bundle-provided? bundle id)
-  (or (memf (λ (x) (equal? (syntax-e id)
-                           (syntax-e x)))
-            (hash-keys (contract-bundle-p/c-hash bundle)))
-      (memf (λ (x) (equal? (struct-name id)
-                           (syntax-e x)))
-            (hash-keys (contract-bundle-s/o-hash bundle)))))
-
-(define struct-name
+;; Syntax -> Symbol
+;; extract out a struct name from a struct-out form
+(define struct-out->name
   (syntax-parser
     #:datum-literals (struct-out)
     [(struct-out y) (syntax-e #'y)]
     [_ #f]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; String -> (Symbol -> Number)
+;; makes a function that can extract number from a prefixed identifier
+(define ((make-get-number t) x)
+  (define x* (symbol->string x))
+  (and (string-prefix? x* t)
+       (string->number (substring x* (string-length t)))))
+
+;; Symbol -> Number
+;; extracts numbered suffix from an identifier
+(define g-number (make-get-number "g"))
+(define generated-contract-number (make-get-number "generated-contract"))
+(define lifted-number (make-get-number "lifted/"))
+
+;; [List-of (Symbol -> Number)]
+;; list of functions for ordering identifiers
+(define identifier-orders
+  (list g-number generated-contract-number lifted-number))
+
+;; Syntax Syntax -> Boolean
+;; compares identifiers based on numeric suffix
+(define (compare x y)
+  (define-values (x* y*)
+    (values (syntax-e (car x))
+            (syntax-e (car y))))
+  (let go ([orders identifier-orders])
+    (if (empty? orders)
+        (symbol<? x* y*)
+        (let ([x** ((car orders) x*)]
+              [y** ((car orders) y*)])
+          (if (and x** y**)
+              (< x** y**)
+              (go (cdr orders)))))))
