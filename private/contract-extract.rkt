@@ -58,26 +58,26 @@
 (define (hashes->bundle targets i/c-hash p/c-hash kind stx)
   (define s/o-hash
     (p/c-remove-structs! i/c-hash p/c-hash kind stx))
-  (define-values (deps d/i-hash)
+  (define deps
     (hashes->deps i/c-hash p/c-hash s/o-hash))
-  (ctc-bundle (hashes->defns targets i/c-hash p/c-hash s/o-hash d/i-hash)
+  (ctc-bundle (hashes->defns targets i/c-hash p/c-hash s/o-hash)
               (hashes->outs i/c-hash p/c-hash s/o-hash)
               deps
               i/c-hash
               p/c-hash
               s/o-hash))
 
-;; [List-of Path] I/C-Hash P/C-Hash S/O-Hash D/I-Hash -> Syntaxes
+;; [List-of Path] I/C-Hash P/C-Hash S/O-Hash -> Syntaxes
 ;; constructs a list of define forms that provide auxiliary definitions
 ;; for contracts, sorting definitions such that a dependency occurs
 ;; before its usage
-(define (hashes->defns targets i/c-hash p/c-hash s/o-hash d/i-hash)
+(define (hashes->defns targets i/c-hash p/c-hash s/o-hash)
   (let* ([i/c-assoc-list  (hash->list i/c-hash)]
          [i/c-assoc-list* (sort i/c-assoc-list compare)])
     (map (λ (p)
            #`(define
                #,(car p)
-               #,(syntax-scope-external targets d/i-hash (cdr p))))
+               #,(syntax-scope-external targets (cdr p))))
          i/c-assoc-list*)))
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
@@ -86,22 +86,16 @@
   (append (hash-map p/c-hash (λ (k v) #`(#,k #,v)))
           (hash-map s/o-hash (λ (k v) v))))
 
-;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax] D/I-Hash
+;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
 ;; constructs a minimal list of dependencies for injection into a
 ;; require form as well as a hash that maps module names to the
 ;; syntax introducer that was used on it
 (define (hashes->deps i/c-hash p/c-hash s/o-hash)
   (define deps
     (hash-map i/c-hash (λ (k v) (syntax-dependencies v))))
-  (define d/i-hash
-    (make-hash))
-  (define (fresh x)
-    (define introducer (make-syntax-introducer))
-    (hash-set! d/i-hash x introducer)
-    ((compose syntax-preserve introducer)
-     (datum->syntax #f x)))
-  (values (map fresh (remove-duplicates (apply append deps)))
-          d/i-hash))
+  (map (λ (x) (syntax-preserve ((make-syntax-introducer)
+                                (datum->syntax #f x))))
+       (remove-duplicates (apply append deps))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -97,9 +97,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; [List-of Path] D/I-Hash Syntax -> Syntax
+;; [List-of Path] Syntax -> Syntax
 ;; places a fresh scope on syntax that came from expansion
-(define (syntax-scope-external targets d/i-hash stx)
+(define (syntax-scope-external targets stx)
   (let go ([e stx])
     (cond [(syntax? e)
            (let* ([id? (identifier? e)]
@@ -113,8 +113,6 @@
                                  (λ (x) (datum->syntax #f (syntax-e x)))]
                                 [(or from-expansion? (not binding))
                                  strip-context]
-                                [(and (from-dependency? targets name))
-                                 (dependency-introducer d/i-hash)]
                                 [else
                                  (compose syntax-preserve syntax-attach-scope)])]
                   [e* (go (syntax-e e))])
@@ -166,24 +164,6 @@
 ;; protects a syntax object's context from erasure by strip-context*
 (define (syntax-preserve stx)
   (syntax-property stx 'preserve-context #t))
-
-;; D/I-Hash -> (Syntax -> Syntax)
-;; introduces dependency scope on require specifications
-(define ((dependency-introducer d/i-hash) stx)
-  (define dep
-    (car (syntax-dependencies stx)))
-  ((compose syntax-preserve
-           (hash-ref d/i-hash dep)
-           strip-context)
-   stx))
-
-;; [List-of Path] Path -> Boolean
-;; determines if name is in the list of targets
-(define (from-dependency? targets name)
-  (and (path? name)
-       (member (path->string name)
-               (map path->string targets)
-               string=?)))
 
 ;; Syntax -> String
 ;; converts syntax to a string

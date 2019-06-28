@@ -57,6 +57,13 @@
                    '("bad/untyped.rkt"
                      "bad/typed.rkt")))
 
+  (test-case
+    "unexported identifier"
+    (test-optimize "unexported/main.rkt"
+                   '("unexported/main.rkt"
+                     "unexported/server.rkt"
+                     "unexported/client.rkt")))
+
   ;; success
   (test-benchmark "sieve")
   (test-benchmark "snake")
