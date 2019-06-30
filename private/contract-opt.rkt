@@ -6,9 +6,13 @@
 
 (require racket/require
          racket/contract
-         (multi-in scv-gt/private (configure contract-extract contract-inject syntax-util))
-         soft-contract/main
-         syntax/parse)
+         (multi-in scv-gt/private (configure
+                                   contract-extract
+                                   contract-inject
+                                   syntax-compile
+                                   syntax-util))
+         syntax/parse
+         soft-contract/main)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -23,9 +27,14 @@
     (for/list ([target  targets]
                [raw-stx raw-stxs]
                [datum   data])
-      (if datum
-          (contract-inject target raw-stx datum)
-          raw-stx)))
+      (define stx
+        (if datum
+            (syntax-replace-source target
+                                   (contract-inject target raw-stx datum))
+            raw-stx))
+      (syntax-compile target stx)
+      stx))
+
   (if (verify-off)
       stxs
       (let ([blames (verify-modules targets* stxs)])
@@ -35,7 +44,7 @@
                    [datum   data])
           (if datum
               (begin
-                (erase-contracts! target datum blames)
+                #;(erase-contracts! target datum blames)
                 (contract-inject target raw-stx datum))
               raw-stx)))))
 

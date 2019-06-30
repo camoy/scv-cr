@@ -13,13 +13,14 @@
          syntax-fresh-scope
          syntax-scope-external
          syntax-dependencies
-         syntax-preserve)
+         syntax-preserve
+         syntax-replace-source)
 
 (require compiler/compilation-path
          lang-file/read-lang-file
          racket/require
          (multi-in racket (function list match path pretty set string))
-         (multi-in syntax (modcollapse modread parse strip-context)))
+         (multi-in syntax (modcollapse modread parse strip-context srcloc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -177,6 +178,21 @@
   (if (path? p)
       (path->string (find-relative-path (current-directory) p))
       p))
+
+
+;; Path Syntax -> Syntax
+;; traverses the syntax object replacing each source location's source module
+;; with target
+(define (syntax-replace-source target e)
+  (cond
+    [(syntax? e)
+     (let* ([srcloc (build-source-location e)]
+            [srcloc* (update-source-location srcloc #:source target)]
+            [srclist (build-source-location-list srcloc*)])
+       (datum->syntax e (syntax-replace-source target (syntax-e e)) srclist e))]
+    [(pair? e) (cons (syntax-replace-source target (car e))
+                     (syntax-replace-source target (cdr e)))]
+    [else e]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
