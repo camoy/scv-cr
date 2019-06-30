@@ -10,19 +10,24 @@
 (require racket/require
          (multi-in racket (list string))
          (multi-in scv-gt/private (contract-munge struct-extract syntax-util))
-         syntax/parse)
+         syntax/parse
+         graph)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Syntaxes is a [List-of Syntax].
 
-;; Ctc-Data is a (ctc-data Ctc-Bundle Ctc-Bundle) containing contract
-;; information for both provided identifiers and required identifiers.
-(struct ctc-data (provide require))
+;; Ctc-Data is a (ctc-data Ctc-Bundle Ctc-Bundle Graph) containing contract
+;; information for both provided identifiers and required identifiers and a
+;; graph describing contract dependencies.
+(struct ctc-data (provide require graph))
 
 ;; A Ctc-Bundle is a (ctc-bundle Syntaxes Syntaxes Syntaxes I/C-Hash P/C-Hash
-;; S/O-Hash) bundling together all the contract information necessary.
-(struct ctc-bundle (defns outs deps i/c-hash p/c-hash s/o-hash) #:mutable)
+;; S/O-Hash C/C-Hash) bundling together all the contract information necessary.
+(struct
+  ctc-bundle
+  (defns outs deps i/c-hash p/c-hash s/o-hash c/c-hash)
+  #:mutable)
 
 ;; A I/C-Hash is a [Hash Syntax Syntax] of auxiliary contract definitions,
 ;; mapping an identifier to a contract.
@@ -33,6 +38,9 @@
 ;; An S/O-Hash is a [Hash Syntax Syntax] mapping struct names to their struct-out
 ;; declaration for contract-out.
 
+;; A C/C-Hash is a [Hash Symbol Symbol] mapping an identifier to the contract
+;; definition its contained in.
+
 ;; A Munger is a [Syntax -> [List-of [Cons Syntax Syntax]]] that maps a syntax
 ;; object to an associative list between identifiers and their contract
 ;; definition.
@@ -42,7 +50,8 @@
 ;; Syntax -> Ctc-Data
 ;; extracts and collects contract information from expanded syntax
 (define (contract-extract targets stx stx-raw)
-  (ctc-data (hashes->bundle targets
+  (define-values (provide-bundle require-bundle)
+    (values (hashes->bundle targets
                             (provide-ctc-defns stx)
                             (provide-ctc-outs stx)
                             'provide
@@ -52,6 +61,10 @@
                             (require-ctc-outs stx)
                             'require-rename
                             stx-raw)))
+  (define ctc-graph
+    (hashes->graph (ctc-bundle-c/c-hash provide-bundle)
+                   (ctc-bundle-c/c-hash require-bundle)))
+  (ctc-data provide-bundle require-bundle ctc-graph))
 
 ;; [List-of Path] I/C-Hash P/C-Hash Symbol Syntax -> Ctc-Bundle
 ;; convert hashes to contract bundle
@@ -60,12 +73,15 @@
     (p/c-remove-structs! i/c-hash p/c-hash kind stx))
   (define deps
     (hashes->deps i/c-hash p/c-hash s/o-hash))
+  (define c/c-hash
+    (i/c-hash->c/c-hash i/c-hash))
   (ctc-bundle (hashes->defns targets i/c-hash p/c-hash s/o-hash)
               (hashes->outs i/c-hash p/c-hash s/o-hash)
               deps
               i/c-hash
               p/c-hash
-              s/o-hash))
+              s/o-hash
+              c/c-hash))
 
 ;; [List-of Path] I/C-Hash P/C-Hash S/O-Hash -> Syntaxes
 ;; constructs a list of define forms that provide auxiliary definitions
@@ -96,6 +112,44 @@
   (map (λ (x) (syntax-preserve ((make-syntax-introducer)
                                 (datum->syntax #f x))))
        (remove-duplicates (apply append deps))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; C/C-Hash C/C-Hash -> Graph
+;; converts c/c-hashes from provide and requires into a collective contract
+;; dependency graph
+(define (hashes->graph c/c-p c/c-r)
+  (unweighted-graph/directed
+   (append (hash-map c/c-p list)
+           (hash-map c/c-r list))))
+
+;; I/C-Hash -> C/C-Hash
+;; converts an I/C-Hash into a C/C-Hash and attaches a syntax property to the
+;; definition
+(define (i/c-hash->c/c-hash i/c-hash)
+  (define c/c-hash (make-hash))
+  (hash-for-each
+   i/c-hash
+   (λ (k v)
+     (define k* (syntax-e k))
+     (hash-map-identifier! c/c-hash k* v)
+     (hash-set! i/c-hash k (syntax-property v 'within-contract k*))))
+  c/c-hash)
+
+;; C/C-Hash Symbol Syntax -> Void
+;; adds identifier mappings to c/c-hash from the syntax e
+(define (hash-map-identifier! c/c-hash k e)
+  (let go ([e e])
+    (cond
+      [(identifier? e)
+       (hash-set! c/c-hash (syntax-e e) k)]
+      [(syntax? e)
+       (go (syntax-e e))]
+      [(pair? e)
+       (go (car e))
+       (go (cdr e))]
+      [else
+       (void)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

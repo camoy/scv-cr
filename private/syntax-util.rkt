@@ -14,7 +14,7 @@
          syntax-scope-external
          syntax-dependencies
          syntax-preserve
-         syntax-replace-srcloc)
+         syntax-replace-srcloc!)
 
 (require compiler/compilation-path
          lang-file/read-lang-file
@@ -111,7 +111,7 @@
                   [from-expansion? (equal? '|expanded module| name)]
                   [introducer (cond
                                 [(not id?)
-                                 (λ (x) (datum->syntax #f (syntax-e x)))]
+                                 (λ (x) (datum->syntax #f (syntax-e x) x x))]
                                 [(or from-expansion? (not binding))
                                  strip-context]
                                 [else
@@ -180,22 +180,31 @@
       p))
 
 
-;; Path Syntax -> Syntax
+;; L/I-Hash Path Syntax -> Syntax
 ;; traverses the syntax object replacing each source location's source module
-;; with target
-(define (syntax-replace-srcloc target e)
+;; with target and updating the mapping between position
+(define (syntax-replace-srcloc! l/i-hash target e)
   (define pos 1)
+  (define parent-ctc (make-parameter #f))
   (let go ([e e])
     (cond
       [(syntax? e)
-       (let* ([span   (string-length (syntax->string e))]
-              [srcloc (list target 1 pos pos span)]
-              [e*     (go (syntax-e e))])
+       (let* ([span    (string-length (syntax->string e))]
+              [pos-old pos]
+              [srcloc  (list target 1 pos pos span)]
+              [within  (syntax-property e 'within-contract)]
+              [e*      (if within
+                           (parameterize ([parent-ctc within])
+                             (go (syntax-e e)))
+                           (go (syntax-e e)))])
          (set! pos (+ pos span))
          (datum->syntax e e* srcloc e))]
       [(pair? e) (cons (go (car e))
                        (go (cdr e)))]
-      [else e])))
+      [else
+       (when (parent-ctc)
+         (hash-set! l/i-hash pos (parent-ctc)))
+       e])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

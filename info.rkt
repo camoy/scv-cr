@@ -2,7 +2,8 @@
 (define collection "scv-gt")
 (define deps '("base"
                "mischief"
-               "require-typed-check"))
+               "require-typed-check"
+               "graph"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/scv-gt.scrbl" ())))
 (define pkg-desc "Typed Racket optimization with SCV")
