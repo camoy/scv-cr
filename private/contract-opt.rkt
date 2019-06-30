@@ -29,12 +29,11 @@
                [datum   data])
       (define stx
         (if datum
-            (syntax-replace-source target
+            (syntax-replace-srcloc target
                                    (contract-inject target raw-stx datum))
             raw-stx))
       (syntax-compile target stx)
       stx))
-
   (if (verify-off)
       stxs
       (let ([blames (verify-modules targets* stxs)])

@@ -14,13 +14,13 @@
          syntax-scope-external
          syntax-dependencies
          syntax-preserve
-         syntax-replace-source)
+         syntax-replace-srcloc)
 
 (require compiler/compilation-path
          lang-file/read-lang-file
          racket/require
          (multi-in racket (function list match path pretty set string))
-         (multi-in syntax (modcollapse modread parse strip-context srcloc)))
+         (multi-in syntax (modcollapse modread parse strip-context)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -169,7 +169,7 @@
 ;; Syntax -> String
 ;; converts syntax to a string
 (define (syntax->string stx)
-  (symbol->string (syntax->datum stx)))
+  (format "~a" (syntax->datum stx)))
 
 ;; Module-Path-Index -> String
 ;; converts MPI to relative path string
@@ -183,16 +183,19 @@
 ;; Path Syntax -> Syntax
 ;; traverses the syntax object replacing each source location's source module
 ;; with target
-(define (syntax-replace-source target e)
-  (cond
-    [(syntax? e)
-     (let* ([srcloc (build-source-location e)]
-            [srcloc* (update-source-location srcloc #:source target)]
-            [srclist (build-source-location-list srcloc*)])
-       (datum->syntax e (syntax-replace-source target (syntax-e e)) srclist e))]
-    [(pair? e) (cons (syntax-replace-source target (car e))
-                     (syntax-replace-source target (cdr e)))]
-    [else e]))
+(define (syntax-replace-srcloc target e)
+  (define pos 1)
+  (let go ([e e])
+    (cond
+      [(syntax? e)
+       (let* ([span   (string-length (syntax->string e))]
+              [srcloc (list target 1 pos pos span)]
+              [e*     (go (syntax-e e))])
+         (set! pos (+ pos span))
+         (datum->syntax e e* srcloc e))]
+      [(pair? e) (cons (go (car e))
+                       (go (cdr e)))]
+      [else e])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
