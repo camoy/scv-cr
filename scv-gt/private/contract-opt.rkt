@@ -5,7 +5,7 @@
 (provide contract-opt)
 
 (require racket/require
-         (multi-in racket (contract list set))
+         (multi-in racket (contract list set pretty))
          (multi-in scv-gt/private (configure
                                    contract-extract
                                    contract-inject
@@ -45,9 +45,13 @@
             raw-stx))
       (syntax-compile target stx)
       stx))
+  (for ([stx stxs])
+      (pretty-print (syntax->datum stx)))
+  #;(displayln stxs)
   (if (verify-off)
       stxs
       (let* ([blames         (verify-modules targets* stxs)]
+             [_              (pretty-print blames)]
              [blameable-hash (make-blameable-hash targets*
                                                   m/l/i-hash
                                                   m/g-hash
@@ -107,7 +111,8 @@
   (syntax-parser
     #:datum-literals (struct)
     [(struct s (p ...))
-     #`(struct s #,(map make-any (syntax-e #'(p ...))))]
+     #`(struct s #,(map (make-any blameable)
+                        (syntax-e #'(p ...))))]
     [(k v)
      #:when (not (set-member? blameable (syntax-e #'v)))
      #'(k any/c)]

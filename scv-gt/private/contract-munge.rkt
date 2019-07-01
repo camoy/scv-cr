@@ -54,8 +54,10 @@
      (contract-munge id #'(-> dom ... ran))]
 
     ;; Replace contracts we cannot verify (SCV)
-    [struct-predicate-procedure? #'(λ (_) #f)]
-    [struct-predicate-procedure?/c #'(λ (_) #f)]
+    #;[struct-predicate-procedure? #'(λ (_) #f)]
+    #;[struct-predicate-procedure?/c #'(λ (_) #f)]
+    [struct-predicate-procedure? #'#t]
+    [struct-predicate-procedure?/c #'#t]
     [(struct-type/c _) #'#t]
 
     ;; Warning if ->* is non-convertible

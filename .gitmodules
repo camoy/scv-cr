@@ -1,0 +1,3 @@
+[submodule "typed-racket"]
+	path = typed-racket
+	url = https://github.com/racket/typed-racket
