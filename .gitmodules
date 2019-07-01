@@ -1,4 +1,0 @@
-[submodule "typed-racket"]
-	path = typed-racket
-	url = https://github.com/camoy/typed-racket
-	branch = scv-gt
