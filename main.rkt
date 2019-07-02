@@ -16,13 +16,6 @@
                     syntax-compile)))
 
 ;;
-;; const
-;;
-
-(define line-length 80)
-(define long-line (build-string line-length (const #\━)))
-
-;;
 ;; main
 ;;
 
@@ -66,7 +59,8 @@
 
   ;; acquiring targets
   (define targets*
-    (map path->complete-path targets))
+    (map (compose path->complete-path simplify-path)
+         targets))
 
   ;; clean old zo
   (for-each module-delete-zo targets*)

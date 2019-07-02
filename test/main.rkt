@@ -14,12 +14,14 @@
   (define (test-optimize main targets)
     (after
      (define main* (path->complete-path main))
-     (in-dir main*
-       (dynamic-rerequire main*))
      (optimize targets
-               #:ignore-check #t)
+               #:ignore-check #t
+               #:show-contracts #t)
      (in-dir main*
-       (check-not-exn (thunk (dynamic-rerequire main*))))
+       (check-not-exn
+         (thunk
+          (parameterize ([current-namespace (make-base-namespace)])
+            (dynamic-require main* #f)))))
      (for-each module-delete-zo targets)))
 
   ;; String -> Void
@@ -66,7 +68,7 @@
 
   ;; success
   (test-benchmark "sieve")
-  (test-benchmark "snake")
+  #;(test-benchmark "snake")
   #;(test-benchmark "zombie")
   #;(test-benchmark "tetris")
   #;(test-benchmark "synth")

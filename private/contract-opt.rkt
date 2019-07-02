@@ -45,17 +45,18 @@
             raw-stx))
       (syntax-compile target stx)
       stx))
-  (for ([stx stxs])
-      (pretty-print (syntax->datum stx)))
-  #;(displayln stxs)
   (if (verify-off)
       stxs
       (let* ([blames         (verify-modules targets* stxs)]
-             [_              (pretty-print blames)]
              [blameable-hash (make-blameable-hash targets*
                                                   m/l/i-hash
                                                   m/g-hash
                                                   blames)])
+        (when (show-contracts)
+          (displayln long-line)
+          (displayln "Blames")
+          (displayln long-line)
+          (pretty-print blames))
         (for/list ([target  targets]
                    [target* targets*]
                    [raw-stx raw-stxs]

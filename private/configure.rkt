@@ -1,14 +1,14 @@
 #lang racket/base
 
-;;
-;; provide
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide (all-defined-out))
+(require racket/function)
 
-;;
-;; parameter
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define line-length 80)
+(define long-line (build-string line-length (const #\━)))
 
 (define-values (show-contracts
                 ignore-check
