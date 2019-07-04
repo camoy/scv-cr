@@ -66,7 +66,14 @@
                      "unexported/server.rkt"
                      "unexported/client.rkt")))
 
-  ;; success
+
+  #;(test-case
+    "super structs"
+    (test-optimize "super/main.rkt"
+                   '("super/main.rkt"
+                     "super/parent.rkt"
+                     "super/child.rkt")))
+
   (test-benchmark "sieve")
   #;(test-benchmark "snake")
   #;(test-benchmark "zombie")

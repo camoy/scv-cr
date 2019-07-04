@@ -34,8 +34,9 @@
 ;; modifies p/c-hash removing struct-related exports and returns
 ;; an s/o-hash
 (define (p/c-remove-structs! i/c-hash p/c-hash key stx-raw)
-  (let* ([s/f-hash (s/f-make key stx-raw)]
-         [export?  (s/f-export? s/f-hash)]
+  (define-values (s/f-hash s/s-hash)
+    (s/f-make key stx-raw))
+  (let* ([export?  (s/f-export? s/f-hash)]
          [ctor?    (curry unstrange s/f-hash)]
          [s/c-hash (make-hash)])
     (hash-for-each
@@ -44,59 +45,96 @@
        (when (export? id)
          (hash-remove! p/c-hash id))
        (when (ctor? id)
-         (s/c-add! s/c-hash i/c-hash s/f-hash id ctc))))
-    (s/o-make s/c-hash)))
+         (s/c-add! s/c-hash i/c-hash s/f-hash s/s-hash id ctc))))
+    (s/o-make s/c-hash s/s-hash)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Symbol Syntax -> S/F-hash
+;; Symbol Syntax -> S/F-Hash S/S-Hash
 ;; takes Typed Racket syntax and returns hash that maps struct names to their
 ;; fields
 (define (s/f-make key stx-raw)
   (define s/f-hash (make-hash))
+  (define s/s-hash (make-hash))
   (let go ([stx stx-raw])
     (syntax-parse stx
       #:datum-literals (struct struct: :)
-      [((~or struct struct:) name ((fld : type) ...))
+      [((~or struct struct:) s:struct-name ((fld : type) ...))
        #:when (equal? key 'provide)
-       (hash-set! s/f-hash #'name (syntax-e #'(fld ...)))
+       (hash-set! s/f-hash #'s.name (syntax-e #'(fld ...)))
+       (when (syntax-e #'s.super)
+         (hash-set! s/s-hash #'s.name #'s.super))
        stx]
-      [((~datum #:struct) name ((fld : type) ...))
+      [((~datum #:struct) s:struct-name ((fld : type) ...))
        #:when (equal? key 'require-rename)
-       (hash-set! s/f-hash #'name (syntax-e #'(fld ...)))
+       (hash-set! s/f-hash #'s.name (syntax-e #'(fld ...)))
+       (when (syntax-e #'s.super)
+         (hash-set! s/s-hash #'s.name #'s.super))
        stx]
       [(x ...)
        (for-each go (syntax-e #'(x ...)))
        stx]
       [_ stx]))
-  s/f-hash)
+  (values s/f-hash s/s-hash))
+
+(define-syntax-class struct-name
+  #:attributes (name super)
+  (pattern (name:id super:id))
+  (pattern name:id #:with super #'#f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; S/C-Hash I/C-Hash S/F-Hash Syntax Syntax -> Void
+;; S/C-Hash I/C-Hash S/F-Hash S/S-Hash Syntax Syntax -> Void
 ;; takes pair matching constructor with contract and pushes appropriate
 ;; field-to-contract association into s/c-hash
-(define (s/c-add! s/c-hash i/c-hash s/f-hash id ctc)
+(define (s/c-add! s/c-hash i/c-hash s/f-hash s/s-hash id ctc)
   (let* ([id*      (unstrange s/f-hash id)]
          [fld-ctcs (chase-domain ctc i/c-hash)]
+         [s-n      (super-fields s/f-hash s/s-hash id*)]
          [f/c-list (map list
                         (hash-ref s/f-hash id*)
-                        fld-ctcs)])
+                        (drop fld-ctcs s-n))])
     (hash-set! s/c-hash id* f/c-list)))
+
+;; S/F-Hash S/S-Hash Syntax -> Natural
+;; returns the number of super struct fields present in the constructor
+(define (super-fields s/f-hash s/s-hash id)
+  (let go ([id  id]
+           [acc 0])
+    (define super (hash-ref-stx s/s-hash id))
+    (if super
+        (go super (+ acc (length (hash-ref-stx s/f-hash super))))
+        acc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Struct-Hash -> [List-of Syntax]
+;; Struct-Hash S/S-Hash -> [List-of Syntax]
 ;; returns list of struct-out declarations for contract-out
-(define (s/o-make s/c-hash)
+(define (s/o-make s/c-hash s/s-hash)
   (define s/o-hash (make-hash))
   (hash-for-each
    s/c-hash
    (λ (name f/c)
+     (define super (hash-ref-stx s/s-hash name))
      (hash-set! s/o-hash
                 name
-                #`(struct #,name #,f/c))))
+                #`(struct
+                    #,(if super
+                          #`(#,name #,super)
+                          name)
+                    #,(get-f/c s/c-hash s/s-hash name)))))
   s/o-hash)
+
+;; S/C-Hash S/S-Hash Syntax -> [List-of Syntax]
+;; gets field contract association
+(define (get-f/c s/c-hash s/s-hash name)
+  (let go ([name name]
+           [acc '()])
+    (define super (hash-ref-stx s/s-hash name))
+    (define acc* (append (hash-ref-stx s/c-hash name) acc))
+    (if super
+        (go super acc*)
+        acc*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
