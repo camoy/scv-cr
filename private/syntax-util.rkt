@@ -14,7 +14,8 @@
          syntax-scope-external
          syntax-dependencies
          syntax-preserve
-         syntax-replace-srcloc!)
+         syntax-replace-srcloc!
+         hash-ref-stx)
 
 (require compiler/compilation-path
          lang-file/read-lang-file
@@ -205,6 +206,14 @@
        (when (parent-ctc)
          (hash-set! l/i-hash pos (parent-ctc)))
        e])))
+
+;; [Hash Syntax Syntax] Syntax -> Syntax
+;; looks syntax in a hash from by its content
+(define (hash-ref-stx h k)
+  (define p
+   (assoc (syntax->datum k)
+          (hash-map h (λ (k v) (cons (syntax->datum k) v)))))
+  (and p (cdr p)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

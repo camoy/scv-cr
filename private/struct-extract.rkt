@@ -198,14 +198,6 @@
                     (string->number (substring id* (string-length name*))))))
          (hash-keys s/f-hash)))
 
-;; [Hash Syntax Syntax] Syntax -> Syntax
-;; looks syntax in a hash from by its content
-(define (hash-ref-stx h k)
-  (define p
-   (assoc (syntax->datum k)
-          (hash-map h (λ (k v) (cons (syntax->datum k) v)))))
-  (and p (cdr p)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #;(module+ test

@@ -17,10 +17,11 @@
 
 ;; Syntaxes is a [List-of Syntax].
 
-;; Ctc-Data is a (ctc-data Ctc-Bundle Ctc-Bundle Graph) containing contract
-;; information for both provided identifiers and required identifiers and a
-;; graph describing contract dependencies.
-(struct ctc-data (provide require graph))
+;; Ctc-Data is a (ctc-data Ctc-Bundle Ctc-Bundle Graph D/I-Hash M/I-Hash)
+;; containing contract information for both provided identifiers and required
+;; identifiers, a graph describing contract dependencies, and hashes
+;; describing mappings between predicates and their contracts.
+(struct ctc-data (provide require graph d-pred m-pred))
 
 ;; A Ctc-Bundle is a (ctc-bundle Syntaxes Syntaxes Syntaxes I/C-Hash P/C-Hash
 ;; S/O-Hash C/C-Hash) bundling together all the contract information necessary.
@@ -64,7 +65,9 @@
   (define ctc-graph
     (hashes->graph (ctc-bundle-c/c-hash provide-bundle)
                    (ctc-bundle-c/c-hash require-bundle)))
-  (ctc-data provide-bundle require-bundle ctc-graph))
+  (define-values (d-pred m-pred)
+    (list->predicate-hashes (syntax-property-values stx 'make-predicate)))
+  (ctc-data provide-bundle require-bundle ctc-graph d-pred m-pred))
 
 ;; [List-of Path] I/C-Hash P/C-Hash Symbol Syntax -> Ctc-Bundle
 ;; convert hashes to contract bundle
@@ -262,6 +265,21 @@
     #:datum-literals (struct-out)
     [(struct-out y) (syntax-e #'y)]
     [_ #f]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; [List-of [Cons Syntax Syntax]] -> D/I-Hash M/I-Hash
+;; makes predicate hashes
+(define (list->predicate-hashes xs)
+  (define xs* (filter pair? xs))
+  (define-values (d-list m-list)
+    (partition (λ (x)
+                 (syntax-parse (car x)
+                   #:datum-literals (define-predicate)
+                   [(define-predicate _ _) #t]
+                   [_ #f]))
+               xs*))
+  (values (make-hash d-list) (make-hash m-list)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

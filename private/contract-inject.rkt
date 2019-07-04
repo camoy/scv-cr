@@ -24,7 +24,8 @@
      (define forms*
        (for/fold ([stx       #'(forms ...)])
                  ([injection (list (inject-require target)
-                                   inject-provide)])
+                                   inject-provide
+                                   inject-predicates)])
          (injection stx data)))
      #`(module name #,(no-check #'lang)
          (#,(syntax-attach-scope #'mb)
@@ -88,6 +89,7 @@
        (provide (contract-out #,@(ctc-bundle-outs bundle))))
      (require (prefix-in -: (only-in 'require/contracts #,@defs))
               (except-in 'require/contracts #,@defs))
+     #,@(ctc-bundle-defns bundle)
      (define-values (#,@defs) (values #,@defs*))
      #,@forms*))
 
@@ -124,3 +126,23 @@
                     stx
                     stx)]
     [x #'x]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (inject-predicates stx data)
+  (define-values (d-pred m-pred)
+    (values (ctc-data-d-pred data)
+            (ctc-data-m-pred data)))
+  (let go ([stx stx])
+    (syntax-parse stx
+      #:datum-literals (define-predicate make-predicate)
+      [(define-predicate x _)
+       #`(define x #,(hash-ref-stx d-pred stx))]
+      [(make-predicate _)
+       (hash-ref-stx m-pred stx)]
+      [(x ...)
+       (datum->syntax stx
+                      (map go (syntax-e #'(x ...)))
+                      stx
+                      stx)]
+      [x #'x])))
