@@ -79,14 +79,27 @@
   (define bundle (ctc-data-require data))
   (define required-set (mutable-set))
   (define forms* ((munge-requires target required-set) forms))
+  (define-values (defs defs*) (make-definition bundle))
   #`((module require/contracts racket/base
        (require racket/contract
                 #,@(set->list required-set)
                 #,@(ctc-bundle-deps bundle))
        #,@(ctc-bundle-defns bundle)
        (provide (contract-out #,@(ctc-bundle-outs bundle))))
-     (require 'require/contracts)
+     (require (prefix-in -: (only-in 'require/contracts #,@defs))
+              (except-in 'require/contracts #,@defs))
+     (define-values (#,@defs) (values #,@defs*))
      #,@forms*))
+
+;; Ctc-Bundle -> [List-of Symbol] [List-of Symbol]
+;; identifiers that should be defined by the require form
+(define (make-definition bundle)
+  (define to-define
+    (append (hash-keys (ctc-bundle-p/c-hash bundle))
+            (map (λ (x) (format-symbol "~a?" x))
+                 (hash-keys (ctc-bundle-s/o-hash bundle)))))
+  (values to-define
+          (map (λ (x) (format-symbol "-:~a" x)) to-define)))
 
 ;; Path Set -> Syntax -> Syntax
 ;; extracts and munges require forms
