@@ -14,5 +14,9 @@ data.each_with_index do |h, k|
   puts "```"
   puts h[:error]
   puts "```"
+  puts "### Output"
+  puts "```"
+  puts h[:output]
+  puts "```"
   puts ""
 end
