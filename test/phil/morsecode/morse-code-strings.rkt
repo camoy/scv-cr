@@ -16,6 +16,7 @@
    (define lifted/1 g9)
    (provide (contract-out (char-table lifted/1))))
 (require (prefix-in -: (only-in 'require/contracts char-table))
+         (lib "typed-racket/utils/hash-contract.rkt")
           (except-in 'require/contracts char-table))
 (define g6 char?)
 (define g7 string?)
@@ -35,5 +36,5 @@
 (: string->morse (-> String String))
 (define (string->morse str)
    (define morse-list
-     (for/list : (Listof String) ((c : Char str)) (char->dit-dah-string c)))
+     (for/list ((c str)) (char->dit-dah-string c)))
    (apply string-append morse-list))
