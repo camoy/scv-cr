@@ -1,13 +1,16 @@
-`<main>': /home/camoy/wrk/soft-contract/soft-contract/fake-contract.rkt:234:40: recursive-contract: must be #:chaperone or #:flat (RuntimeError)
-  in: (#:impersonator)
+math.rkt:1:2183: parser: don't know what this identifier means. It is possibly an unimplemented primitive.
+  in: sqrt
   location...:
-   /home/camoy/wrk/soft-contract/soft-contract/fake-contract.rkt:234:40
+   math.rkt:1:2183
   context...:
    do-raise-syntax-error
-   success
-   fail-handler1004
    /home/camoy/wrk/racket/racket/collects/racket/contract/private/arrow-higher-order.rkt:360:33
-   [repeats 1 more time]
+   /home/camoy/wrk/soft-contract/soft-contract/parse/private.rkt:761:2: parse-id
+   fail-handler820
+   /home/camoy/wrk/racket/racket/collects/racket/contract/private/arrow-higher-order.rkt:360:33
+   /home/camoy/wrk/racket/racket/collects/racket/list.rkt:586:2: append-map
+   ...rivate/parse.rkt:562:26
+   /home/camoy/wrk/racket/racket/collects/racket/contract/private/arrow-higher-order.rkt:360:33
    /home/camoy/wrk/soft-contract/soft-contract/parse/private.rkt:255:10: for-loop
    success
    /home/camoy/wrk/soft-contract/soft-contract/parse/private.rkt:110:7: stxs->modules
@@ -16,8 +19,4 @@
    /home/camoy/wrk/scv-gt/private/contract-opt.rkt:22:0: contract-opt
    /home/camoy/wrk/scv-gt/main.rkt:47:0: optimize16
    (submod "/home/camoy/wrk/scv-gt/main.rkt" main): [running body]
-   temp37_0
-   for-loop
-   run-module-instance!125
-   ...
 
