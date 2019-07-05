@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+require "open3"
+cmd = "raco scv-gt"
+main = ARGV[2]
+files = Dir.glob(File.dirname(main) + "/**/*.rkt")
+full = ([cmd] + files).join(" ")
+
+# capture output
+_, error, status = Open3.capture3(full)
+raise error unless error == ""
