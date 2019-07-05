@@ -63,8 +63,7 @@ benchmarks.each_with_index do |benchmark, k|
   result[:error] = error
   results << result
   puts "Finished #{benchmark}"
-end
-
-File.open("result.dat", "w") do |handle|
-  handle.write(Marshal.dump(results))
+  File.open("result.dat", "w") do |handle|
+    handle.write(Marshal.dump(results))
+  end
 end
