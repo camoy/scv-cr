@@ -19,4 +19,9 @@ data.each_with_index do |h, k|
   puts h[:output]
   puts "```"
   puts ""
+  puts "### Blames"
+  puts "```"
+  puts h[:blames]
+  puts "```"
+  puts ""
 end

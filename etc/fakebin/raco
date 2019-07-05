@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/ruby
 
 require "open3"
 cmd = "raco scv-gt -b"
@@ -7,5 +7,13 @@ files = Dir.glob(File.dirname(main) + "/**/*.rkt")
 full = ([cmd] + files).join(" ")
 
 # capture output
-_, error, status = Open3.capture3(full)
+output, error, _ = Open3.capture3(full)
+
+f = __dir__ + "/../blames.dat"
+results = Marshal.load(File.read(f))
+results << output
+File.open(f, "w") do |handle|
+  handle.write(Marshal.dump(results))
+end
+
 raise error unless error == ""
