@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "open3"
-cmd = "raco scv-gt"
+cmd = "raco scv-gt -b"
 main = ARGV[2]
 files = Dir.glob(File.dirname(main) + "/**/*.rkt")
 full = ([cmd] + files).join(" ")

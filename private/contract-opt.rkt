@@ -52,7 +52,7 @@
                                                   m/l/i-hash
                                                   m/g-hash
                                                   blames)])
-        (when (show-contracts)
+        (when (show-blames)
           (displayln long-line)
           (displayln "Blames")
           (displayln long-line)

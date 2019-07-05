@@ -11,11 +11,13 @@
 (define long-line (build-string line-length (const #\━)))
 
 (define-values (show-contracts
+                show-blames
                 ignore-check
                 overwrite
                 compiler-off
                 verify-off)
   (values (make-parameter #f)
+          (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)
