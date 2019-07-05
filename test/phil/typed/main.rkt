@@ -1,0 +1,21 @@
+#lang typed/racket/base/no-check
+(require racket/contract)
+(provide (contract-out))
+(module require/contracts racket/base
+   (require racket/contract)
+   (provide (contract-out)))
+(require (prefix-in -: (only-in 'require/contracts))
+          (except-in 'require/contracts))
+(define-values () (values))
+(require require-typed-check "../base/command-types.rkt")
+(require "eval.rkt")
+(require (only-in racket/file file->lines))
+(define LOOPS 1)
+(: main (-> (Listof String) Void))
+(define (main lines)
+   (for
+    ((i (in-range LOOPS)))
+    (define-values (_e _s) (forth-eval* lines))
+    (void)))
+(define lines (file->lines "../base/history-100.txt"))
+(time (main lines))

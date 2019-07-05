@@ -1,0 +1,19 @@
+`<main>': missing `/home/camoy/wrk/racket/racket/collects/racket/private/class-internal.rkt` for `compose-class` (RuntimeError)
+  context...:
+   /home/camoy/wrk/soft-contract/soft-contract/parse/private.rkt:731:2: parse-ref224
+   /home/camoy/wrk/racket/racket/collects/racket/contract/private/arrow-higher-order.rkt:360:33
+   fail-handler1649
+   fail-handler1004
+   /home/camoy/wrk/racket/racket/collects/racket/contract/private/arrow-higher-order.rkt:360:33
+   [repeats 1 more time]
+   /home/camoy/wrk/soft-contract/soft-contract/parse/private.rkt:255:10: for-loop
+   success
+   /home/camoy/wrk/soft-contract/soft-contract/parse/private.rkt:110:7: stxs->modules
+   /home/camoy/wrk/soft-contract/soft-contract/parse/main.rkt:30:4: parse-stxs65
+   /home/camoy/wrk/soft-contract/soft-contract/verifier.rkt:42:2: verify-modules109
+   /home/camoy/wrk/scv-gt/private/contract-opt.rkt:22:0: contract-opt
+   /home/camoy/wrk/scv-gt/main.rkt:47:0: optimize16
+   (submod "/home/camoy/wrk/scv-gt/main.rkt" main): [running body]
+   temp37_0
+   for-loop
+   ...
