@@ -186,7 +186,7 @@
                     [y-def*
                      (contract-munge #'y #'y-def)])
         (map cons
-             (syntax-e #'(xs ... y))
+             (map lifted->l (syntax-e #'(xs ... y)))
              (syntax-e #'(xs-def* ... y-def*))))])))
 
 ;; Syntax -> Syntax
@@ -205,7 +205,7 @@
                     [y-def*
                      (contract-munge #'y #'y-def)])
         (map cons
-             (syntax-e #'(xs ... y))
+             (map lifted->l (syntax-e #'(xs ... y)))
              (syntax-e #'(xs-def* ... y-def*))))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -232,7 +232,7 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (cons #'k #'v)])))
+      (cons #'k (lifted->l #'v))])))
 
 ;; Syntax -> P/C-Hash
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
@@ -246,7 +246,7 @@
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (cons #'k #'v)])))
+      (cons #'k (lifted->l #'v))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -278,23 +278,11 @@
                    #:datum-literals (define-predicate)
                    [(define-predicate _ _) #t]
                    [_ #f]))
-               xs*))
+               (map (λ (x) (cons (car x)
+                                 (lifted->l (cdr x)))) xs*)))
   (values (make-hash d-list) (make-hash m-list)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; String -> (Symbol -> Number)
-;; makes a function that can extract number from a prefixed identifier
-(define ((make-get-number t) x)
-  (define x* (symbol->string x))
-  (and (string-prefix? x* t)
-       (string->number (substring x* (string-length t)))))
-
-;; Symbol -> Number
-;; extracts numbered suffix from an identifier
-(define g-number (make-get-number "g"))
-(define generated-contract-number (make-get-number "generated-contract"))
-(define lifted-number (make-get-number "lifted/"))
 
 ;; [List-of (Symbol -> Number)]
 ;; list of functions for ordering identifiers

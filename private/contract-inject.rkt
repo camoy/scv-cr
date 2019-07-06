@@ -86,10 +86,10 @@
                 #,@(set->list required-set)
                 #,@(ctc-bundle-deps bundle))
        #,@(ctc-bundle-defns bundle)
-       (provide (contract-out #,@(ctc-bundle-outs bundle))))
+       (provide #,@(hash-keys (ctc-bundle-i/c-hash bundle))
+                (contract-out #,@(ctc-bundle-outs bundle))))
      (require (prefix-in -: (only-in 'require/contracts #,@defs))
               (except-in 'require/contracts #,@defs))
-     #,@(ctc-bundle-defns bundle)
      (define-values (#,@defs) (values #,@defs*))
      #,@forms*))
 

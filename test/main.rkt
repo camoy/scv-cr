@@ -66,6 +66,11 @@
                      "unexported/server.rkt"
                      "unexported/client.rkt")))
 
+  (test-case
+    "hash"
+    (test-optimize "hash/client.rkt"
+                   '("hash/client.rkt"
+                     "hash/server.rkt")))
 
   #;(test-case
     "super structs"
@@ -74,12 +79,18 @@
                      "super/parent.rkt"
                      "super/child.rkt")))
 
+  (test-case
+    "predicate"
+    (test-optimize "predicate/main.rkt"
+                   '("predicate/main.rkt"
+                     "predicate/typed.rkt")))
+
   (test-benchmark "sieve")
+  (test-benchmark "morsecode")
   #;(test-benchmark "snake")
   #;(test-benchmark "zombie")
   #;(test-benchmark "tetris")
   #;(test-benchmark "synth")
 
   ;; error
-  #;(test-benchmark "morsecode")
   )

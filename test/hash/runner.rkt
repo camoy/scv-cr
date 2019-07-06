@@ -7,11 +7,10 @@
          scv-gt/private/proxy-resolver)
 
 (define (test-optimize main targets)
-  (optimize targets)
+  (optimize targets
+            #:ignore-check #f
+            #:show-blames #t)
   (define main* (path->complete-path main))
-  (void)
-  #;(in-dir main*
-    (thunk (dynamic-rerequire main*)))
-  #;(for-each module-delete-zo targets))
+  (void))
 
-(test-optimize "untyped.rkt" '("typed.rkt" "untyped.rkt"))
+(test-optimize "client.rkt" '("client.rkt" "server.rkt"))

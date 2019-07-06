@@ -15,12 +15,16 @@
          syntax-dependencies
          syntax-preserve
          syntax-replace-srcloc!
-         hash-ref-stx)
+         hash-ref-stx
+         g-number
+         generated-contract-number
+         lifted-number
+         lifted->l)
 
 (require compiler/compilation-path
          lang-file/read-lang-file
          racket/require
-         (multi-in racket (function list match path pretty set string))
+         (multi-in racket (function list match path pretty set string syntax))
          (multi-in syntax (modcollapse modread parse strip-context)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -214,6 +218,28 @@
    (assoc (syntax->datum k)
           (hash-map h (λ (k v) (cons (syntax->datum k) v)))))
   (and p (cdr p)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; String -> (Symbol -> Number)
+;; makes a function that can extract number from a prefixed identifier
+(define ((make-get-number t) x)
+  (define x* (symbol->string x))
+  (and (string-prefix? x* t)
+       (string->number (substring x* (string-length t)))))
+
+;; Symbol -> Number
+;; extracts numbered suffix from an identifier
+(define g-number (make-get-number "g"))
+(define generated-contract-number (make-get-number "generated-contract"))
+(define lifted-number (make-get-number "lifted/"))
+
+;; Syntax -> Syntax
+;; changed lifted identifier to non-lifted
+(define (lifted->l stx)
+  (define n (and (identifier? stx)
+                 (lifted-number (syntax-e stx))))
+  (if n (format-id #f "l/~a" n) stx))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

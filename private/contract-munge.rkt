@@ -6,6 +6,7 @@
 
 (require racket/function
          racket/contract
+         scv-gt/private/syntax-util
          syntax/parse)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,15 +31,21 @@
                        letrec
                        c->
                        c->*
-                       t:index?)
+                       typed-racket-hash/c)
+    ;; Convert lifted identifiers
+    [lifted
+     #:when (and (identifier? #'lifted)
+                 (lifted-number (syntax-e #'lifted)))
+     (lifted->l #'lifted)]
+
     ;; Convert any-wrap/c to any/c, cannot require (SCV)
     [any-wrap/c #'any/c]
 
     ;; Contract for predicate checking
     [pred-cnt #'(-> any/c boolean?)]
 
-    ;; From numeric predicates
-    [t:index? #'exact-nonnegative-integer?]
+    ;; TR hash
+    [typed-racket-hash/c #'hash/c]
 
     ;; Inline simple-result->, cannot require (SCV)
     [(simple-result-> ran arity)
@@ -87,8 +94,8 @@
 
     ;; Distribute munge-contract to all list elements
     [(f args ...)
-     #`(f #,@(map (curry contract-munge id)
-                  (syntax->list #'(args ...))))]
+     #`(#,@(map (curry contract-munge id)
+                (syntax->list #'(f args ...))))]
 
     ;; Catch-all case
     [other #'other]))
