@@ -5,6 +5,7 @@
 (provide p/c-remove-structs!)
 
 (require racket/require
+         racket/math
          (multi-in racket (list set syntax string function))
          mischief/dict
          syntax/parse
@@ -195,7 +196,8 @@
            (define name* (syntax->string name))
            (or (string=? id* name*)
                (and (string-prefix? id* name*)
-                    (string->number (substring id* (string-length name*))))))
+                    (let [(n (string->number (substring id* (string-length name*))))]
+                      (and n (natural? n))))))
          (hash-keys s/f-hash)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
