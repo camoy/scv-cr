@@ -6,7 +6,7 @@
 
 (require
  racket/require
- (multi-in racket (syntax function set path))
+ (multi-in racket (syntax function set path list))
  (multi-in syntax (parse modresolve))
  (multi-in scv-gt private (contract-extract
                            configure
@@ -42,24 +42,26 @@
 ;; takes original syntax and contract data and uses contract information
 ;; to inject provide contracts into the unexpanded syntax
 (define (inject-provide forms data)
-  (define bundle (ctc-data-provide data))
-  (define forms* (munge-provides forms bundle))
+  (define-values (p-bundle r-bundle)
+    (values (ctc-data-provide data)
+            (ctc-data-require data)))
+  (define forms* (munge-provides forms p-bundle r-bundle))
   #`((require racket/contract
-              #,@(ctc-bundle-deps bundle))
-     #,@(ctc-bundle-defns bundle)
-     (provide (contract-out #,@(ctc-bundle-outs bundle)))
+              #,@(ctc-bundle-deps p-bundle))
+     #,@(ctc-bundle-defns p-bundle)
+     (provide (contract-out #,@(ctc-bundle-outs p-bundle)))
      #,@forms*))
 
 ;; Syntax Ctc-Data -> Syntax
 ;; removes already provided identifiers from provide forms
-(define (munge-provides stx bundle)
+(define (munge-provides stx p-bundle r-bundle)
   (define not-provided
     (syntax-parser
       #:datum-literals (provide)
       [(provide x ...)
        (define xs*
-         (filter (λ (x) (not (ctc-bundle-provided? bundle x)))
-                 (syntax-e #'(x ...))))
+         (append-map (ctc-bundle-provides p-bundle r-bundle)
+                     (syntax-e #'(x ...))))
        #`(provide #,@xs*)]
        [x #'x]))
   (syntax-parse stx
@@ -67,7 +69,7 @@
      (define provides*
        (map not-provided (syntax-e #'(x ...))))
      (define provides**
-       (map (λ (x) (munge-provides x bundle)) provides*))
+       (map (λ (x) (munge-provides x p-bundle r-bundle)) provides*))
      (datum->syntax stx provides** stx stx)]
     [x #'x]))
 

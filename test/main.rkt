@@ -89,7 +89,7 @@
                    '("predicate/main.rkt"
                      "predicate/typed.rkt")))
 
-  #;(test-case
+  (test-case
     "adaptor"
     (test-optimize "adaptor/const.rkt"
                    '("adaptor/const.rkt"

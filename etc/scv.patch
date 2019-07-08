@@ -12,19 +12,42 @@ index 8e8a045f..4c1b3e7d 100644
           racket/list
           racket/splicing
           syntax/parse/define
-@@ -176,8 +177,11 @@
+@@ -39,9 +40,9 @@
+ 
+ (define-syntax (scv:ignore stx)
+   (syntax-case stx ()
+-    [(_ s) (syntax-property #'s 'scv:ignore #t)])) 
++    [(_ s) (syntax-property #'s 'scv:ignore #t)]))
+ 
+-(define-syntax (struct/c stx) 
++(define-syntax (struct/c stx)
+   (syntax-case stx ()
+     [(_ name cs ...)
+      (with-syntax-source stx
+@@ -50,7 +51,7 @@
+ 
+ (define-syntax-rule (parametric->/c (x ...) c) (dynamic-parametric->/c (λ (x ...) c)))
+ 
+-(begin-for-syntax 
++(begin-for-syntax
+   (define-syntax-class dom
+     #:description "restricted dependent domain"
+     (pattern _:id+ctc))
+@@ -176,20 +177,24 @@
                   (clauses ...))]
      [(_ (ctcs ...) ((_ init ... range) clauses ...))
       (case->/acc (ctcs ... (list (list init ...) #f (list range)))
-                  (clauses ...))]))
-
+-                 (clauses ...))])) 
++                 (clauses ...))]))
+ 
  (define-syntax-rule (provide/contract [id ctc] ...)
    (begin (dynamic-provide/contract (list id ctc) ...)
-          (scv:ignore (c:provide/contract [id ctc] ...))))
+-         (scv:ignore (c:provide/contract [id ctc] ...)))) 
++         (scv:ignore (c:provide/contract [id ctc] ...))))
 +
 +(define-for-syntax (not-a-type? id)
 +  (not (equal? type-name-error (syntax-local-value id void))))
-
+ 
  (define-syntax (provide stx)
 -  (syntax-parse stx #:literals (contract-out struct struct-out)
 +  (syntax-parse stx #:literals (contract-out struct-out)

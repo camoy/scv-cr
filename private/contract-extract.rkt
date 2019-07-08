@@ -5,10 +5,10 @@
 (provide (struct-out ctc-data)
          (struct-out ctc-bundle)
          contract-extract
-         ctc-bundle-provided?)
+         ctc-bundle-provides)
 
 (require racket/require
-         (multi-in racket (list string))
+         (multi-in racket (list string syntax))
          (multi-in scv-gt/private (contract-munge struct-extract syntax-util))
          syntax/parse
          graph)
@@ -250,13 +250,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Ctc-Bundle Syntax -> Boolean
+;; Ctc-Bundle Ctc-Bundle -> (Syntax -> [List-of Syntax])
 ;; determines if an identifier had already been provided with a contract-out
-(define (ctc-bundle-provided? bundle id)
-  (or (memf (λ (x) (equal? (syntax-e id) (syntax-e x)))
-            (hash-keys (ctc-bundle-p/c-hash bundle)))
-      (memf (λ (x) (equal? (struct-out->name id) (syntax-e x)))
-            (hash-keys (ctc-bundle-s/o-hash bundle)))))
+(define ((ctc-bundle-provides p-bundle r-bundle) id)
+  (define s-name
+    (datum->syntax #f (struct-out->name id)))
+  (define-values (p-p/c p-s/o r-p/c)
+    (values (hash-ref-stx (ctc-bundle-p/c-hash p-bundle) id)
+            (hash-ref-stx (ctc-bundle-s/o-hash p-bundle) s-name)
+            (hash-ref-stx (ctc-bundle-s/o-hash r-bundle) s-name)))
+  (cond
+    [p-p/c '()]
+    [p-s/o '()]
+    [r-p/c (list id (format-id s-name "~a?" s-name))]
+    [else (list id)]))
 
 ;; Syntax -> Symbol
 ;; extract out a struct name from a struct-out form
