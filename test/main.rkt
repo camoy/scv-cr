@@ -14,9 +14,7 @@
   (define (test-optimize main targets)
     (after
      (define main* (path->complete-path main))
-     (optimize targets
-               #:ignore-check #t
-               #:show-contracts #t)
+     (optimize targets #:ignore-check #t)
      (in-dir main*
        (check-not-exn
          (thunk
@@ -72,7 +70,7 @@
                    '("hash/client.rkt"
                      "hash/server.rkt")))
 
-  #;(test-case
+  (test-case
     "super structs"
     (test-optimize "super/main.rkt"
                    '("super/main.rkt"
@@ -80,17 +78,27 @@
                      "super/child.rkt")))
 
   (test-case
+    "mutable"
+    (test-optimize "mutable/client.rkt"
+                   '("mutable/client.rkt"
+                     "mutable/server.rkt")))
+
+  (test-case
     "predicate"
     (test-optimize "predicate/main.rkt"
                    '("predicate/main.rkt"
                      "predicate/typed.rkt")))
+
+  #;(test-case
+    "adaptor"
+    (test-optimize "adaptor/const.rkt"
+                   '("adaptor/const.rkt"
+                     "adaptor/data-adaptor.rkt"
+                     "adaptor/data.rkt")))
 
   (test-benchmark "sieve")
   (test-benchmark "morsecode")
   #;(test-benchmark "snake")
   #;(test-benchmark "zombie")
   #;(test-benchmark "tetris")
-  #;(test-benchmark "synth")
-
-  ;; error
-  )
+  #;(test-benchmark "synth"))

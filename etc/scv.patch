@@ -1,0 +1,59 @@
+diff --git a/soft-contract/fake-contract.rkt b/soft-contract/fake-contract.rkt
+index 8e8a045f..4c1b3e7d 100644
+--- a/soft-contract/fake-contract.rkt
++++ b/soft-contract/fake-contract.rkt
+@@ -14,7 +14,8 @@
+                      racket/syntax
+                      syntax/parse
+                      racket/pretty
+-                     "parse/utils.rkt")
++                     "parse/utils.rkt"
++                     typed-racket/base-env/type-name-error)
+          racket/list
+          racket/splicing
+          syntax/parse/define
+@@ -176,8 +177,11 @@
+                  (clauses ...))]
+     [(_ (ctcs ...) ((_ init ... range) clauses ...))
+      (case->/acc (ctcs ... (list (list init ...) #f (list range)))
+                  (clauses ...))]))
+
+ (define-syntax-rule (provide/contract [id ctc] ...)
+   (begin (dynamic-provide/contract (list id ctc) ...)
+          (scv:ignore (c:provide/contract [id ctc] ...))))
++
++(define-for-syntax (not-a-type? id)
++  (not (equal? type-name-error (syntax-local-value id void))))
+
+ (define-syntax (provide stx)
+-  (syntax-parse stx #:literals (contract-out struct struct-out)
++  (syntax-parse stx #:literals (contract-out struct-out)
+     [(_ (~or i:id
+              (struct-out so:id)
+              (contract-out (~or [p/i:id ctc:expr]
+                                 ;; TODO confirm that ignoring parent declaration makes no difference
+-                                [struct (~or s:id (s:id _:id)) ([ac:id dom:expr] ...)]) ...))
++                                [(~datum struct) (~or s:id (s:id _:id)) ([ac:id dom:expr] ...)]) ...))
+         ...)
++     #:with (i* ...) (filter not-a-type? (syntax->list #'(i ...)))
+      (define (ids->str ids)
+        (string-join (map symbol->string (map syntax-e (syntax->list ids)))))
+      #;(unless (null? (syntax->list #'(i ...)))
+@@ -199,7 +204,7 @@
+      #'(begin
+          ;; Real stuff to preserve the program's meaning when run
+          (scv:ignore
+-          (r:provide i ...
++          (r:provide i* ...
+                      (struct-out so) ...
+                      (contract-out [p/i ctc] ...
+                                    [struct s ([ac dom] ...)] ...)
+@@ -208,7 +213,7 @@
+          ;; Ignore all non-contracted identifiers because they might be macros even.
+          ;; Verifying against `any/c` doesn't mean much anyways
+          (dynamic-provide/contract
+-          i ...
++          i* ...
+           (list p/i ctc) ... ...
+           (dynamic-id-struct-out 'so) ...
+           (dynamic-struct-out 's (list 'ac dom) ...) ... ...))]))

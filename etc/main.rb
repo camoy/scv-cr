@@ -11,7 +11,6 @@ b = __dir__ + "/blames.dat"
 all_benchmarks = [
   "acquire",
   "dungeon",
-  "forth",
   "fsm",
   "fsmoo",
   "gregor",
@@ -30,15 +29,14 @@ all_benchmarks = [
 ]
 
 benchmarks = [
-#  "forth",
 #  "gregor",
-#  "morsecode",
-  "sieve"#,
-#  "snake",
+  "morsecode",
+  "sieve",
+  "snake",
 #  "suffixtree",
 #  "synth",
-#  "tetris",
-#  "zombie"
+  "tetris",
+  "zombie"
 ]
 
 #################################################################################
@@ -60,7 +58,7 @@ benchmarks.each_with_index do |benchmark, k|
   File.open(b, "w") do |handle|
     handle.write(Marshal.dump([]))
   end
-  `raco gtp-measure -c 0 -i 1 -S 1 -R 1 --bin #{fakebin} --setup #{benchmark_dir}`
+  `raco gtp-measure -c 4 -i 1 -S 1 -R 1 --bin #{fakebin} --setup #{benchmark_dir}`
   output, error, _ = Open3.capture3("#{env_str} raco gtp-measure --resume #{gtp_dir}/#{k+1}")
   result = {}
   result[:name] = benchmark
