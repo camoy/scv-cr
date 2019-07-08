@@ -5,8 +5,7 @@
 (provide p/c-remove-structs!)
 
 (require racket/require
-         racket/math
-         (multi-in racket (list set syntax string function))
+         (multi-in racket (list set syntax string function math))
          mischief/dict
          syntax/parse
          scv-gt/private/syntax-util)
@@ -60,7 +59,7 @@
   (let go ([stx stx-raw])
     (syntax-parse stx
       #:datum-literals (struct struct: :)
-      [((~or struct struct:) s:struct-name ((fld : type) ...) _ ...)
+      [((~or struct struct:) s:struct-name-splicing ((fld : type) ...) _ ...)
        #:when (equal? key 'provide)
        (hash-set! s/f-hash #'s.name (syntax-e #'(fld ...)))
        (when (syntax-e #'s.super)
@@ -77,6 +76,11 @@
        stx]
       [_ stx]))
   (values s/f-hash s/s-hash))
+
+(define-splicing-syntax-class struct-name-splicing
+  #:attributes (name super)
+  (pattern (~seq name:id super:id))
+  (pattern name:id #:with super #'#f))
 
 (define-syntax-class struct-name
   #:attributes (name super)

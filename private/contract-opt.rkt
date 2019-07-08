@@ -43,7 +43,7 @@
                                       target
                                       (contract-inject target raw-stx datum)))
             raw-stx))
-      (pretty-print (syntax->datum stx))
+      #;(pretty-print (syntax->datum stx))
       (syntax-compile target stx)
       stx))
   (if (verify-off)

@@ -71,6 +71,11 @@
                      "hash/server.rkt")))
 
   (test-case
+    "super structs simple"
+    (test-optimize "super/both.rkt"
+                   '("super/both.rkt")))
+
+  (test-case
     "super structs"
     (test-optimize "super/main.rkt"
                    '("super/main.rkt"
