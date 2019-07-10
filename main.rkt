@@ -46,6 +46,7 @@
 ;; the flags
 (define (optimize targets
                   #:show-contracts [s (show-contracts)]
+                  #:keep-contracts [k (keep-contracts)]
                   #:show-blames [b (show-blames)]
                   #:ignore-check [i (ignore-check)]
                   #:overwrite [o (overwrite)]
@@ -53,6 +54,7 @@
                   #:verify-off [v (verify-off)])
   ;; set parameters
   (show-contracts s)
+  (keep-contracts k)
   (show-blames b)
   (ignore-check i)
   (overwrite o)
@@ -110,6 +112,8 @@
    #:once-each
    [("-s" "--show-contracts") "dump modules with contracts"
                               (show-contracts #t)]
+   [("-k" "--keep-contracts") "keep all contracts even if verified"
+                              (keep-contracts #t)]
    [("-b" "--show-blames")    "dump blame information"
                               (show-blames #t)]
    [("-i" "--ignore-check")   "ignore require-typed/check (for debugging)"

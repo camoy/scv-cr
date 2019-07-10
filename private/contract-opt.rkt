@@ -50,19 +50,21 @@
       stxs
       (let* ([blames         (verify-modules targets* stxs)]
              [_              (print-blames blames)]
-             [blameable-hash (make-blameable-hash targets*
-                                                  m/l/i-hash
-                                                  m/g-hash
-                                                  blames)])
+             [blameable-hash (and (not (keep-contracts))
+                                  (make-blameable-hash targets*
+                                                       m/l/i-hash
+                                                       m/g-hash
+                                                       blames))])
         (for/list ([target  targets]
                    [target* targets*]
                    [raw-stx raw-stxs]
                    [datum   data])
           (if datum
               (begin
-                (erase-contracts! target
-                                  datum
-                                  (hash-ref blameable-hash target*))
+                (when (not (keep-contracts))
+                  (erase-contracts! target
+                                    datum
+                                    (hash-ref blameable-hash target*)))
                 (contract-inject target raw-stx datum))
               raw-stx)))))
 
