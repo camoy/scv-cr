@@ -5,7 +5,7 @@
 (provide contract-opt)
 
 (require racket/require
-         (multi-in racket (contract list set pretty))
+         (multi-in racket (contract list set function pretty))
          (multi-in scv-gt/private (configure
                                    contract-extract
                                    contract-inject
@@ -49,15 +49,11 @@
   (if (verify-off)
       stxs
       (let* ([blames         (verify-modules targets* stxs)]
+             [_              (print-blames blames)]
              [blameable-hash (make-blameable-hash targets*
                                                   m/l/i-hash
                                                   m/g-hash
                                                   blames)])
-        (when (show-blames)
-          (displayln long-line)
-          (displayln "Blames")
-          (displayln long-line)
-          (pretty-print blames))
         (for/list ([target  targets]
                    [target* targets*]
                    [raw-stx raw-stxs]
@@ -95,15 +91,16 @@
     (let* ([def-site  (third blame)]
            [mod       (first def-site)]
            [pos       (third def-site)]
-           [l/i-hash  (hash-ref m/l/i-hash mod)]
-           [g         (hash-ref m/g-hash mod)]
-           [blame-id  (hash-ref l/i-hash pos)]
-           [blameable (hash-ref blameable-hash mod)])
-      (define-values (h _)
-        (bfs g blame-id))
-      (define blame-ids
-        (hash-keys h))
-      (set-union! blameable (apply mutable-set blame-ids))))
+           [l/i-hash  (hash-ref m/l/i-hash mod (thunk #f))])
+      (when l/i-hash
+        (let* ([g         (hash-ref m/g-hash mod)]
+               [blame-id  (hash-ref l/i-hash pos)]
+               [blameable (hash-ref blameable-hash mod)])
+          (define-values (h _)
+            (bfs g blame-id))
+          (define blame-ids
+            (hash-keys h))
+          (set-union! blameable (apply mutable-set blame-ids))))))
   blameable-hash)
 
 ;; [Set Symbol] -> (Syntax -> Syntax)
@@ -119,3 +116,12 @@
      #:when (not (set-member? blameable (syntax-e #'v)))
      #'(k any/c)]
     [(k v) #'(k v)]))
+
+;; [List-of Blame] -> Void
+;; print blames
+(define (print-blames blames)
+  (when (show-blames)
+    (displayln long-line)
+    (displayln "Blames")
+    (displayln long-line)
+    (pretty-print blames)))

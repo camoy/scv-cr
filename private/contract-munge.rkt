@@ -6,6 +6,7 @@
 
 (require racket/function
          racket/contract
+         racket/list
          scv-gt/private/syntax-util
          syntax/parse)
 
@@ -66,11 +67,11 @@
     [struct-predicate-procedure? #'#t]
     [struct-predicate-procedure?/c #'#t]
     [(struct-type/c _) #'#t]
-
-    ;; Warning if ->* is non-convertible
-    [(->* x ...)
-     (begin (log-warning "explicit-contracts: cannot convert ->* to ->")
-            #'(->* x ...))]
+    [(->* (man-dom ...) (optional-dom ...) rng)
+     #:with (c ...) (let ([os (syntax->list #'(optional-dom ...))])
+                      (for/list ([k (add1 (length os))])
+                        #`(-> man-dom ... #,@(take os k) rng)))
+     #'(case-> c ...)]
 
     ;; Unwrap some contract forms (SCV)
     [(flat-named-contract _ ctc)
