@@ -123,7 +123,4 @@
 ;; print blames
 (define (print-blames blames)
   (when (show-blames)
-    (displayln long-line)
-    (displayln "Blames")
-    (displayln long-line)
-    (pretty-print blames)))
+    (display blames)))

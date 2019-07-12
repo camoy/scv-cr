@@ -1,19 +1,40 @@
-#!/usr/bin/ruby
+#!/usr/bin/env racket
+#lang racket/base
 
-require "open3"
-cmd = "raco scv-gt -b"
-main = ARGV[2]
-files = Dir.glob(File.dirname(main) + "/**/*.rkt")
-full = ([cmd] + files).join(" ")
+(require racket/path
+         racket/port
+         racket/exn
+         racket/function
+         racket/string
+         racket/tcp
+         scv-gt)
 
-# capture output
-output, error, _ = Open3.capture3(full)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-f = __dir__ + "/../blames.dat"
-results = Marshal.load(File.read(f))
-results << output
-File.open(f, "w") do |handle|
-  handle.write(Marshal.dump(results))
-end
+(define port 8182)
+(define main
+  (vector-ref (current-command-line-arguments) 0))
+(define main-dir
+  (path-only (path->complete-path (string->path main))))
+(define rkt? (curryr path-has-extension? #".rkt"))
+(define targets
+  (filter rkt? (directory-list main-dir #:build? main-dir)))
 
-raise error unless error == ""
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define out-port (open-output-string))
+(define out
+  (with-handlers ([exn:fail? (λ (x) (list 'error (exn->string x)))])
+    (parameterize ([current-output-port out-port])
+      (optimize targets #:show-blames #t))
+    (get-output-string out-port)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-values (tcp-in tcp-out)
+  (tcp-connect "localhost" port))
+(display out tcp-out)
+(close-input-port tcp-in)
+(close-output-port tcp-out)
+(when (not (string? out))
+  (raise-user-error "scv-gt failed"))
