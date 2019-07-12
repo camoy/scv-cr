@@ -81,7 +81,8 @@
 (define ((inject-require target) forms data)
   (define bundle (ctc-data-require data))
   (define required-set (mutable-set))
-  (define forms* ((munge-requires target required-set) forms))
+  (define opaque-types (box '()))
+  (define forms* ((munge-requires target required-set opaque-types) forms))
   (define-values (defs defs*) (make-definition bundle))
   #`((module require/contracts racket/base
        (require racket/contract
@@ -93,6 +94,7 @@
      (require (prefix-in -: (only-in 'require/contracts #,@defs))
               (except-in 'require/contracts #,@defs))
      (define-values (#,@defs) (values #,@defs*))
+     #,@(unbox opaque-types)
      #,@forms*))
 
 ;; Ctc-Bundle -> [List-of Symbol] [List-of Symbol]
@@ -107,11 +109,12 @@
 
 ;; Path Set -> Syntax -> Syntax
 ;; extracts and munges require forms
-(define ((munge-requires target required-set) stx)
+(define ((munge-requires target required-set opaque-types) stx)
   (syntax-parse stx
     #:datum-literals (require/typed require/typed/check)
-    [(~or* (require/typed m _ ...)
-           (require/typed/check m _ ...))
+    [(~or* (require/typed m x ...)
+           (require/typed/check m x ...))
+     #:with [opaque ...] (filter-map make-opaque-type (syntax->list #'[x ...]))
      (define m-typed?
        (parameterize ([current-directory (path-only target)])
          (module-typed? (path->complete-path (syntax-e #'m)))))
@@ -119,15 +122,25 @@
        [(and m-typed? (not (ignore-check)))
         #'(require m)]
        [else
+        (set-box! opaque-types (append (syntax->list #'[opaque ...])
+                                       (unbox opaque-types)))
         (set-add! required-set #'m)
         #'(void)])]
     [(x ...)
      (datum->syntax stx
-                    (map (munge-requires target required-set)
+                    (map (munge-requires target required-set opaque-types)
                          (syntax-e #'(x ...)))
                     stx
                     stx)]
     [x #'x]))
+
+;; Syntax -> Syntax or #f
+;; creates an opaque type definition from require/typed forms
+(define (make-opaque-type stx)
+  (syntax-parse stx
+    [((~datum #:opaque) ?type ?pred)
+     #'(define-type ?type (Opaque ?pred))]
+    [_ #f]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

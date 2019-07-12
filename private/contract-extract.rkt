@@ -232,7 +232,7 @@
              (define-values _ ...)
              (define-module-boundary-contract
                _ k v _ ...))
-      (cons #'k (lifted->l #'v))])))
+      (cons #'k (contract-munge #'_ (lifted->l #'v)))])))
 
 ;; Syntax -> P/C-Hash
 ;; takes syntax from Typed Racket and yields an immutable hash mapping from imported
@@ -246,7 +246,7 @@
      [(begin (require _ ...)
              (rename-without-provide _ ...)
              (define-ignored _ (contract v k _ ...)))
-      (cons #'k (lifted->l #'v))])))
+      (cons #'k (contract-munge #'_ (lifted->l #'v)))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
