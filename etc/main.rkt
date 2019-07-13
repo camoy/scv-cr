@@ -24,9 +24,9 @@
                      "tetris"))
 (define argv-setup
   (vector "-c" "4"
-          "-i" "1"
+          "-i" "8"
           "-S" "1"
-          "-R" "1"
+          "-R" "6"
           "--bin" (path->string fake-bin)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -84,7 +84,7 @@
 
 (delete-directory/files gtp-dir #:must-exist? #f)
 
-(for ([benchmark (in-list '("morsecode"))]
+(for ([benchmark (in-list benchmarks)]
       [k         (in-naturals 1)])
   (displayln (format "Starting: ~a" benchmark))
   (define benchmark-arg
