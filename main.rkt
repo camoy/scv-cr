@@ -99,7 +99,7 @@
   (unless (compiler-off)
     (syntax-compile-all sorted-targets stxs-opt))
 
-  )
+  (void))
 
 ;;
 ;; parsing

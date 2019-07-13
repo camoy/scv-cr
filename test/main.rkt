@@ -25,12 +25,10 @@
   ;; String -> Void
   ;; takes benchmark name and runs all files with test-optimize
   (define (test-benchmark benchmark)
-    (let* ([benchmark-dir
-            (build-path "benchmarks" benchmark "typed")]
-           [benchmark-files
-            (directory-list benchmark-dir #:build? benchmark-dir)]
+    (let* ([benchmark-files
+            (directory-list benchmark #:build? benchmark)]
            [benchmark-files*
-            (filter (negate directory-exists?) benchmark-files)]
+            (filter (curryr path-has-extension? #".rkt") benchmark-files)]
            [is-main?
             (λ (p) (string=? (path->string (file-name-from-path p))
                              "main.rkt"))]
@@ -102,8 +100,4 @@
                      "adaptor/data.rkt")))
 
   (test-benchmark "sieve")
-  (test-benchmark "morsecode")
-  #;(test-benchmark "snake")
-  #;(test-benchmark "zombie")
-  #;(test-benchmark "tetris")
-  #;(test-benchmark "synth"))
+  (test-benchmark "morsecode"))
