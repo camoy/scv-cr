@@ -76,6 +76,7 @@
 
 (for ([benchmark (in-list benchmarks)]
       [k         (in-naturals 1)])
+  (set-box! blames '())
   (displayln (format "Starting: ~a" benchmark))
   (define benchmark-arg
     (vector "--setup"
