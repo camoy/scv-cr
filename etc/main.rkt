@@ -31,20 +31,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (dynamic-require* mod)
-  (parameterize ([current-namespace (make-base-empty-namespace)])
-    (dynamic-require mod #f)))
-
 (define (gtp-measure argv)
-  (define-values (out err)
-    (values (open-output-string)
-            (open-output-string)))
   (parameterize ([current-command-line-arguments argv]
-                 [current-output-port out]
-                 [current-error-port err])
-    (dynamic-require* '(submod gtp-measure/private/raco main)))
-  (values (get-output-string out)
-          (get-output-string err)))
+                 [current-namespace (make-base-empty-namespace)])
+    (dynamic-require '(submod gtp-measure/private/raco main) #f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
