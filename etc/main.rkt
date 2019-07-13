@@ -84,7 +84,7 @@
 
 (delete-directory/files gtp-dir #:must-exist? #f)
 
-(for ([benchmark (in-list '("sieve"))]
+(for ([benchmark (in-list '("morsecode"))]
       [k         (in-naturals 1)])
   (displayln (format "Starting: ~a" benchmark))
   (define benchmark-arg
@@ -97,7 +97,7 @@
   (gtp-measure argv-resume)
   (define benchmark-assoc
     (for/list ([data  (get-data benchmark k gtp-dir*)]
-               [blame (unbox blames)])
+               [blame (reverse (unbox blames))])
       (define-values (conf perf)
         (values (first data)
                 (second data)))
