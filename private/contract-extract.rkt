@@ -24,10 +24,10 @@
 (struct ctc-data (provide require graph d-pred m-pred))
 
 ;; A Ctc-Bundle is a (ctc-bundle Syntaxes Syntaxes Syntaxes I/C-Hash P/C-Hash
-;; S/O-Hash C/C-Hash) bundling together all the contract information necessary.
+;; S/O-Hash C/C-List) bundling together all the contract information necessary.
 (struct
   ctc-bundle
-  (defns outs deps i/c-hash p/c-hash s/o-hash c/c-hash)
+  (defns outs deps i/c-hash p/c-hash s/o-hash c/c-list)
   #:mutable)
 
 ;; A I/C-Hash is a [Hash Syntax Syntax] of auxiliary contract definitions,
@@ -63,8 +63,8 @@
                             'require-rename
                             stx-raw)))
   (define ctc-graph
-    (hashes->graph (ctc-bundle-c/c-hash provide-bundle)
-                   (ctc-bundle-c/c-hash require-bundle)))
+    (hashes->graph (ctc-bundle-c/c-list provide-bundle)
+                   (ctc-bundle-c/c-list require-bundle)))
   (define-values (d-pred m-pred)
     (list->predicate-hashes (syntax-property-values stx 'make-predicate)))
   (ctc-data provide-bundle require-bundle ctc-graph d-pred m-pred))
@@ -76,15 +76,15 @@
     (p/c-remove-structs! i/c-hash p/c-hash kind stx))
   (define deps
     (hashes->deps i/c-hash p/c-hash s/o-hash))
-  (define c/c-hash
-    (i/c-hash->c/c-hash i/c-hash))
+  (define c/c-list
+    (i/c-hash->c/c-list i/c-hash))
   (ctc-bundle (hashes->defns targets i/c-hash p/c-hash s/o-hash)
               (hashes->outs i/c-hash p/c-hash s/o-hash)
               deps
               i/c-hash
               p/c-hash
               s/o-hash
-              c/c-hash))
+              c/c-list))
 
 ;; [List-of Path] I/C-Hash P/C-Hash S/O-Hash -> Syntaxes
 ;; constructs a list of define forms that provide auxiliary definitions
@@ -118,34 +118,33 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; C/C-Hash C/C-Hash -> Graph
-;; converts c/c-hashes from provide and requires into a collective contract
+;; C/C-List C/C-List -> Graph
+;; converts c/c-lists from provide and requires into a collective contract
 ;; dependency graph
 (define (hashes->graph c/c-p c/c-r)
-  (unweighted-graph/directed
-   (append (hash-map c/c-p list)
-           (hash-map c/c-r list))))
+  (unweighted-graph/directed (append c/c-p c/c-r)))
 
-;; I/C-Hash -> C/C-Hash
-;; converts an I/C-Hash into a C/C-Hash and attaches a syntax property to the
+;; I/C-Hash -> C/C-List
+;; converts an I/C-Hash into a C/C-List and attaches a syntax property to the
 ;; definition
-(define (i/c-hash->c/c-hash i/c-hash)
-  (define c/c-hash (make-hash))
+(define (i/c-hash->c/c-list i/c-hash)
+  (define c/c-list (box '()))
   (hash-for-each
    i/c-hash
    (λ (k v)
      (define k* (syntax-e k))
-     (hash-map-identifier! c/c-hash k* v)
+     (hash-map-identifier! c/c-list k* v)
      (hash-set! i/c-hash k (syntax-property v 'within-contract k*))))
-  c/c-hash)
+  (unbox c/c-list))
 
-;; C/C-Hash Symbol Syntax -> Void
+;; [Box C/C-List] Symbol Syntax -> Void
 ;; adds identifier mappings to c/c-hash from the syntax e
-(define (hash-map-identifier! c/c-hash k e)
+(define (hash-map-identifier! c/c-list k e)
   (let go ([e e])
     (cond
       [(identifier? e)
-       (hash-set! c/c-hash (syntax-e e) k)]
+       (set-box! c/c-list (cons (list (syntax-e e) k)
+                                (unbox c/c-list)))]
       [(syntax? e)
        (go (syntax-e e))]
       [(pair? e)
