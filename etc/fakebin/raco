@@ -4,10 +4,12 @@
 (require racket/path
          racket/port
          racket/exn
+         racket/file
          racket/function
          racket/string
          racket/tcp
-         scv-gt)
+         scv-gt
+         basedir)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -19,6 +21,15 @@
 (define rkt? (curryr path-has-extension? #".rkt"))
 (define targets
   (filter rkt? (directory-list main-dir #:build? main-dir)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define now (number->string (current-seconds)))
+(define gtp-dir (writable-data-dir #:program "gtp-measure"))
+(define dir (build-path gtp-dir "configurations" now))
+(make-directory* dir)
+(for ([target (in-list targets)])
+  (copy-file target (build-path dir (file-name-from-path target))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -34,7 +45,11 @@
 
 (define-values (tcp-in tcp-out)
   (tcp-connect "localhost" port))
-(write out tcp-out)
+
+(if (pair? out)
+    (write out tcp-out)
+    (write (list 'unexpected (list (format "~a" out))) tcp-out))
+
 (close-input-port tcp-in)
 (close-output-port tcp-out)
 (when (and (pair? out) (equal? 'error (car out)))

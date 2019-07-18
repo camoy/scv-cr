@@ -14,9 +14,9 @@
 
 (define (get-color blame)
   (match blame
-    [(list 'error _) "red"]
-    [(list x _ ...) "yellow"]
-    [(list) "white"]))
+    [(list 'error _) "#FF4136"]
+    [(list 'unexpected _ ) "grey"]
+    [(list x _ ...) "#FFDC00"]))
 
 (define (dat->html dat)
   (define data (call-with-input-file dat read))
