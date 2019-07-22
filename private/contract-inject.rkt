@@ -45,16 +45,18 @@
   (define-values (p-bundle r-bundle)
     (values (ctc-data-provide data)
             (ctc-data-require data)))
-  (define forms* (munge-provides forms p-bundle r-bundle))
+  (define provide-box (box '()))
+  (define forms* (munge-provides forms p-bundle r-bundle provide-box))
   #`((require racket/contract
               #,@(ctc-bundle-deps p-bundle))
      #,@(ctc-bundle-defns p-bundle)
-     (provide (contract-out #,@(ctc-bundle-outs p-bundle)))
-     #,@forms*))
+     #,@forms*
+     #,@(unbox provide-box)
+     (provide (contract-out #,@(ctc-bundle-outs p-bundle)))))
 
-;; Syntax Ctc-Data -> Syntax
+;; Syntax Ctc-Data [Box [List-of Syntax]] -> Syntax
 ;; removes already provided identifiers from provide forms
-(define (munge-provides stx p-bundle r-bundle)
+(define (munge-provides stx p-bundle r-bundle provide-box)
   (define not-provided
     (syntax-parser
       #:datum-literals (provide)
@@ -62,15 +64,14 @@
        (define xs*
          (append-map (ctc-bundle-provides p-bundle r-bundle)
                      (syntax-e #'(x ...))))
-       #`(provide #,@xs*)]
+       (set-box! provide-box (cons #`(provide #,@xs*) (unbox provide-box)))
+       #'(void)]
        [x #'x]))
   (syntax-parse stx
     [(x ...)
      (define provides*
        (map not-provided (syntax-e #'(x ...))))
-     (define provides**
-       (map (λ (x) (munge-provides x p-bundle r-bundle)) provides*))
-     (datum->syntax stx provides** stx stx)]
+     (datum->syntax stx provides* stx stx)]
     [x #'x]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

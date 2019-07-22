@@ -82,8 +82,9 @@
                              (ctc-bundle-outs provide-bundle))))
 
 ;; [List-of String] [Hash String L/I-Hash] [Hash String Graph] [List-of Blame]
-;; -> [List-of Symbol]
-;; returns a list of contract identifiers that could potentially incur blame
+;; -> [Hash String Symbol]
+;; returns a hash mapping module names to contract identifiers that could
+;; potentially incur blame
 (define (make-blameable-hash targets m/l/i-hash m/g-hash blames)
   (define blameable-hash
     (make-hash))
