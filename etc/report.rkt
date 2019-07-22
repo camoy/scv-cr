@@ -16,7 +16,8 @@
   (match blame
     [(list 'error _) "#FF4136"]
     [(list 'unexpected _ ) "grey"]
-    [(list x _ ...) "#FFDC00"]))
+    [(list x _ ...) "#FFDC00"]
+    [(list) "white"]))
 
 (define (dat->html dat)
   (define data (call-with-input-file dat read))

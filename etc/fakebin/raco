@@ -8,7 +8,10 @@
          racket/function
          racket/string
          racket/tcp
+         racket/list
          scv-gt
+         scv-gt/private/syntax-util
+         gtp-util
          basedir)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -24,9 +27,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define now (number->string (current-seconds)))
+(define (targets->name targets benchmark)
+  (define bits
+    (for/list ([target (in-list targets)])
+      (if (module-typed? target) "1" "0")))
+  (format "~a_~a" benchmark (string-join bits "")))
+
+(define benchmark-name
+  (path->string
+   (last (explode-path (simplify-path (build-path main-dir ".."))))))
+(define config-dir (targets->name targets benchmark-name))
 (define gtp-dir (writable-data-dir #:program "gtp-measure"))
-(define dir (build-path gtp-dir "configurations" now))
+(define dir (build-path gtp-dir "configurations" config-dir))
 (make-directory* dir)
 (for ([target (in-list targets)])
   (copy-file target (build-path dir (file-name-from-path target))))
@@ -46,7 +58,7 @@
 (define-values (tcp-in tcp-out)
   (tcp-connect "localhost" port))
 
-(if (pair? out)
+(if (or (null? out) (pair? out))
     (write out tcp-out)
     (write (list 'unexpected (list (format "~a" out))) tcp-out))
 
