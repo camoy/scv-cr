@@ -52,7 +52,7 @@
      #,@(ctc-bundle-defns p-bundle)
      #,@forms*
      #,@(unbox provide-box)
-     (provide (contract-out #,@(ctc-bundle-outs p-bundle)))))
+     (provide #,@(ctc-bundle-outs p-bundle))))
 
 ;; Syntax Ctc-Data [Box [List-of Syntax]] -> Syntax
 ;; removes already provided identifiers from provide forms
@@ -91,7 +91,7 @@
                 #,@(ctc-bundle-deps bundle))
        #,@(ctc-bundle-defns bundle)
        (provide #,@(hash-keys (ctc-bundle-i/c-hash bundle))
-                (contract-out #,@(ctc-bundle-outs bundle))))
+                #,@(ctc-bundle-outs bundle)))
      (require (prefix-in -: (only-in 'require/contracts #,@defs))
               (except-in 'require/contracts #,@defs))
      (define-values (#,@defs) (values #,@defs*))

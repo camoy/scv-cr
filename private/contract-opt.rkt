@@ -82,9 +82,9 @@
                              (ctc-bundle-outs provide-bundle))))
 
 ;; [List-of String] [Hash String L/I-Hash] [Hash String Graph] [List-of Blame]
-;; -> [Hash String Symbol]
-;; returns a hash mapping module names to contract identifiers that could
-;; potentially incur blame
+;; -> [Hash String [Set-of Symbol]]
+;; returns a hash mapping module names to a set of contract identifiers that
+;; could potentially incur blame
 (define (make-blameable-hash targets m/l/i-hash m/g-hash blames)
   (define blameable-hash
     (make-hash))
@@ -109,16 +109,28 @@
 ;; [Set Symbol] -> (Syntax -> Syntax)
 ;; given an element in a contract-out specification will change all contracts
 ;; to any/c
-(define (make-any blameable)
-  (syntax-parser
-    #:datum-literals (struct)
-    [(struct s (p ...))
-     #`(struct s #,(map (make-any blameable)
-                        (syntax-e #'(p ...))))]
-    [(k v)
-     #:when (not (set-member? blameable (syntax-e #'v)))
-     #'(k any/c)]
-    [(k v) #'(k v)]))
+(define ((make-any blameable) stx)
+  (syntax-parse stx
+    #:datum-literals (struct contract-out)
+    [(contract-out (struct s ((p c) ...)))
+     (if (andmap (safe-contract? blameable) (syntax->list #'(c ...)))
+         (if (identifier? #'s)
+             #'(struct-out s)
+             #`(struct-out #,(car (syntax-e #'s))))
+         #`(contract-out
+            (struct s #,(map (λ (p c)
+                              (if ((safe-contract? blameable) c)
+                                  #`(#,p any/c)
+                                  #`(#,p #,c)))
+                            (syntax->list #'(p ...))
+                            (syntax->list #'(c ...))))))]
+    [(contract-out (k v))
+     #:when ((safe-contract? blameable) #'v)
+     #'k]
+    [_ stx]))
+
+(define ((safe-contract? blameable) v)
+  (not (set-member? blameable (syntax-e v))))
 
 ;; [List-of Blame] -> Void
 ;; print blames

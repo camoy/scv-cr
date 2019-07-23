@@ -102,8 +102,8 @@
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
 ;; constructs forms that will be injected inside of a contract-out
 (define (hashes->outs i/c-hash p/c-hash s/o-hash)
-  (append (hash-map p/c-hash (λ (k v) #`(#,k #,v)))
-          (hash-map s/o-hash (λ (k v) v))))
+  (append (hash-map p/c-hash (λ (k v) #`(contract-out (#,k #,v))))
+          (hash-map s/o-hash (λ (k v) #`(contract-out #,v)))))
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
 ;; constructs a minimal list of dependencies for injection into a
