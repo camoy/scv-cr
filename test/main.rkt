@@ -56,6 +56,13 @@
                      "bad/typed.rkt")))
 
   (test-case
+    "bad struct"
+    (test-optimize "bad_struct/untyped.rkt"
+                   '("bad_struct/untyped.rkt"
+                     "bad_struct/typed.rkt"
+                     "bad_struct/data.rkt")))
+
+  (test-case
     "unexported identifier"
     (test-optimize "unexported/main.rkt"
                    '("unexported/main.rkt"

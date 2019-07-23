@@ -77,7 +77,7 @@
   (define deps
     (hashes->deps i/c-hash p/c-hash s/o-hash))
   (define c/c-list
-    (i/c-hash->c/c-list i/c-hash))
+    (hashes->c/c-list p/c-hash s/o-hash i/c-hash))
   (ctc-bundle (hashes->defns targets i/c-hash p/c-hash s/o-hash)
               (hashes->outs i/c-hash p/c-hash s/o-hash)
               deps
@@ -102,8 +102,12 @@
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
 ;; constructs forms that will be injected inside of a contract-out
 (define (hashes->outs i/c-hash p/c-hash s/o-hash)
-  (append (hash-map p/c-hash (λ (k v) #`(contract-out (#,k #,v))))
-          (hash-map s/o-hash (λ (k v) #`(contract-out #,v)))))
+  (append (hash-map p/c-hash
+                    (λ (k v)
+                      #`(contract-out (#,k #,v))))
+          (hash-map s/o-hash
+                    (λ (k v)
+                      #`(contract-out (struct #,k #,v))))))
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
 ;; constructs a minimal list of dependencies for injection into a
@@ -124,17 +128,28 @@
 (define (hashes->graph c/c-p c/c-r)
   (unweighted-graph/directed (append c/c-p c/c-r)))
 
-;; I/C-Hash -> C/C-List
-;; converts an I/C-Hash into a C/C-List and attaches a syntax property to the
-;; definition
-(define (i/c-hash->c/c-list i/c-hash)
+;; P/C-Hash S/O-Hash I/C-Hash -> C/C-List
+;; converts an I/C-Hash into a C/C-List
+(define (hashes->c/c-list p/c-hash s/o-hash i/c-hash)
   (define c/c-list (box '()))
+  (hash-for-each
+   p/c-hash
+   (λ (k v)
+     (hash-map-identifier! c/c-list (syntax-e k) v)))
+  (hash-for-each
+   s/o-hash
+   (λ (k v)
+     (define k* (syntax-e k))
+     (define k** (if (pair? k*)
+                     (syntax-e (car k*))
+                     k*))
+     (for ([x (in-list (syntax-e v))])
+       (define ctc (cadr (syntax-e x)))
+       (hash-map-identifier! c/c-list k** ctc))))
   (hash-for-each
    i/c-hash
    (λ (k v)
-     (define k* (syntax-e k))
-     (hash-map-identifier! c/c-list k* v)
-     (hash-set! i/c-hash k (syntax-property v 'within-contract k*))))
+     (hash-map-identifier! c/c-list (syntax-e k) v)))
   (unbox c/c-list))
 
 ;; [Box C/C-List] Symbol Syntax -> Void
@@ -184,8 +199,10 @@
                           (syntax-e #'(xs-def ...)))]
                     [y-def*
                      (contract-munge #'y #'y-def)])
-        (map cons
-             (map lifted->l (syntax-e #'(xs ... y)))
+        (map (λ (k v)
+               (cons (lifted->l-within k)
+                     (syntax-within v k)))
+             (syntax-e #'(xs ... y))
              (syntax-e #'(xs-def* ... y-def*))))])))
 
 ;; Syntax -> Syntax
@@ -203,9 +220,16 @@
                           (syntax-e #'(xs-def ...)))]
                     [y-def*
                      (contract-munge #'y #'y-def)])
-        (map cons
-             (map lifted->l (syntax-e #'(xs ... y)))
+        (map (λ (k v)
+               (cons (lifted->l-within k)
+                     (syntax-within v k)))
+             (syntax-e #'(xs ... y))
              (syntax-e #'(xs-def* ... y-def*))))])))
+
+;; Syntax -> Syntax
+;; changes lifted identifiers and attaches within syntax property
+(define (lifted->l-within stx)
+  (syntax-within (lifted->l stx) stx))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -256,8 +280,8 @@
     (datum->syntax #f (struct-out->name id)))
   (define-values (p-p/c p-s/o r-p/c)
     (values (hash-ref-stx (ctc-bundle-p/c-hash p-bundle) id)
-            (hash-ref-stx (ctc-bundle-s/o-hash p-bundle) s-name)
-            (hash-ref-stx (ctc-bundle-s/o-hash r-bundle) s-name)))
+            (hash-ref-struct (ctc-bundle-s/o-hash p-bundle) s-name)
+            (hash-ref-struct (ctc-bundle-s/o-hash r-bundle) s-name)))
   (cond
     [p-p/c '()]
     [p-s/o '()]

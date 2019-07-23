@@ -83,8 +83,8 @@
 
 ;; [List-of String] [Hash String L/I-Hash] [Hash String Graph] [List-of Blame]
 ;; -> [Hash String [Set-of Symbol]]
-;; returns a hash mapping module names to a set of contract identifiers that
-;; could potentially incur blame
+;; returns a hash mapping module names to a set of identifiers that could
+;; potentially incur blame
 (define (make-blameable-hash targets m/l/i-hash m/g-hash blames)
   (define blameable-hash
     (make-hash))
@@ -113,23 +113,28 @@
   (syntax-parse stx
     #:datum-literals (struct contract-out)
     [(contract-out (struct s ((p c) ...)))
-     (if (andmap (safe-contract? blameable) (syntax->list #'(c ...)))
+     (if (safe-struct? blameable #'s)
          (if (identifier? #'s)
              #'(struct-out s)
              #`(struct-out #,(car (syntax-e #'s))))
          #`(contract-out
             (struct s #,(map (λ (p c)
-                              (if ((safe-contract? blameable) c)
+                              (if (safe-identifier? blameable c)
                                   #`(#,p any/c)
                                   #`(#,p #,c)))
                             (syntax->list #'(p ...))
                             (syntax->list #'(c ...))))))]
     [(contract-out (k v))
-     #:when ((safe-contract? blameable) #'v)
+     #:when (safe-identifier? blameable #'k)
      #'k]
     [_ stx]))
 
-(define ((safe-contract? blameable) v)
+(define (safe-struct? blameable stx)
+  (syntax-parse stx
+    [(id super) (safe-identifier? blameable #'id)]
+    [id (safe-identifier? blameable #'id)]))
+
+(define (safe-identifier? blameable v)
   (not (set-member? blameable (syntax-e v))))
 
 ;; [List-of Blame] -> Void

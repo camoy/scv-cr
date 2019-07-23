@@ -103,7 +103,10 @@
 (define (make-definition bundle)
   (define to-define
     (append (hash-keys (ctc-bundle-p/c-hash bundle))
-            (map (λ (x) (format-symbol "~a?" x))
+            (map (λ (x)
+                   (syntax-parse x
+                     [x:struct-name
+                      (format-symbol "~a?" #'x.name)]))
                  (hash-keys (ctc-bundle-s/o-hash bundle)))))
   (values to-define
           (map (λ (x) (format-symbol "-:~a" x)) to-define)))

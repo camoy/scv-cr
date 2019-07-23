@@ -77,16 +77,6 @@
       [_ stx]))
   (values s/f-hash s/s-hash))
 
-(define-splicing-syntax-class struct-name-splicing
-  #:attributes (name super)
-  (pattern (~seq name:id super:id))
-  (pattern name:id #:with super #'#f))
-
-(define-syntax-class struct-name
-  #:attributes (name super)
-  (pattern (name:id super:id))
-  (pattern name:id #:with super #'#f))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; S/C-Hash I/C-Hash S/F-Hash S/S-Hash Syntax Syntax -> Void
@@ -122,12 +112,16 @@
    (λ (name f/c)
      (define super (hash-ref-stx s/s-hash name))
      (hash-set! s/o-hash
-                name
-                #`(struct
-                    #,(if super
-                          #`(#,name #,super)
-                          name)
-                    #,(get-f/c s/c-hash s/s-hash name)))))
+                (syntax-within
+                 (datum->syntax #f
+                                (if super
+                                    (list name super)
+                                    name))
+                 name)
+                (syntax-within
+                 (datum->syntax #f
+                                (get-f/c s/c-hash s/s-hash name))
+                 name))))
   s/o-hash)
 
 ;; S/C-Hash S/S-Hash Syntax -> [List-of Syntax]

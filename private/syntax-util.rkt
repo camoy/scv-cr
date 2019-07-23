@@ -14,12 +14,16 @@
          syntax-scope-external
          syntax-dependencies
          syntax-preserve
+         syntax-within
          syntax-replace-srcloc!
          hash-ref-stx
+         hash-ref-struct
          g-number
          generated-contract-number
          lifted-number
-         lifted->l)
+         lifted->l
+         struct-name
+         struct-name-splicing)
 
 (require compiler/compilation-path
          lang-file/read-lang-file
@@ -171,6 +175,12 @@
 (define (syntax-preserve stx)
   (syntax-property stx 'preserve-context #t))
 
+;; Syntax -> (Syntax -> Syntax)
+;; associates defining identifier with the definition itself (for construction
+;; of the contract dependency graph)
+(define (syntax-within stx parent)
+  (syntax-property stx 'within-definition (syntax-e parent)))
+
 ;; Syntax -> String
 ;; converts syntax to a string
 (define (syntax->string stx)
@@ -197,7 +207,7 @@
        (let* ([span    (string-length (syntax->string e))]
               [pos-old pos]
               [srcloc  (list target 1 pos pos span)]
-              [within  (syntax-property e 'within-contract)]
+              [within  (syntax-property e 'within-definition)]
               [e*      (if within
                            (parameterize ([parent-ctc within])
                              (go (syntax-e e)))
@@ -217,6 +227,18 @@
   (define p
    (assoc (syntax->datum k)
           (hash-map h (λ (k v) (cons (syntax->datum k) v)))))
+  (and p (cdr p)))
+
+;; [Hash Syntax Syntax] Syntax -> Syntax
+;; looks struct in a hash from by its name
+(define (hash-ref-struct h k)
+  (define p
+   (assoc (syntax->datum k)
+          (hash-map h (λ (k v)
+                        (cons
+                          (syntax-parse k
+                           [s:struct-name (syntax-e #'s.name)])
+                         v)))))
   (and p (cdr p)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -240,6 +262,18 @@
   (define n (and (identifier? stx)
                  (lifted-number (syntax-e stx))))
   (if n (format-id #f "l/~a" n) stx))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-splicing-syntax-class struct-name-splicing
+  #:attributes (name super)
+  (pattern (~seq name:id super:id))
+  (pattern name:id #:with super #'#f))
+
+(define-syntax-class struct-name
+  #:attributes (name super)
+  (pattern (name:id super:id))
+  (pattern name:id #:with super #'#f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
