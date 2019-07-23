@@ -41,7 +41,7 @@
 (define dir (build-path gtp-dir "configurations" config-dir))
 (make-directory* dir)
 (for ([target (in-list targets)])
-  (copy-file target (build-path dir (file-name-from-path target))))
+  (copy-file target (build-path dir (file-name-from-path target))) #t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
