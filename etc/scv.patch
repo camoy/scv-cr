@@ -1,5 +1,5 @@
 diff --git a/soft-contract/fake-contract.rkt b/soft-contract/fake-contract.rkt
-index 8e8a045f..4c1b3e7d 100644
+index 8e8a045f..760070a0 100644
 --- a/soft-contract/fake-contract.rkt
 +++ b/soft-contract/fake-contract.rkt
 @@ -14,7 +14,8 @@
@@ -45,8 +45,8 @@ index 8e8a045f..4c1b3e7d 100644
 -         (scv:ignore (c:provide/contract [id ctc] ...)))) 
 +         (scv:ignore (c:provide/contract [id ctc] ...))))
 +
-+(define-for-syntax (not-a-type? id)
-+  (not (equal? type-name-error (syntax-local-value id void))))
++(define-for-syntax (not-macro? id)
++  (not (syntax-local-value id (λ () #f))))
  
  (define-syntax (provide stx)
 -  (syntax-parse stx #:literals (contract-out struct struct-out)
@@ -58,7 +58,7 @@ index 8e8a045f..4c1b3e7d 100644
 -                                [struct (~or s:id (s:id _:id)) ([ac:id dom:expr] ...)]) ...))
 +                                [(~datum struct) (~or s:id (s:id _:id)) ([ac:id dom:expr] ...)]) ...))
          ...)
-+     #:with (i* ...) (filter not-a-type? (syntax->list #'(i ...)))
++     #:with (i* ...) (filter not-macro? (syntax->list #'(i ...)))
       (define (ids->str ids)
         (string-join (map symbol->string (map syntax-e (syntax->list ids)))))
       #;(unless (null? (syntax->list #'(i ...)))
