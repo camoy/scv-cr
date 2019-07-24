@@ -29,8 +29,7 @@
   (make-parent-directory* zo-path)
   (with-output-to-file zo-path
     #:exists 'replace
-    (thunk (write (compile/dir stx target))))
-  (file-or-directory-modify-seconds target (current-seconds)))
+    (thunk (write (compile/dir stx target)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
