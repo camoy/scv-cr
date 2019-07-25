@@ -141,4 +141,4 @@
 ;; print blames
 (define (print-blames blames)
   (when (show-blames)
-    (display blames)))
+    (write blames)))
