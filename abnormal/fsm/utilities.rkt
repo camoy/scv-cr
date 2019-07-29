@@ -1,0 +1,60 @@
+#lang typed/racket/no-check
+(require racket/contract
+          (lib "racket/contract.rkt")
+          (lib "racket/base.rkt")
+          (lib "racket/contract/base.rkt")
+          (submod (lib "typed-racket/private/type-contract.rkt") predicates))
+(define g11 nonnegative?)
+(define g12 (or/c g11))
+(define g13 (listof g12))
+(define g14 exact-nonnegative-integer?)
+(define g15 (or/c g14))
+(define g16 real?)
+(define g17 '#f)
+(define g18 (or/c g16 g17))
+(define g19 (listof g15))
+(define g20 (or/c g16))
+(define g21 (listof g20))
+(define generated-contract8
+   (case-> (-> g13 g15 (values g19)) (-> g13 g15 g18 (values g19))))
+(define generated-contract9 (-> g21 g20 (values g20)))
+(define generated-contract10 (-> g21 (values g20)))
+(module require/contracts racket/base (require racket/contract) (provide))
+(require (prefix-in -: (only-in 'require/contracts))
+          (except-in 'require/contracts))
+(define-values () (values))
+(define-type Probability Nonnegative-Real)
+(void)
+(: sum (-> (Listof Real) Real))
+(: relative-average (-> (Listof Real) Real Real))
+(:
+  choose-randomly
+  (->* ((Listof Probability) Natural) ((U False Real)) (Listof Natural)))
+(define (sum l) (apply + l))
+(define (relative-average l w) (exact->inexact (/ (sum l) w (length l))))
+(define (choose-randomly probabilities speed (q #f))
+   (define %s (accumulated-%s probabilities))
+   (for/list
+    ((n (in-range speed)))
+    (define r (or q (random)))
+    (let loop :
+      Natural
+      ((%s : (Listof Real) %s))
+      (cond ((< r (first %s)) 0) (else (add1 (loop (rest %s))))))))
+(: accumulated-%s (-> (Listof Probability) (Listof Real)))
+(define (accumulated-%s probabilities)
+   (define total (sum probabilities))
+   (let relative->absolute :
+     (Listof Real)
+     ((payoffs : (Listof Real) probabilities) (so-far : Real 0.0))
+     (cond
+      ((empty? payoffs) '())
+      (else
+       (define nxt (+ so-far (first payoffs)))
+       ((inst cons Real Real)
+        (/ nxt total)
+        (relative->absolute (rest payoffs) nxt))))))
+(provide)
+(provide (contract-out (choose-randomly generated-contract8))
+          (contract-out (relative-average generated-contract9))
+          (contract-out (sum generated-contract10)))
