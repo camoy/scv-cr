@@ -62,11 +62,10 @@
      (contract-munge id #'(-> dom ... ran))]
 
     ;; Replace contracts we cannot verify (SCV)
-    #;[struct-predicate-procedure? #'(λ (_) #f)]
-    #;[struct-predicate-procedure?/c #'(λ (_) #f)]
-    [struct-predicate-procedure? #'#t]
-    [struct-predicate-procedure?/c #'#t]
-    [(struct-type/c _) #'#t]
+    [struct-predicate-procedure? #'(λ (_) #f)]
+    [struct-predicate-procedure?/c #'(λ (_) #f)]
+    [(struct-type/c _) #'struct-type?]
+
     [(->* (man-dom ...) (optional-dom ...) rng)
      #:with (c ...) (let ([os (syntax->list #'(optional-dom ...))])
                       (for/list ([k (add1 (length os))])
