@@ -1,4 +1,4 @@
-#lang typed/racket
+#lang racket/base
 
-(struct: foo ())
-(provide [struct-out foo])
+(struct foo ())
+(provide (struct-out foo))
