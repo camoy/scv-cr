@@ -19,6 +19,10 @@
     [(list x _ ...) "#FFDC00"]
     [(list) "white"]))
 
+(define (within-body x)
+  `(html (head (meta ((charset "utf-8"))))
+         (body ,x)))
+
 (define (dat->html dat)
   (define data (call-with-input-file dat read))
   (define heading
@@ -39,7 +43,9 @@
          data))
 
   (with-output-to-file (path-replace-extension dat #".html") #:exists 'replace
-    (λ () (display (xexpr->html (txexpr 'table '() (cons heading rows)))))))
+    (λ ()
+      (define tbl (txexpr 'table '() (cons heading rows)))
+      (display (xexpr->html (within-body tbl))))))
 
 (for ([p (in-vector data-paths)])
   (dat->html p))

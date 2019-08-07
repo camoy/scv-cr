@@ -51,8 +51,9 @@
   (void))
 (loop)
 
+(define is-out? (curryr path-has-extension? #".out"))
+
 (define (get-data benchmark k dir)
-  (define is-out? (curryr path-has-extension? #".out"))
   (define outs (filter is-out? (directory-list dir)))
   (define path->number
     (let ([prefix-length (string-length (string-append (number->string k) "-" benchmark))])
@@ -72,8 +73,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(delete-directory/files gtp-dir #:must-exist? #f)
-
 (for ([benchmark (in-list benchmarks)]
       [k         (in-naturals 1)])
   (set-box! blames '())
@@ -84,7 +83,11 @@
   (define argv-setup* (vector-append argv-setup benchmark-arg))
   (define gtp-dir* (build-path gtp-dir (number->string k)))
   (define argv-resume (vector "--resume" (path->string gtp-dir*)))
-  (gtp-measure argv-setup*)
+  (unless (directory-exists? gtp-dir*)
+    (gtp-measure argv-setup*))
+  (define outs (filter is-out? (directory-list gtp-dir*)))
+  (for ([out (in-list outs)])
+    (delete-file (build-path gtp-dir* out)))
   (gtp-measure argv-resume)
   (define benchmark-assoc
     (for/list ([data  (get-data benchmark k gtp-dir*)]
