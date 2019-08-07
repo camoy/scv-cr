@@ -203,7 +203,8 @@
                (cons (lifted->l-within k)
                      (syntax-within v k)))
              (syntax-e #'(xs ... y))
-             (syntax-e #'(xs-def* ... y-def*))))])))
+             (syntax-e #'(xs-def* ... y-def*))))]
+     [_ '()])))
 
 ;; Syntax -> Syntax
 ;; yields munged require contract definitions
@@ -224,7 +225,8 @@
                (cons (lifted->l-within k)
                      (syntax-within v k)))
              (syntax-e #'(xs ... y))
-             (syntax-e #'(xs-def* ... y-def*))))])))
+             (syntax-e #'(xs-def* ... y-def*))))]
+     [_ '()])))
 
 ;; Syntax -> Syntax
 ;; changes lifted identifiers and attaches within syntax property
@@ -252,7 +254,7 @@
      #:datum-literals (begin define define-values
                        define-module-boundary-contract)
      [(begin (define _ ...) ...
-             (define-values _ ...)
+             (~optional (define-values _ ...))
              (define-module-boundary-contract
                _ k v _ ...))
       (cons #'k (contract-munge #'_ (lifted->l #'v)))])))
