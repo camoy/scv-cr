@@ -60,13 +60,11 @@
     (syntax-parse stx
       #:datum-literals (struct struct: :)
       [((~or struct struct:) s:struct-name-splicing ((fld : type) ...) _ ...)
-       #:when (equal? key 'provide)
        (hash-set! s/f-hash #'s.name (syntax-e #'(fld ...)))
        (when (syntax-e #'s.super)
          (hash-set! s/s-hash #'s.name #'s.super))
        stx]
       [((~datum #:struct) s:struct-name ((fld : type) ...) _ ...)
-       #:when (equal? key 'require-rename)
        (hash-set! s/f-hash #'s.name (syntax-e #'(fld ...)))
        (when (syntax-e #'s.super)
          (hash-set! s/s-hash #'s.name #'s.super))
