@@ -28,7 +28,7 @@
 (require compiler/compilation-path
          lang-file/read-lang-file
          racket/require
-         (multi-in racket (function list match path pretty set string syntax))
+         (multi-in racket (function list match path pretty set string syntax port))
          (multi-in syntax (modcollapse modread parse strip-context)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -79,15 +79,11 @@
 
 ;; Syntax -> String
 ;; converts syntax to nicer printable representation
-(define syntax->pretty
-  (syntax-parser
-    #:datum-literals (module #%module-begin)
-    [(module _ lang (#%module-begin forms ...))
-     (string-join
-      (cons (format "#lang ~a" (syntax->datum #'lang))
-            (map (λ (s) (substring (pretty-format s) 1))
-                 (syntax->datum #'(forms ...))))
-      "\n")]))
+(define (syntax->pretty stx)
+  (substring
+   (with-output-to-string
+     (λ () (pretty-print (syntax->datum stx))))
+   1))
 
 ;; Syntax Module-Path -> Void
 ;; replaces content of target with new syntax
@@ -194,32 +190,55 @@
       (path->string (find-relative-path (current-directory) p))
       p))
 
-
 ;; L/I-Hash Path Syntax -> Syntax
 ;; traverses the syntax object replacing each source location's source module
 ;; with target and updating the mapping between position
 (define (syntax-replace-srcloc! l/i-hash target e)
-  (define pos 1)
   (define parent-ctc (make-parameter #f))
-  (let go ([e e])
+  (define last-src #f)
+  (let go ([e e]
+           [e-norm (syntax-normalize-srcloc target e)])
     (cond
       [(syntax? e)
-       (let* ([span    (string-length (syntax->string e))]
-              [pos-old pos]
-              [srcloc  (list target 1 pos pos span)]
-              [within  (syntax-property e 'within-definition)]
+       (set! last-src (cons (syntax-line e-norm) (syntax-column e-norm)))
+       (let* ([within  (syntax-property e 'within-definition)]
               [e*      (if within
                            (parameterize ([parent-ctc within])
-                             (go (syntax-e e)))
-                           (go (syntax-e e)))])
-         (set! pos (+ pos span))
-         (datum->syntax e e* srcloc e))]
-      [(pair? e) (cons (go (car e))
-                       (go (cdr e)))]
+                             (go (syntax-e e) (syntax-e e-norm)))
+                           (go (syntax-e e) (syntax-e e-norm)))])
+         (datum->syntax e e* (syntax-srcloc e-norm) e))]
+      [(pair? e)
+       (define ce (cdr e))
+       (cons (go (car e) (car e-norm))
+             (go (if (syntax? ce) (syntax-e ce) ce)
+                 (cdr e-norm)))]
       [else
        (when (parent-ctc)
-         (hash-set! l/i-hash pos (parent-ctc)))
+         (hash-set! l/i-hash
+                    last-src
+                    (parent-ctc)))
        e])))
+
+;; Path Syntax -> Syntax
+;; normalize source location information
+(define (syntax-normalize-srcloc target stx)
+  (define s
+    (with-output-to-string
+      (λ () (pretty-print (syntax->datum stx)))))
+  (define s*
+    (open-input-string (substring s 1)))
+  (displayln (substring s 1))
+  (port-count-lines! s*)
+  (read-syntax target s*))
+
+;; Syntax -> Srcloc
+;; extracts srcloc list from syntax
+(define (syntax-srcloc stx)
+  (list (syntax-source stx)
+        (syntax-line stx)
+        (syntax-column stx)
+        (syntax-position stx)
+        (syntax-span stx)))
 
 ;; [Hash Syntax Syntax] Syntax -> Syntax
 ;; looks syntax in a hash from by its content

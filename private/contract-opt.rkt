@@ -93,11 +93,12 @@
   (for ([blame blames])
     (let* ([def-site  (third blame)]
            [mod       (first def-site)]
-           [pos       (third def-site)]
+           [l+c       (cons (second def-site)
+                            (third def-site))]
            [l/i-hash  (hash-ref m/l/i-hash mod (thunk #f))])
       (when l/i-hash
         (let* ([g         (hash-ref m/g-hash mod)]
-               [blame-id  (hash-ref l/i-hash pos)]
+               [blame-id  (hash-ref l/i-hash l+c)]
                [blameable (hash-ref blameable-hash mod)])
           (define-values (h _)
             (bfs g blame-id))
