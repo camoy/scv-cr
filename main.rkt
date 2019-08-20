@@ -47,6 +47,7 @@
 (define (optimize targets
                   #:show-contracts [s (show-contracts)]
                   #:keep-contracts [k (keep-contracts)]
+                  #:show-optimized [p (show-optimized)]
                   #:show-blames [b (show-blames)]
                   #:ignore-check [i (ignore-check)]
                   #:overwrite [o (overwrite)]
@@ -55,6 +56,7 @@
   ;; set parameters
   (show-contracts s)
   (keep-contracts k)
+  (show-optimized p)
   (show-blames b)
   (ignore-check i)
   (overwrite o)
@@ -80,12 +82,14 @@
     (sort-by-dependency targets*))
   (define sorted-data
     (map (λ (t) (hash-ref t/d-hash t)) sorted-targets))
-  (define stxs-opt
+  (define-values (stxs-unopt stxs-opt)
     (contract-opt sorted-targets sorted-data))
 
   ;; flags
   (when (overwrite)
-    (for-each syntax-overwrite stxs-opt sorted-targets))
+    (for-each syntax-overwrite
+              (if (show-optimized) stxs-opt stxs-unopt)
+              sorted-targets))
 
   (when (show-contracts)
     (for-each (λ (stx target)
@@ -93,7 +97,7 @@
                 (displayln target)
                 (displayln long-line)
                 (displayln (syntax->pretty stx)))
-              stxs-opt
+              (if (show-optimized) stxs-opt stxs-unopt)
               sorted-targets))
 
   (unless (compiler-off)
@@ -114,11 +118,13 @@
                               (show-contracts #t)]
    [("-k" "--keep-contracts") "keep all contracts even if verified"
                               (keep-contracts #t)]
+   [("-p" "--show-optimized") "print and overwrite optimized code"
+                              (show-optimized #t)]
    [("-b" "--show-blames")    "dump blame information"
                               (show-blames #t)]
-   [("-i" "--ignore-check")   "ignore require-typed/check (for debugging)"
+   [("-i" "--ignore-check")   "ignore require-typed/check"
                               (ignore-check #t)]
-   [("-o" "--overwrite")      "overwrite source files (for debugging)"
+   [("-o" "--overwrite")      "overwrite source files"
                               (overwrite #t)]
    [("-c" "--compiler-off")   "don't compile zo files"
                               (compiler-off #t)]

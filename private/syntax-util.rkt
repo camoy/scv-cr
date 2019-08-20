@@ -90,7 +90,7 @@
 (define (syntax-overwrite stx target)
   (with-output-to-file target
     #:exists 'replace
-    (thunk (displayln (syntax->pretty stx)))))
+    (thunk (display (syntax->pretty stx)))))
 
 ;; Module-Path -> Syntax
 ;; retrieves syntax object from module path
@@ -227,7 +227,6 @@
       (λ () (pretty-print (syntax->datum stx)))))
   (define s*
     (open-input-string (substring s 1)))
-  (displayln (substring s 1))
   (port-count-lines! s*)
   (read-syntax target s*))
 

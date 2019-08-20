@@ -12,12 +12,14 @@
 
 (define-values (show-contracts
                 keep-contracts
+                show-optimized
                 show-blames
                 ignore-check
                 overwrite
                 compiler-off
                 verify-off)
   (values (make-parameter #f)
+          (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)

@@ -47,26 +47,27 @@
       (syntax-compile target stx)
       stx))
   (if (verify-off)
-      stxs
-      (let* ([blames         (verify-modules targets* stxs)]
-             [_              (print-blames blames)]
-             [blameable-hash (and (not (keep-contracts))
-                                  (make-blameable-hash targets*
-                                                       m/l/i-hash
-                                                       m/g-hash
-                                                       blames))])
-        (for/list ([target  targets]
-                   [target* targets*]
-                   [raw-stx raw-stxs]
-                   [datum   data])
-          (if datum
-              (begin
-                (when (not (keep-contracts))
-                  (erase-contracts! target
-                                    datum
-                                    (hash-ref blameable-hash target*)))
-                (contract-inject target raw-stx datum))
-              raw-stx)))))
+      (values stxs stxs)
+      (values stxs
+              (let* ([blames         (verify-modules targets* stxs)]
+                     [_              (print-blames blames)]
+                     [blameable-hash (and (not (keep-contracts))
+                                          (make-blameable-hash targets*
+                                                               m/l/i-hash
+                                                               m/g-hash
+                                                               blames))])
+                (for/list ([target  targets]
+                           [target* targets*]
+                           [raw-stx raw-stxs]
+                           [datum   data])
+                  (if datum
+                      (begin
+                        (when (not (keep-contracts))
+                          (erase-contracts! target
+                                            datum
+                                            (hash-ref blameable-hash target*)))
+                        (contract-inject target raw-stx datum))
+                      raw-stx))))))
 
 ;; Path Contract-Data L/I-Hash [Set Symbol] -> Void
 ;; erase contract by changing them to any/c

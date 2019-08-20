@@ -32,6 +32,11 @@ command-line flags:
 }
 
 @item{
+  @exec{-p} or @exec{--show-optimized} --- print and overwrite
+  optimized code instead of the pre-verified code with contracts.
+}
+
+@item{
   @exec{-b} or @exec{--show-blames} --- output blame information
   from @exec{scv}.
 }
@@ -64,6 +69,7 @@ command-line flags:
 @defproc[(optimize [targets (or/c path-string? path-for-some-system?)]
                    [#:show-contracts show-contracts #f boolean?]
                    [#:keep-contracts keep-contracts #f boolean?]
+                   [#:show-optimized show-optimized #f boolean?]
                    [#:show-blames show-blames #f boolean?]
                    [#:ignore-check ignore-check #f boolean?]
                    [#:overwrite overwrite #f boolean?]
