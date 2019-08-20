@@ -19,8 +19,9 @@
 (define benchmarks '("sieve"
                      "morsecode"
                      "fsm"
-                     "snake"
                      "suffixtree"
+                     "kcfa"
+                     "snake"
                      "tetris"))
 (define argv-setup
   (vector "-c" "4"
