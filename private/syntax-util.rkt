@@ -195,17 +195,19 @@
 ;; with target and updating the mapping between position
 (define (syntax-replace-srcloc! l/i-hash target e)
   (define parent-ctc (make-parameter #f))
-  (define last-src #f)
   (let go ([e e]
            [e-norm (syntax-normalize-srcloc target e)])
     (cond
       [(syntax? e)
-       (set! last-src (cons (syntax-line e-norm) (syntax-column e-norm)))
        (let* ([within  (syntax-property e 'within-definition)]
               [e*      (if within
                            (parameterize ([parent-ctc within])
                              (go (syntax-e e) (syntax-e e-norm)))
                            (go (syntax-e e) (syntax-e e-norm)))])
+         (when (or within (parent-ctc))
+           (hash-set! l/i-hash
+                      (cons (syntax-line e-norm) (syntax-column e-norm))
+                      (or within (parent-ctc))))
          (datum->syntax e e* (syntax-srcloc e-norm) e))]
       [(pair? e)
        (define ce (cdr e))
@@ -213,10 +215,6 @@
              (go (if (syntax? ce) (syntax-e ce) ce)
                  (cdr e-norm)))]
       [else
-       (when (parent-ctc)
-         (hash-set! l/i-hash
-                    last-src
-                    (parent-ctc)))
        e])))
 
 ;; Path Syntax -> Syntax
