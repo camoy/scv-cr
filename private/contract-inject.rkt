@@ -119,9 +119,12 @@
     [(~or* (require/typed m x ...)
            (require/typed/check m x ...))
      #:with [opaque ...] (filter-map make-opaque-type (syntax->list #'[x ...]))
+     (define required-module (syntax-e #'m))
      (define m-typed?
-       (parameterize ([current-directory (path-only target)])
-         (module-typed? (path->complete-path (syntax-e #'m)))))
+       (if (path-string? required-module)
+           (parameterize ([current-directory (path-only target)])
+             (module-typed? (path->complete-path required-module)))
+           #f))
      (cond
        [(and m-typed? (not (ignore-check)))
         #'(require m)]
