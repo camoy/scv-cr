@@ -1,18 +1,19 @@
-#lang typed/racket/base
+#lang racket/base
 
 (provide
- w0
- World)
+ w0)
 
-(require
- require-typed-check
- racket/math
- "image-adapted.rkt")
+(require racket/math)
 
-(require/typed/check  "math.rkt"
-  (min (-> Real Real Real))
-  (max (-> Real Real Real))
-  (abs (-> Real Real)))
+(require (only-in "image.rkt"
+  empty-scene
+  place-image
+  circle))
+
+(require (only-in "math.rkt"
+  min
+  max
+  abs))
 
 ;; =============================================================================
 
@@ -25,52 +26,6 @@
 (define PLAYER-RADIUS 20)
 (define PLAYER-IMG (circle PLAYER-RADIUS "solid" "green"))
 
-(define-type Posn
-  (case->
-   ['x -> (-> Real)]
-   ['y -> (-> Real)]
-   ['posn -> (-> Posn)]
-   ['move-toward/speed -> (Posn Real -> Posn)]
-   ['draw-on/image -> (image image -> image)]
-   ['dist -> (Posn -> Real)]))
-
-(define-type Player
-  (case->
-   ['posn -> (-> Posn)]
-   ['move-toward -> (Posn -> Player)]
-   ['draw-on -> (image -> image)]))
-
-(define-type Zombie
-  (case->
-   ['posn -> (-> Posn)]
-   ['draw-on/color -> (String image -> image)]
-   ['touching? -> (Posn -> Boolean)]
-   ['move-toward -> (Posn -> Zombie)]))
-
-(define-type Horde
-  (case->
-   ['dead -> (-> Zombies)]
-   ['undead -> (-> Zombies)]
-   ['draw-on -> (image -> image)]
-   ['touching? -> (Posn -> Boolean)]
-   ['move-toward -> (Posn -> Horde)]
-   ['eat-brains -> (-> Horde)]))
-
-(define-type Zombies
-  (case->
-   ['move-toward -> (Posn -> Zombies)]
-   ['draw-on/color -> (String image -> image)]
-   ['touching? -> (Posn -> Boolean)]
-   ['kill-all -> (Zombies -> Horde)]))
-
-(define-type World
-  (case->
-   ['on-mouse -> (Real Real String -> World)]
-   ['on-tick -> (-> World)]
-   ['to-draw -> (-> image)]
-   ['stop-when -> (-> Boolean)]))
-
-(: new-world : Player Posn Horde -> World)
 (define (new-world player mouse zombies)
   (λ (msg)
     (cond
@@ -92,7 +47,6 @@
          ((zombies 'touching?) ((player 'posn))))]
       [else "unknown message"])))
 
-(: new-player : Posn -> Player)
 (define (new-player p)
   (λ (msg)
     (cond
@@ -105,7 +59,6 @@
          ((p 'draw-on/image) PLAYER-IMG scn))]
       [else "unknown message"])))
 
-(: new-horde : Zombies Zombies -> Horde)
 (define (new-horde undead dead)
   (λ (msg)
     (cond
@@ -123,7 +76,6 @@
       [(equal? msg 'eat-brains) (λ () ((undead 'kill-all) dead))]
       [else "unknown message"])))
 
-(: new-cons-zombies : Zombie Zombies -> Zombies)
 (define (new-cons-zombies z r)
   (λ (msg)
     (cond
@@ -148,7 +100,6 @@
                     ((res 'dead))))]))]
       [else "unknown message"])))
 
-(: new-mt-zombies : -> Zombies)
 (define (new-mt-zombies)
   (λ (msg)
     (cond
@@ -160,7 +111,6 @@
          (new-horde (new-mt-zombies) dead))]
       [else "unknown message"])))
 
-(: new-zombie : Posn -> Zombie)
 (define (new-zombie p)
   (λ (msg)
     (cond
@@ -178,50 +128,38 @@
          (new-zombie ((p 'move-toward/speed) q ZOMBIE-SPEED)))]
       [else "unknown message"])))
 
-(: new-posn : Real Real -> Posn)
 (define (new-posn x y)
-  (define-type Posn-Internal
-    (case->
-     ['x -> (-> Real)]
-     ['y -> (-> Real)]
-     ['posn -> (-> Posn)]
-     ['move-toward/speed -> (Posn Real -> Posn)]
-     ['draw-on/image -> (image image -> image)]
-     ['dist -> (Posn -> Real)]
-     ;; private
-     ['move -> (Real Real -> Posn)]))
-  (letrec ([this : Posn-Internal
-                 (λ (msg)
-                   (cond
-                     [(equal? msg 'x) (λ () x)]
-                     [(equal? msg 'y) (λ () y)]
-                     [(equal? msg 'posn) (λ () this)]
-                     [(equal? msg 'move-toward/speed)
-                      (λ (p speed)
-                        (let* ([δx (- ((p 'x)) x)]
-                               [δy (- ((p 'y)) y)]
-                               [move-distance (min speed (max (abs δx) (abs δy)))])
-                          (cond
-                            [(< (abs δx) (abs δy))
-                             ((this 'move)
-                              0
-                              (if (positive? δy) move-distance (- 0 move-distance)))]
-                            [else
-                             ((this 'move)
-                              (if (positive? δx) move-distance (- 0 move-distance))
-                              0)])))]
-                     [(equal? msg 'move)
-                      (λ (δx δy)
-                        (new-posn (+ x δx) (+ y δy)))]
-                     [(equal? msg 'draw-on/image)
-                      (λ (img scn)
-                        (place-image img x y scn))]
-                     [(equal? msg 'dist)
-                      (λ (p)
-                        (sqrt (+ (sqr (- ((p 'y)) y))
-                                 (sqr (- ((p 'x)) x)))))]
-                     [else "unknown message"]))])
-    this))
+  (λ (msg)
+    (let ([this (new-posn x y)]) ; FIXME
+      (cond
+        [(equal? msg 'x) (λ () x)]
+        [(equal? msg 'y) (λ () y)]
+        [(equal? msg 'posn) (λ () this)]
+        [(equal? msg 'move-toward/speed)
+         (λ (p speed)
+           (let* ([δx (- ((p 'x)) x)]
+                  [δy (- ((p 'y)) y)]
+                  [move-distance (min speed (max (abs δx) (abs δy)))])
+             (cond
+               [(< (abs δx) (abs δy))
+                ((this 'move)
+                 0
+                 (if (positive? δy) move-distance (- 0 move-distance)))]
+               [else
+                ((this 'move)
+                 (if (positive? δx) move-distance (- 0 move-distance))
+                 0)])))]
+        [(equal? msg 'move)
+         (λ (δx δy)
+           (new-posn (+ x δx) (+ y δy)))]
+        [(equal? msg 'draw-on/image)
+         (λ (img scn)
+           (place-image img x y scn))]
+        [(equal? msg 'dist)
+         (λ (p)
+           (sqrt (+ (sqr (- ((p 'y)) y))
+                    (sqr (- ((p 'x)) x)))))]
+        [else "unknown message"]))))
 
 (define w0
   (new-world

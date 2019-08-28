@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang racket/base
 
 (provide
  min  ;(number? number? . -> . number?)]
@@ -8,6 +8,6 @@
 
 ;; =============================================================================
 
-(define (min [x : Real] [y : Real]) (if (<= x y) x y))
-(define (max [x : Real] [y : Real]) (if (>= x y) x y))
-(define (abs [x : Real]) (if (>= x 0) x (- 0 x)))
+(define (min x y) (if (<= x y) x y))
+(define (max x y) (if (>= x y) x y))
+(define (abs x) (if (>= x 0) x (- 0 x)))

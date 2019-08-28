@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang racket/base
 
 ;; Placeholder for images.
 ;; Pretends to render data.
@@ -13,6 +13,6 @@
 ;; =============================================================================
 
 (struct image ())
-(define (empty-scene [w : Real] [h : Real]) (image))
-(define (place-image [i₁ : image] [r : Real] [c : Real] [i₂ : image]) (image))
-(define (circle [r : Real] [m : String] [c : String]) (image))
+(define (empty-scene w h) (image))
+(define (place-image i₁ r c i₂) (image))
+(define (circle r m c) (image))
