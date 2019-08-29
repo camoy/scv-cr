@@ -47,7 +47,7 @@
             (ctc-data-require data)))
   (define provide-box (box '()))
   (define forms* (munge-provides forms p-bundle r-bundle provide-box))
-  #`((require racket/contract
+  #`((require soft-contract/fake-contract
               #,@(ctc-bundle-deps p-bundle))
      #,@(ctc-bundle-defns p-bundle)
      #,@forms*
@@ -86,7 +86,7 @@
   (define forms* ((munge-requires target required-set opaque-types) forms))
   (define-values (defs defs*) (make-definition bundle))
   #`((module require/contracts racket/base
-       (require racket/contract
+       (require soft-contract/fake-contract
                 #,@(set->list required-set)
                 #,@(ctc-bundle-deps bundle))
        #,@(ctc-bundle-defns bundle)
@@ -115,9 +115,10 @@
 ;; extracts and munges require forms
 (define ((munge-requires target required-set opaque-types) stx)
   (syntax-parse stx
-    #:datum-literals (require/typed require/typed/check)
+    #:datum-literals (require/typed require/typed/check require/typed/provide)
     [(~or* (require/typed m x ...)
-           (require/typed/check m x ...))
+           (require/typed/check m x ...)
+           (require/typed/provide m x ...))
      #:with [opaque ...] (filter-map make-opaque-type (syntax->list #'[x ...]))
      (define required-module (syntax-e #'m))
      (define m-typed?

@@ -106,5 +106,12 @@
                      "adaptor/data-adaptor.rkt"
                      "adaptor/data.rkt")))
 
+  (test-case
+    "require provide"
+    (test-optimize "require_provide/main.rkt"
+                   '("require_provide/main.rkt"
+                     "require_provide/adapter.rkt"
+                     "require_provide/abs.rkt")))
+
   (test-benchmark "sieve")
   (test-benchmark "morsecode"))
