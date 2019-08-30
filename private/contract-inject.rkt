@@ -111,14 +111,32 @@
   (values to-define
           (map (λ (x) (format-symbol "-:~a" x)) to-define)))
 
+(define-syntax-class rt-clause
+  #:attributes (out-name)
+  (pattern [name:id _]
+           #:with out-name #'name)
+  (pattern [(~datum #:struct) name:id _ ...]
+           #:with out-name #'(struct-out name)))
+
 ;; Path Set -> Syntax -> Syntax
 ;; extracts and munges require forms
 (define ((munge-requires target required-set opaque-types) stx)
+  (define to-provide
+    (syntax-parse stx
+      #:datum-literals (require/typed/provide require/typed/provide/opaque)
+      [(~or (require/typed/provide m x:rt-clause ...)
+            (require/typed/provide/opaque m x:rt-clause ...))
+       #'(provide x.out-name ...)]
+      [_ #'(void)]))
   (syntax-parse stx
-    #:datum-literals (require/typed require/typed/check require/typed/provide)
+    #:datum-literals (require/typed
+                      require/typed/check
+                      require/typed/provide
+                      require/typed/provide/opaque)
     [(~or* (require/typed m x ...)
            (require/typed/check m x ...)
-           (require/typed/provide m x ...))
+           (require/typed/provide m x ...)
+           (require/typed/provide/opaque m x ...))
      #:with [opaque ...] (filter-map make-opaque-type (syntax->list #'[x ...]))
      (define required-module (syntax-e #'m))
      (define m-typed?
@@ -126,14 +144,16 @@
            (parameterize ([current-directory (path-only target)])
              (module-typed? (path->complete-path required-module)))
            #f))
-     (cond
-       [(and m-typed? (not (ignore-check)))
-        #'(require m)]
-       [else
-        (set-box! opaque-types (append (syntax->list #'[opaque ...])
-                                       (unbox opaque-types)))
-        (set-add! required-set #'m)
-        #'(void)])]
+     (define to-require
+       (cond
+         [(and m-typed? (not (ignore-check)))
+          #'(require m)]
+         [else
+          (set-box! opaque-types (append (syntax->list #'[opaque ...])
+                                         (unbox opaque-types)))
+          (set-add! required-set #'m)
+          #'(void)]))
+     #`(begin #,to-require #,to-provide)]
     [(x ...)
      (datum->syntax stx
                     (map (munge-requires target required-set opaque-types)
