@@ -171,7 +171,7 @@
 (define (syntax-preserve stx)
   (syntax-property stx 'preserve-context #t))
 
-;; Syntax -> (Syntax -> Syntax)
+;; Syntax Syntax -> Syntax
 ;; associates defining identifier with the definition itself (for construction
 ;; of the contract dependency graph)
 (define (syntax-within stx parent)
@@ -207,7 +207,9 @@
          (when (or within (parent-ctc))
            (hash-set! l/i-hash
                       (cons (syntax-line e-norm) (syntax-column e-norm))
-                      (or within (parent-ctc))))
+                      (syntax-e (lifted->l (datum->syntax #f
+                                                          (or within
+                                                              (parent-ctc)))))))
          (datum->syntax e e* (syntax-srcloc e-norm) e))]
       [(pair? e)
        (define ce (cdr e))

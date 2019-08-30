@@ -105,10 +105,12 @@
 (define (hashes->outs i/c-hash p/c-hash s/o-hash)
   (append (hash-map p/c-hash
                     (λ (k v)
-                      #`(contract-out (#,k #,v))))
+                      #`(contract-out #,(syntax-within #`(#,k #,v)
+                                                       k))))
           (hash-map s/o-hash
                     (λ (k v)
-                      #`(contract-out (struct #,k #,v))))))
+                      #`(contract-out #,(syntax-within #`(struct #,k #,v)
+                                                       k))))))
 
 ;; I/C-Hash P/C-Hash S/O-Hash -> [List-of Syntax]
 ;; constructs a minimal list of dependencies for injection into a

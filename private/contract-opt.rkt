@@ -89,6 +89,9 @@
 (define (make-blameable-hash targets m/l/i-hash m/g-hash blames)
   (define blameable-hash
     (make-hash))
+  (define cannot-find '())
+  (define ((add-to-cannot-find b))
+    (set! cannot-find (cons b cannot-find)))
   (for ([target targets])
     (hash-set! blameable-hash target (mutable-set)))
   (for ([blame blames])
@@ -99,13 +102,21 @@
            [l/i-hash  (hash-ref m/l/i-hash mod (thunk #f))])
       (when l/i-hash
         (let* ([g         (hash-ref m/g-hash mod)]
-               [blame-id  (hash-ref l/i-hash l+c)]
+               [blame-id  (hash-ref l/i-hash l+c (add-to-cannot-find blame))]
                [blameable (hash-ref blameable-hash mod)])
-          (define-values (h _)
-            (bfs g blame-id))
-          (define blame-ids
-            (hash-keys h))
-          (set-union! blameable (apply mutable-set blame-ids))))))
+          (pretty-print l/i-hash)
+          (when (not (void? blame-id))
+            (define-values (h _)
+              (bfs g blame-id))
+            (define blame-ids
+              (hash-keys h))
+            (set-union! blameable (apply mutable-set blame-ids)))))))
+  (pretty-print blameable-hash)
+  (when (not (empty? cannot-find))
+    (displayln long-line)
+    (displayln "Cannot Handle Blame")
+    (displayln long-line)
+    (pretty-print cannot-find))
   blameable-hash)
 
 ;; [Set Symbol] -> (Syntax -> Syntax)
