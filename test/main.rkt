@@ -113,7 +113,7 @@
                      "require_provide/adapter.rkt"
                      "require_provide/abs.rkt")))
 
-  #;(test-case
+  (test-case
     "opaque"
     (test-optimize "opaque/main.rkt"
                    '("opaque/main.rkt"
