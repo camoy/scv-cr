@@ -1,6 +1,6 @@
 #lang racket/base
 
-(provide abs)
+(provide absz)
 
-(define (abs x)
+(define (absz x)
   (if (> x 0) x (- x)))
