@@ -113,5 +113,11 @@
                      "require_provide/adapter.rkt"
                      "require_provide/abs.rkt")))
 
+  #;(test-case
+    "opaque"
+    (test-optimize "opaque/main.rkt"
+                   '("opaque/main.rkt"
+                     "opaque/adapter.rkt")))
+
   (test-benchmark "sieve")
   (test-benchmark "morsecode"))

@@ -1,11 +1,10 @@
 #lang racket/base
 
-(require racket/contract)
+(provide absz (struct-out my-box))
 
-(provide absz
-         (contract-out [something-bad (parameter/c boolean?)]))
+(struct my-box (x))
 
-(define something-bad (make-parameter #f))
+(define bad-for-scv (make-parameter #f))
 
 (define (absz x)
   (if (> x 0) x (- x)))

@@ -21,14 +21,15 @@
 ;; containing contract information for both provided identifiers and required
 ;; identifiers, a graph describing contract dependencies, and hashes
 ;; describing mappings between predicates and their contracts.
-(struct ctc-data (provide require graph d-pred m-pred))
+(struct ctc-data (provide require graph d-pred m-pred) #:transparent)
 
 ;; A Ctc-Bundle is a (ctc-bundle Syntaxes Syntaxes Syntaxes I/C-Hash P/C-Hash
 ;; S/O-Hash C/C-List) bundling together all the contract information necessary.
 (struct
   ctc-bundle
   (defns outs deps i/c-hash p/c-hash s/o-hash c/c-list)
-  #:mutable)
+  #:mutable
+  #:transparent)
 
 ;; A I/C-Hash is a [Hash Syntax Syntax] of auxiliary contract definitions,
 ;; mapping an identifier to a contract.

@@ -41,7 +41,7 @@
               (hash-set! m/g-hash target* (ctc-data-graph datum))
               (syntax-replace-srcloc! l/i-hash
                                       target
-                                      (contract-inject target raw-stx datum)))
+                                      (contract-inject target raw-stx datum #t)))
             raw-stx))
       #;(pretty-print (syntax->datum stx))
       (syntax-compile target stx)
@@ -66,7 +66,7 @@
                           (erase-contracts! target
                                             datum
                                             (hash-ref blameable-hash target*)))
-                        (contract-inject target raw-stx datum))
+                        (contract-inject target raw-stx datum #f))
                       raw-stx))))))
 
 ;; Path Contract-Data L/I-Hash [Set Symbol] -> Void

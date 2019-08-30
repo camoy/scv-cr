@@ -14,16 +14,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Path Syntax Ctc-Data -> Syntax
+;; Path Syntax Ctc-Data Boolean -> Syntax
 ;; takes original syntax and contract data and uses contract information
 ;; to inject provide and require contracts into the unexpanded syntax
-(define (contract-inject target stx data)
+(define (contract-inject target stx data as-opaque?)
   (syntax-parse stx
     #:datum-literals (module)
     [(module name lang (mb forms ...))
      (define forms*
        (for/fold ([stx       #'(forms ...)])
-                 ([injection (list (inject-require target)
+                 ([injection (list (inject-require target as-opaque?)
                                    inject-provide
                                    inject-predicates)])
          (injection stx data)))
@@ -79,17 +79,23 @@
 ;; Path -> (Syntax Ctc-Data -> Syntax)
 ;; takes original syntax and contract data and uses contract information
 ;; to inject require contracts into the unexpanded syntax
-(define ((inject-require target) forms data)
+(define ((inject-require target as-opaque?) forms data)
   (define bundle (ctc-data-require data))
   (define required-set (mutable-set))
   (define opaque-types (box '()))
-  (define forms* ((munge-requires target required-set opaque-types) forms))
+  (define opaque-defns (box '()))
+  (define forms* ((munge-requires target
+                                  required-set
+                                  opaque-types
+                                  (and as-opaque? opaque-defns))
+                  forms))
   (define-values (defs defs*) (make-definition bundle))
   #`((module require/contracts racket/base
        (require soft-contract/fake-contract
                 #,@(set->list required-set)
                 #,@(ctc-bundle-deps bundle))
        #,@(ctc-bundle-defns bundle)
+       #,@(unbox opaque-defns)
        (provide #,@(hash-keys (ctc-bundle-i/c-hash bundle))
                 #,@(ctc-bundle-outs bundle)))
      (require (prefix-in -: (only-in 'require/contracts #,@defs))
@@ -112,22 +118,30 @@
           (map (λ (x) (format-symbol "-:~a" x)) to-define)))
 
 (define-syntax-class rt-clause
-  #:attributes (out-name)
+  #:attributes (out-name opaque-def)
   (pattern [name:id _]
-           #:with out-name #'name)
-  (pattern [(~datum #:struct) name:id _ ...]
-           #:with out-name #'(struct-out name)))
+           #:with out-name #'name
+           #:with opaque-def #'(define name #:opaque))
+  (pattern [(~datum #:struct) name:id ([f:id : t] ...)]
+           #:with out-name #'(struct-out name)
+           #:with opaque-def #'(struct name (f ...) #:transparent)))
 
 ;; Path Set -> Syntax -> Syntax
 ;; extracts and munges require forms
-(define ((munge-requires target required-set opaque-types) stx)
+(define ((munge-requires target required-set opaque-types opaque-defns) stx)
+  (define opaque-provide? #f)
   (define to-provide
     (syntax-parse stx
       #:datum-literals (require/typed/provide require/typed/provide/opaque)
-      [(~or (require/typed/provide m x:rt-clause ...)
-            (require/typed/provide/opaque m x:rt-clause ...))
+      [(require/typed/provide m x:rt-clause ...)
        #'(provide x.out-name ...)]
-      [_ #'(void)]))
+      [(require/typed/provide/opaque m x:rt-clause ...)
+       (set! opaque-provide? #t)
+       (when opaque-defns
+         (set-box! opaque-defns
+                   (cons #'(begin x.opaque-def ...) (unbox opaque-defns))))
+       #'(provide x.out-name ...)]
+      [_ #f]))
   (syntax-parse stx
     #:datum-literals (require/typed
                       require/typed/check
@@ -151,12 +165,16 @@
          [else
           (set-box! opaque-types (append (syntax->list #'[opaque ...])
                                          (unbox opaque-types)))
-          (set-add! required-set #'m)
+          (unless (and opaque-provide? opaque-defns)
+            (set-add! required-set #'m))
           #'(void)]))
-     #`(begin #,to-require #,to-provide)]
+     #`(begin #,to-require #,(or to-provide #'(void)))]
     [(x ...)
      (datum->syntax stx
-                    (map (munge-requires target required-set opaque-types)
+                    (map (munge-requires target
+                                         required-set
+                                         opaque-types
+                                         opaque-defns)
                          (syntax-e #'(x ...)))
                     stx
                     stx)]
