@@ -118,12 +118,13 @@
           (map (λ (x) (format-symbol "-:~a" x)) to-define)))
 
 (define-syntax-class rt-clause
-  #:attributes (out-name opaque-def)
+  #:attributes ([outs 1] opaque-def)
   (pattern [name:id _]
-           #:with out-name #'name
+           #:with [outs ...] (list #'name)
            #:with opaque-def #'(define name #:opaque))
   (pattern [(~datum #:struct) name:id ([f:id : t] ...)]
-           #:with out-name #'(struct-out name)
+           #:with [outs ...] (list #'(struct-out name)
+                                   (format-id #'name "~a?" (syntax-e #'name)))
            #:with opaque-def #'(struct name (f ...) #:transparent)))
 
 ;; Path Set -> Syntax -> Syntax
@@ -134,13 +135,13 @@
     (syntax-parse stx
       #:datum-literals (require/typed/provide require/typed/provide/opaque)
       [(require/typed/provide m x:rt-clause ...)
-       #'(provide x.out-name ...)]
+       #'(provide x.outs ... ...)]
       [(require/typed/provide/opaque m x:rt-clause ...)
        (set! opaque-provide? #t)
        (when opaque-defns
          (set-box! opaque-defns
                    (cons #'(begin x.opaque-def ...) (unbox opaque-defns))))
-       #'(provide x.out-name ...)]
+       #'(provide x.outs ... ...)]
       [_ #f]))
   (syntax-parse stx
     #:datum-literals (require/typed
