@@ -119,5 +119,10 @@
                    '("opaque/main.rkt"
                      "opaque/adapter.rkt")))
 
+  (test-case
+    "opaque_require"
+    (test-optimize "opaque_require/main.rkt"
+                   '("opaque_require/main.rkt")))
+
   (test-benchmark "sieve")
   (test-benchmark "morsecode"))

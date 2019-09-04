@@ -130,26 +130,36 @@
 ;; Path Set -> Syntax -> Syntax
 ;; extracts and munges require forms
 (define ((munge-requires target required-set opaque-types opaque-defns) stx)
-  (define opaque-provide? #f)
+  (define opaque? #f)
   (define to-provide
     (syntax-parse stx
-      #:datum-literals (require/typed/provide require/typed/provide/opaque)
+      #:datum-literals (require/typed/provide
+                        require/typed/provide/opaque
+                        require/typed/opaque)
       [(require/typed/provide m x:rt-clause ...)
        #'(provide x.outs ... ...)]
       [(require/typed/provide/opaque m x:rt-clause ...)
-       (set! opaque-provide? #t)
+       (set! opaque? #t)
        (when opaque-defns
          (set-box! opaque-defns
                    (cons #'(begin x.opaque-def ...) (unbox opaque-defns))))
        #'(provide x.outs ... ...)]
+      [(require/typed/opaque m x:rt-clause ...)
+       (set! opaque? #t)
+       (when opaque-defns
+         (set-box! opaque-defns
+                   (cons #'(begin x.opaque-def ...) (unbox opaque-defns))))
+       #'(void)]
       [_ #f]))
   (syntax-parse stx
     #:datum-literals (require/typed
                       require/typed/check
+                      require/typed/opaque
                       require/typed/provide
                       require/typed/provide/opaque)
     [(~or* (require/typed m x ...)
            (require/typed/check m x ...)
+           (require/typed/opaque m x ...)
            (require/typed/provide m x ...)
            (require/typed/provide/opaque m x ...))
      #:with [opaque ...] (filter-map make-opaque-type (syntax->list #'[x ...]))
@@ -166,7 +176,7 @@
          [else
           (set-box! opaque-types (append (syntax->list #'[opaque ...])
                                          (unbox opaque-types)))
-          (unless (and opaque-provide? opaque-defns)
+          (unless (and opaque? opaque-defns)
             (set-add! required-set #'m))
           #'(void)]))
      #`(begin #,to-require #,(or to-provide #'(void)))]
