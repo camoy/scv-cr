@@ -1,11 +1,11 @@
 (module date typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract/base.rkt")
-             (lib "racket/base.rkt")
              (lib "racket/contract.rkt")
-             (submod "core-structs.rkt" #%type-decl "..")
-             (submod "gregor-structs.rkt" #%type-decl ".."))
+             (lib "racket/base.rkt")
+             (submod "gregor-structs.rkt" #%type-decl "..")
+             (lib "racket/contract/base.rkt")
+             (submod "core-structs.rkt" #%type-decl ".."))
     (define g57 exact-nonnegative-integer?)
     (define g58 (or/c g57))
     (define g59 (lambda (x) (equal? x '1)))

@@ -141,7 +141,14 @@
     (define (resolve-offset/raise g/o target-dt target-tzid orig)
       (raise-invalid-offset g/o target-dt target-tzid orig))
     (provide)
-    (provide (contract-out
+    (provide (contract-out (offset-resolver generated-contract57))
+             (contract-out
+              (resolve-offset/raise (-> g80 g71 g74 g76 (values g75))))
+             (contract-out
+              (resolve-offset/push (-> g80 g71 g74 g76 (values g75))))
+             (contract-out
+              (resolve-offset/retain (-> g80 g71 g74 g76 (values g75))))
+             (contract-out
               (resolve-offset/post-gap/pre-overlap
                (-> g80 g71 g74 g76 (values g75))))
              (contract-out
@@ -153,11 +160,4 @@
              (contract-out (resolve-overlap/pre generated-contract68))
              (contract-out (resolve-gap/push generated-contract60))
              (contract-out (resolve-gap/post generated-contract58))
-             (contract-out (resolve-gap/pre generated-contract59))
-             (contract-out (offset-resolver generated-contract57))
-             (contract-out
-              (resolve-offset/raise (-> g80 g71 g74 g76 (values g75))))
-             (contract-out
-              (resolve-offset/push (-> g80 g71 g74 g76 (values g75))))
-             (contract-out
-              (resolve-offset/retain (-> g80 g71 g74 g76 (values g75)))))))
+             (contract-out (resolve-gap/pre generated-contract59)))))

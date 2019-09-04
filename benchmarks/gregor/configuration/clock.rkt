@@ -3,8 +3,8 @@
     (require soft-contract/fake-contract
              (lib "racket/contract.rkt")
              (lib "racket/base.rkt")
-             (submod "gregor-structs.rkt" #%type-decl "..")
              (lib "racket/contract/base.rkt")
+             (submod "gregor-structs.rkt" #%type-decl "..")
              (lib "typed-racket/types/numeric-predicates.rkt"))
     (define g25 t:exact-rational?)
     (define g26 (or/c g25))

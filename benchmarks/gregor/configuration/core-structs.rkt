@@ -1,8 +1,8 @@
 (module core-structs typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
              (lib "racket/base.rkt")
+             (lib "racket/contract.rkt")
              (lib "racket/contract/base.rkt"))
     (define g22 exact-integer?)
     (define g23 (or/c g22))

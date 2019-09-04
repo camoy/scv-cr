@@ -1,10 +1,10 @@
 (module difference typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
              (lib "racket/base.rkt")
-             (lib "racket/contract/base.rkt")
-             (submod "gregor-structs.rkt" #%type-decl ".."))
+             (submod "gregor-structs.rkt" #%type-decl "..")
+             (lib "racket/contract.rkt")
+             (lib "racket/contract/base.rkt"))
     (define g25 (lambda (x) (DateTime? x)))
     (define g26 exact-integer?)
     (define g27 (or/c g26))
