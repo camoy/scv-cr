@@ -119,13 +119,13 @@
 
 (define-syntax-class rt-clause
   #:attributes ([outs 1] opaque-def)
-  (pattern [name:id _]
-           #:with [outs ...] (list #'name)
-           #:with opaque-def #'(define name #:opaque))
-  (pattern [(~datum #:struct) name:id ([f:id : t] ...)]
-           #:with [outs ...] (list #'(struct-out name)
-                                   (format-id #'name "~a?" (syntax-e #'name)))
-           #:with opaque-def #'(struct name (f ...) #:transparent)))
+  (pattern [sn:struct-name _]
+           #:with [outs ...] (list #'sn.name)
+           #:with opaque-def #'(define sn.name #:opaque))
+  (pattern [(~datum #:struct) sn:struct-name ([f:id : t] ...)]
+           #:with [outs ...] (list #'(struct-out sn.name)
+                                   (format-id #'sn.name "~a?" (syntax-e #'sn.name)))
+           #:with opaque-def #'(struct sn.name (f ...) #:transparent)))
 
 ;; Path Set -> Syntax -> Syntax
 ;; extracts and munges require forms
@@ -176,7 +176,8 @@
          [else
           (set-box! opaque-types (append (syntax->list #'[opaque ...])
                                          (unbox opaque-types)))
-          (unless (and opaque? opaque-defns)
+          (unless (or (and opaque? opaque-defns)
+                      (eq? (syntax-e #'m) 'racket/base))
             (set-add! required-set #'m))
           #'(void)]))
      #`(begin #,to-require #,(or to-provide #'(void)))]
