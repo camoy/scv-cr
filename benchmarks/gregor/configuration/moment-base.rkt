@@ -1,20 +1,20 @@
 (module moment-base typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
+             (lib "racket/contract/base.rkt")
              (lib "racket/base.rkt")
              (submod "gregor-structs.rkt" #%type-decl "..")
-             (lib "racket/contract/base.rkt"))
-    (define g45 (lambda (x) (DateTime? x)))
-    (define g46 exact-integer?)
-    (define g47 (or/c g46))
-    (define g48 string?)
-    (define g49 '#f)
-    (define g50 (or/c g48 g49))
-    (define g51 (lambda (x) (Moment? x)))
-    (define generated-contract42 (-> g45 g47 g50 (values g51)))
-    (define generated-contract43 (-> g51 (values g48)))
-    (define generated-contract44 (-> g51 (values g48)))
+             (lib "racket/contract.rkt"))
+    (define g35 (lambda (x) (DateTime? x)))
+    (define g36 exact-integer?)
+    (define g37 (or/c g36))
+    (define g38 string?)
+    (define g39 '#f)
+    (define g40 (or/c g38 g39))
+    (define g41 (lambda (x) (Moment? x)))
+    (define generated-contract32 (-> g35 g37 g40 (values g41)))
+    (define generated-contract33 (-> g41 (values g38)))
+    (define generated-contract34 (-> g41 (values g38)))
     (module require/contracts racket/base
       (require soft-contract/fake-contract)
       (provide))
@@ -25,7 +25,7 @@
     (require require-typed-check
              racket/match
              "gregor-adapter.rkt"
-             (only-in racket/format ~r))
+             "format-adapter.rkt")
     (begin (require "datetime.rkt") (void))
     (: moment->iso8601/tzid (-> Moment String))
     (define (moment->iso8601/tzid m)
@@ -46,12 +46,12 @@
          "~a~a~a:~a"
          (datetime->iso8601 d)
          sign
-         (~r hrs #:min-width 2 #:pad-string "0" #:sign #f)
-         (~r min #:min-width 2 #:pad-string "0" #:sign #f)))))
+         (~r** hrs 2 "0")
+         (~r** min 2 "0")))))
     (: make-moment (-> DateTime Integer (U String #f) Moment))
     (define (make-moment dt off z)
       (Moment dt off (and z (string->immutable-string z))))
     (provide)
-    (provide (contract-out (moment->iso8601 generated-contract43))
-             (contract-out (make-moment generated-contract42))
-             (contract-out (moment->iso8601/tzid generated-contract44)))))
+    (provide (contract-out (moment->iso8601 generated-contract33))
+             (contract-out (make-moment generated-contract32))
+             (contract-out (moment->iso8601/tzid generated-contract34)))))

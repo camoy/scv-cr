@@ -2,8 +2,8 @@
    (#%module-begin
     (require soft-contract/fake-contract
              (lib "racket/base.rkt")
-             (lib "racket/contract.rkt")
-             (lib "racket/contract/base.rkt"))
+             (lib "racket/contract/base.rkt")
+             (lib "racket/contract.rkt"))
     (define g22 exact-integer?)
     (define g23 (or/c g22))
     (define g24 (lambda (x) (HMSN? x)))

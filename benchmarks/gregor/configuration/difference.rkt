@@ -1,10 +1,10 @@
 (module difference typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
+             (lib "racket/contract/base.rkt")
              (lib "racket/base.rkt")
              (submod "gregor-structs.rkt" #%type-decl "..")
-             (lib "racket/contract.rkt")
-             (lib "racket/contract/base.rkt"))
+             (lib "racket/contract.rkt"))
     (define g25 (lambda (x) (DateTime? x)))
     (define g26 exact-integer?)
     (define g27 (or/c g26))
@@ -60,6 +60,6 @@
     (: datetime->jdns (-> DateTime Integer))
     (define (datetime->jdns dt) (exact-floor (* (datetime->jd dt) NS/DAY)))
     (provide)
-    (provide (contract-out (datetime-nanoseconds-between generated-contract24))
-             (contract-out (datetime-days-between generated-contract22))
-             (contract-out (datetime-months-between generated-contract23)))))
+    (provide (contract-out (datetime-months-between generated-contract23))
+             (contract-out (datetime-nanoseconds-between generated-contract24))
+             (contract-out (datetime-days-between generated-contract22)))))

@@ -1,11 +1,11 @@
 (module gregor-structs typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract/base.rkt")
              (lib "racket/contract.rkt")
              (lib "racket/base.rkt")
-             (lib "typed-racket/types/numeric-predicates.rkt")
-             (submod "core-structs.rkt" #%type-decl ".."))
+             (lib "racket/contract/base.rkt")
+             (submod "core-structs.rkt" #%type-decl "..")
+             (lib "typed-racket/types/numeric-predicates.rkt"))
     (define g37 (lambda (x) (YMD? x)))
     (define g38 exact-integer?)
     (define g39 (or/c g38))
@@ -67,10 +67,10 @@
       (utc-offset : Integer)
       (zone : (U String #f))))
     (provide)
-    (provide (contract-out (struct DateTime ((date g40) (time g49) (jd g51))))
+    (provide (contract-out (struct Time ((hmsn g56) (ns g58))))
+             (contract-out (struct DateTime ((date g40) (time g49) (jd g51))))
              (contract-out
               (struct
                Moment
                ((datetime/local g52) (utc-offset g39) (zone g54))))
-             (contract-out (struct Date ((ymd g37) (jdn g39))))
-             (contract-out (struct Time ((hmsn g56) (ns g58)))))))
+             (contract-out (struct Date ((ymd g37) (jdn g39)))))))

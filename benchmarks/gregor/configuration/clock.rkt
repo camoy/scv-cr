@@ -1,9 +1,9 @@
 (module clock typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
-             (lib "racket/base.rkt")
              (lib "racket/contract/base.rkt")
+             (lib "racket/base.rkt")
+             (lib "racket/contract.rkt")
              (submod "gregor-structs.rkt" #%type-decl "..")
              (lib "typed-racket/types/numeric-predicates.rkt"))
     (define g25 t:exact-rational?)

@@ -36,10 +36,10 @@
     (define generated-contract42 (-> g77 (values g71)))
     (module require/contracts racket/base
       (require soft-contract/fake-contract
-               (lib "racket/contract/base.rkt")
                (lib "typed-racket/types/numeric-predicates.rkt")
                (lib "racket/contract.rkt")
-               (lib "racket/base.rkt"))
+               (lib "racket/base.rkt")
+               (lib "racket/contract/base.rkt"))
       (define g43 exact-integer?)
       (define g44 string?)
       (define g45 '#f)
@@ -80,7 +80,8 @@
         (struct tzoverlap (offset-before offset-after) #:transparent)
         (define local-seconds->tzoffset #:opaque)
         (define utc-seconds->tzoffset #:opaque))
-      (provide l/130
+      (provide g61
+               l/130
                g56
                g57
                l/119
@@ -88,16 +89,6 @@
                g53
                g54
                l/78
-               g59
-               l/126
-               g55
-               l/84
-               l/43
-               l/123
-               l/82
-               g51
-               l/41
-               l/39
                g47
                g48
                g49
@@ -108,18 +99,23 @@
                g45
                g46
                l/1
+               g59
+               l/126
+               g55
+               l/84
+               l/43
+               l/123
+               l/82
+               g51
+               l/41
                g58
                l/121
                l/80
+               l/39
                g60
-               g61
-               (contract-out (utc-seconds->tzoffset l/130))
-               (contract-out (local-seconds->tzoffset l/126))
                (contract-out (system-tzid l/1))
-               (contract-out
-                (struct
-                 tzoverlap
-                 ((offset-before any/c) (offset-after any/c))))
+               (contract-out (local-seconds->tzoffset l/126))
+               (contract-out (utc-seconds->tzoffset l/130))
                (contract-out
                 (struct
                  tzgap
@@ -127,39 +123,43 @@
                (contract-out
                 (struct
                  tzoffset
-                 ((utc-seconds g52) (dst? g54) (abbreviation g44))))))
+                 ((utc-seconds g52) (dst? g54) (abbreviation g44))))
+               (contract-out
+                (struct
+                 tzoverlap
+                 ((offset-before any/c) (offset-after any/c))))))
     (require (prefix-in
               -:
               (only-in
                'require/contracts
-               system-tzid
-               local-seconds->tzoffset
                utc-seconds->tzoffset
+               local-seconds->tzoffset
+               system-tzid
+               tzoverlap?
                tzoffset?
-               tzgap?
-               tzoverlap?))
+               tzgap?))
              (except-in
               'require/contracts
-              system-tzid
-              local-seconds->tzoffset
               utc-seconds->tzoffset
+              local-seconds->tzoffset
+              system-tzid
+              tzoverlap?
               tzoffset?
-              tzgap?
-              tzoverlap?))
+              tzgap?))
     (define-values
-     (system-tzid
+     (utc-seconds->tzoffset
       local-seconds->tzoffset
-      utc-seconds->tzoffset
+      system-tzid
+      tzoverlap?
       tzoffset?
-      tzgap?
-      tzoverlap?)
+      tzgap?)
      (values
-      -:system-tzid
-      -:local-seconds->tzoffset
       -:utc-seconds->tzoffset
+      -:local-seconds->tzoffset
+      -:system-tzid
+      -:tzoverlap?
       -:tzoffset?
-      -:tzgap?
-      -:tzoverlap?))
+      -:tzgap?))
     (require scv-gt/opaque)
     (begin
       (void)

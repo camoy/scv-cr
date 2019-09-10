@@ -1,10 +1,10 @@
 (module offset-resolvers typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
              (lib "racket/base.rkt")
-             (lib "racket/contract/base.rkt")
              (submod "tzinfo-adapter.rkt" #%type-decl "..")
+             (lib "racket/contract.rkt")
+             (lib "racket/contract/base.rkt")
              (submod "gregor-structs.rkt" #%type-decl ".."))
     (define g70 (lambda (x) (tzgap? x)))
     (define g71 (lambda (x) (DateTime? x)))
