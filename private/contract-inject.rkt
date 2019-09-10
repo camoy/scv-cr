@@ -119,13 +119,18 @@
 
 (define-syntax-class rt-clause
   #:attributes ([outs 1] opaque-def)
-  (pattern [sn:struct-name _]
-           #:with [outs ...] (list #'sn.name)
-           #:with opaque-def #'(define sn.name #:opaque))
+  (pattern [n:id _]
+           #:with [outs ...] (list #'n)
+           #:with opaque-def #'(define n #:opaque))
   (pattern [(~datum #:struct) sn:struct-name ([f:id : t] ...)]
            #:with [outs ...] (list #'(struct-out sn.name)
                                    (format-id #'sn.name "~a?" (syntax-e #'sn.name)))
-           #:with opaque-def #'(struct sn.name (f ...) #:transparent)))
+           #:with opaque-def (if (syntax-e #'sn.super)
+                                 #'(struct sn.name sn.super (f ...) #:transparent)
+                                 #'(struct sn.name (f ...) #:transparent)))
+  (pattern [(~datum #:opaque) _ pred:id]
+           #:with [outs ...] (list #'pred)
+           #:with opaque-def #'(define pred #:opaque)))
 
 ;; Path Set -> Syntax -> Syntax
 ;; extracts and munges require forms
