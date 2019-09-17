@@ -86,7 +86,7 @@
 
   ;; extract data
   (define ctc-data
-    (time (map (pipeline targets**) targets**)))
+    (map (pipeline targets**) targets**))
   (define t/d-hash
     (make-hash (map cons targets** ctc-data)))
 
@@ -96,7 +96,7 @@
   (define sorted-data
     (map (λ (t) (hash-ref t/d-hash t)) sorted-targets))
   (define-values (stxs-unopt stxs-opt)
-    (time (contract-opt sorted-targets sorted-data)))
+    (contract-opt sorted-targets sorted-data))
 
   ;; flags
   (when (overwrite)
