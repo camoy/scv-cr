@@ -9,8 +9,10 @@
          racket/string
          racket/tcp
          racket/list
+         syntax/modread
          scv-gt
          scv-gt/private/syntax-util
+         compiler/compile-file
          gtp-util
          basedir)
 
@@ -18,7 +20,7 @@
 
 (define port 8182)
 (define main
-  (vector-ref (current-command-line-arguments) 0))
+  (vector-ref (current-command-line-arguments) 2))
 (define main-dir
   (path-only (path->complete-path (string->path main))))
 (define rkt? (curryr path-has-extension? #".rkt"))
@@ -48,8 +50,12 @@
 (define out-port (open-output-string))
 (define out
   (with-handlers ([exn:fail? (λ (x) (list 'error (exn->string x)))])
-    (parameterize ([current-output-port out-port])
-      (optimize targets #:show-blames #t))
+    (parameterize ([current-output-port out-port]
+                   [current-namespace (make-base-namespace)])
+      (with-module-reading-parameterization
+        (λ ()
+          (compile-file (path->complete-path (string->path main)))))
+      (optimize targets #:show-blames #t #:trust-zos #t))
     (define input-port (open-input-string (get-output-string out-port)))
     (read input-port)))
 

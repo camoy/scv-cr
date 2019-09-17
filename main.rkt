@@ -64,7 +64,8 @@
                   #:overwrite [o (overwrite)]
                   #:compiler-off [c (compiler-off)]
                   #:verify-off [v (verify-off)]
-                  #:analyze-fakes [f (analyze-fakes)])
+                  #:analyze-fakes [f (analyze-fakes)]
+                  #:trust-zos [t (trust-zos)])
   ;; set parameters
   (show-contracts s)
   (keep-contracts k)
@@ -75,6 +76,7 @@
   (compiler-off c)
   (verify-off v)
   (analyze-fakes f)
+  (trust-zos t)
 
   ;; acquiring targets
   (define targets*
@@ -82,7 +84,8 @@
   (define targets** (without-fakes targets*))
 
   ;; clean old zo
-  (for-each module-delete-zo targets**)
+  (unless (trust-zos)
+    (for-each module-delete-zo targets**))
 
   ;; extract data
   (define ctc-data
@@ -147,5 +150,7 @@
                               (verify-off #t)]
    [("-f" "--analyze-fakes")  "analyze fake modules"
                               (analyze-fakes #t)]
+   [("-t" "--trust-zos")      "trust existing compiled zo's"
+                              (trust-zos #t)]
    #:args targets
    targets))
