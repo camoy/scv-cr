@@ -1,13 +1,36 @@
-#lang typed/racket/base
-
-(provide
- min  ;(number? number? . -> . number?)]
- max  ;(number? number? . -> . number?)]
- abs  ;(number? . -> . number?)]
-)
-
-;; =============================================================================
-
-(define (min [x : Real] [y : Real]) (if (<= x y) x y))
-(define (max [x : Real] [y : Real]) (if (>= x y) x y))
-(define (abs [x : Real]) (if (>= x 0) x (- 0 x)))
+(module math typed/racket/base/no-check
+   (#%module-begin
+    (require soft-contract/fake-contract
+             (lib "racket/contract.rkt")
+             (lib "racket/base.rkt")
+             (lib "racket/contract/base.rkt"))
+    (define g8 real?)
+    (define g9 (or/c g8))
+    (define generated-contract3 (-> g9 (values g9)))
+    (define generated-contract4 (-> g9 g9 (values g9)))
+    (define generated-contract5 (-> g9 g9 (values g9)))
+    (define generated-contract6 (-> g9 (values g9)))
+    (define generated-contract7 (-> g9 (values g9)))
+    (module require/contracts racket/base
+      (require soft-contract/fake-contract)
+      (provide))
+    (require (prefix-in -: (only-in 'require/contracts))
+             (except-in 'require/contracts))
+    (define-values () (values))
+    (void)
+    (: min (-> Real Real Real))
+    (define (min x y) (if (<= x y) x y))
+    (: max (-> Real Real Real))
+    (define (max x y) (if (>= x y) x y))
+    (: abs (-> Real Real))
+    (define (abs x) (if (>= x 0) x (- 0 x)))
+    (: sqr (-> Real Real))
+    (define (sqr x) (* x x))
+    (: msqrt (-> Real Real))
+    (define (msqrt x) (assert (sqrt x) real?))
+    (provide sqrt)
+    (provide (contract-out (msqrt generated-contract6))
+             (contract-out (sqr generated-contract7))
+             (contract-out (abs generated-contract3))
+             (contract-out (max generated-contract4))
+             (contract-out (min generated-contract5)))))
