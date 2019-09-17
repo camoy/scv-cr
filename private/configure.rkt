@@ -17,8 +17,10 @@
                 ignore-check
                 overwrite
                 compiler-off
-                verify-off)
+                verify-off
+                analyze-fakes)
   (values (make-parameter #f)
+          (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)

@@ -4,7 +4,9 @@
          (multi-in racket (cmdline
                            function
                            list
-                           pretty))
+                           pretty
+                           path
+                           string))
          (multi-in scv-gt
                    private
                    (proxy-resolver
@@ -41,6 +43,15 @@
         ctc-data)
       #f))
 
+;; Module-Path -> Module-Path
+;; Removes fake modules from the pipeline (but still compiles them)
+(define (without-fakes targets [invert? #f])
+  (filter (λ (target)
+            ((if invert? values not)
+             (string-prefix? (path->string (file-name-from-path target))
+                             "fake-")))
+          targets))
+
 ;; [List-of Module-Path] -> Void
 ;; optimizes target modules, see documentation for the purpose of
 ;; the flags
@@ -52,7 +63,8 @@
                   #:ignore-check [i (ignore-check)]
                   #:overwrite [o (overwrite)]
                   #:compiler-off [c (compiler-off)]
-                  #:verify-off [v (verify-off)])
+                  #:verify-off [v (verify-off)]
+                  #:analyze-fakes [f (analyze-fakes)])
   ;; set parameters
   (show-contracts s)
   (keep-contracts k)
@@ -62,28 +74,29 @@
   (overwrite o)
   (compiler-off c)
   (verify-off v)
+  (analyze-fakes f)
 
   ;; acquiring targets
   (define targets*
-    (map (compose path->complete-path simplify-path)
-         targets))
+    (map (compose path->complete-path simplify-path) targets))
+  (define targets** (without-fakes targets*))
 
   ;; clean old zo
-  (for-each module-delete-zo targets*)
+  (for-each module-delete-zo targets**)
 
   ;; extract data
   (define ctc-data
-    (map (pipeline targets*) targets*))
+    (time (map (pipeline targets**) targets**)))
   (define t/d-hash
-    (make-hash (map cons targets* ctc-data)))
+    (make-hash (map cons targets** ctc-data)))
 
   ;; verify
   (define sorted-targets
-    (sort-by-dependency targets*))
+    (sort-by-dependency targets**))
   (define sorted-data
     (map (λ (t) (hash-ref t/d-hash t)) sorted-targets))
   (define-values (stxs-unopt stxs-opt)
-    (contract-opt sorted-targets sorted-data))
+    (time (contract-opt sorted-targets sorted-data)))
 
   ;; flags
   (when (overwrite)
@@ -101,7 +114,9 @@
               sorted-targets))
 
   (unless (compiler-off)
-    (syntax-compile-all sorted-targets stxs-opt))
+    (syntax-compile-all sorted-targets stxs-opt)
+    (let ([fakes (without-fakes targets* #t)])
+      (syntax-compile-all fakes (map syntax-fetch fakes))))
 
   (void))
 
@@ -130,5 +145,7 @@
                               (compiler-off #t)]
    [("-v" "--verify-off")     "don't compile zo files"
                               (verify-off #t)]
+   [("-f" "--analyze-fakes")  "analyze fake modules"
+                              (analyze-fakes #t)]
    #:args targets
    targets))

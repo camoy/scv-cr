@@ -1,8 +1,10 @@
 #lang info
 (define collection "scv-gt")
 (define deps '("base"
+               "basedir"
                "mischief"
                "require-typed-check"
+               "gtp-measure"
                "graph"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/scv-gt.scrbl" ())))
