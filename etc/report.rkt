@@ -1,27 +1,20 @@
 #lang racket/base
 
+(provide main)
+
 (require racket/list
          racket/string
          racket/port
          racket/match
          txexpr)
 
-(define data-paths
-  (current-command-line-arguments))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (->string x)
-  (with-output-to-string (λ () (display x))))
+(define (main data-paths)
+  (for ([p (in-list data-paths)])
+    (dat->html p)))
 
-(define (get-color blame)
-  (match blame
-    [(list 'error _) "#FF4136"]
-    [(list 'unexpected _ ) "grey"]
-    [(list x _ ...) "#FFDC00"]
-    [(list) "white"]))
-
-(define (within-body x)
-  `(html (head (meta ((charset "utf-8"))))
-         (body ,x)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (dat->html dat)
   (define data (call-with-input-file dat read))
@@ -47,5 +40,16 @@
       (define tbl (txexpr 'table '() (cons heading rows)))
       (display (xexpr->html (within-body tbl))))))
 
-(for ([p (in-vector data-paths)])
-  (dat->html p))
+(define (get-color blame)
+  (match blame
+    [(list 'error _) "#FF4136"]
+    [(list 'unexpected _ ) "grey"]
+    [(list x _ ...) "#FFDC00"]
+    [(list) "white"]))
+
+(define (within-body x)
+  `(html (head (meta ((charset "utf-8"))))
+         (body ,x)))
+
+(define (->string x)
+  (with-output-to-string (λ () (display x))))

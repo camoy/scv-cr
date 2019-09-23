@@ -5,6 +5,7 @@
                "mischief"
                "require-typed-check"
                "gtp-measure"
+               "gtp-plot"
                "graph"
                "txexpr"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
