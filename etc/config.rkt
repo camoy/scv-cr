@@ -14,13 +14,13 @@
 (define-runtime-path fake-bin "fakebin")
 (define benchmarks '("sieve"
                      "fsm"
-                     #;"morsecode"
-                     #;"zombie"
-                     #;"lnm"
-                     #;"suffixtree"
-                     #;"kcfa"
-                     #;"snake"
-                     #;"tetris"))
+                     "morsecode"
+                     "zombie"
+                     "lnm"
+                     "suffixtree"
+                     "kcfa"
+                     "snake"
+                     "tetris"))
 (define argv-setup
   (vector "-c" "14"
           "-i" "10"
