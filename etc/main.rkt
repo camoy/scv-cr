@@ -17,15 +17,17 @@
 (define gtp-dir (writable-data-dir #:program "gtp-measure"))
 (define-runtime-path fake-bin "fakebin")
 (define benchmarks '("sieve"
-                     "morsecode"
                      "fsm"
+                     "morsecode"
+                     "zombie"
+                     "lnm"
                      "suffixtree"
                      "kcfa"
                      "snake"
                      "tetris"))
 (define argv-setup
-  (vector "-c" "4"
-          "-i" "8"
+  (vector "-c" "14"
+          "-i" "10"
           "-S" "1"
           "-R" "6"
           "--bin" (path->string fake-bin)))
