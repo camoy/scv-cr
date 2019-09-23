@@ -18,7 +18,7 @@
                 overwrite
                 compiler-off
                 verify-off
-                analyze-fakes
+                ignore-fakes
                 trust-zos)
   (values (make-parameter #f)
           (make-parameter #f)

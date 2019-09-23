@@ -1,6 +1,8 @@
 #lang racket/base
 
 (require racket/require
+         syntax/modread
+         compiler/compile-file
          (multi-in racket (cmdline
                            function
                            list
@@ -46,10 +48,11 @@
 ;; Module-Path -> Module-Path
 ;; Removes fake modules from the pipeline (but still compiles them)
 (define (without-fakes targets [invert? #f])
+  (define (fake-prefixed? target)
+    (string-prefix? (path->string (file-name-from-path target)) "fake-"))
   (filter (λ (target)
             ((if invert? values not)
-             (string-prefix? (path->string (file-name-from-path target))
-                             "fake-")))
+             (fake-prefixed? target)))
           targets))
 
 ;; [List-of Module-Path] -> Void
@@ -64,7 +67,7 @@
                   #:overwrite [o (overwrite)]
                   #:compiler-off [c (compiler-off)]
                   #:verify-off [v (verify-off)]
-                  #:analyze-fakes [f (analyze-fakes)]
+                  #:ignore-fakes [f (ignore-fakes)]
                   #:trust-zos [t (trust-zos)])
   ;; set parameters
   (show-contracts s)
@@ -75,17 +78,23 @@
   (overwrite o)
   (compiler-off c)
   (verify-off v)
-  (analyze-fakes f)
+  (ignore-fakes f)
   (trust-zos t)
 
   ;; acquiring targets
   (define targets*
     (map (compose path->complete-path simplify-path) targets))
-  (define targets** (without-fakes targets*))
+  (define targets**
+    ((if (ignore-fakes) without-fakes values) targets*))
 
-  ;; clean old zo
+  ;; remove old zo and rebuild unless trusted
   (unless (trust-zos)
-    (for-each module-delete-zo targets**))
+    (for-each module-delete-zo targets*)
+    (parameterize ([current-namespace (make-base-namespace)])
+      (with-module-reading-parameterization
+        (λ ()
+          (for ([target (in-list targets*)])
+            (compile-file target))))))
 
   ;; extract data
   (define ctc-data
@@ -118,8 +127,9 @@
 
   (unless (compiler-off)
     (syntax-compile-all sorted-targets stxs-opt)
-    (let ([fakes (without-fakes targets* #t)])
-      (syntax-compile-all fakes (map syntax-fetch fakes))))
+    (when (ignore-fakes)
+      (let ([fakes (without-fakes targets* #t)])
+        (syntax-compile-all fakes (map syntax-fetch fakes)))))
 
   (void))
 
@@ -148,8 +158,8 @@
                               (compiler-off #t)]
    [("-v" "--verify-off")     "don't compile zo files"
                               (verify-off #t)]
-   [("-f" "--analyze-fakes")  "analyze fake modules"
-                              (analyze-fakes #t)]
+   [("-f" "--ignore-fakes")   "ignore fake modules"
+                              (ignore-fakes #t)]
    [("-t" "--trust-zos")      "trust existing compiled zo's"
                               (trust-zos #t)]
    #:args targets

@@ -62,6 +62,16 @@ command-line flags:
   @exec{-v} or @exec{--verify-off} --- don't pass the modules
   through @exec{scv}.
 }
+
+@item{
+  @exec{-f} or @exec{--ignore-fakes} --- ignore modules that
+  are prefixed with "fake-".
+}
+
+@item{
+  @exec{-t} or @exec{--trust-zos} --- don't recompile bytecode
+  automatically. Trust whatever compiled code is already present.
+}
 ]
 
 @section{Reference}
@@ -74,7 +84,9 @@ command-line flags:
                    [#:ignore-check ignore-check #f boolean?]
                    [#:overwrite overwrite #f boolean?]
                    [#:compiler-off compiler-off #f boolean?]
-                   [#:verify-off verify-off #f boolean?])
+                   [#:verify-off verify-off #f boolean?]
+                   [#:ignore-fakes ignore-fakes #f boolean?]
+                   [#:trust-zos trust-zos #f boolean?])
          void?]{
 Optimize @racket[targets] as described above.
 }

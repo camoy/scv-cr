@@ -9,10 +9,8 @@
          racket/string
          racket/tcp
          racket/list
-         syntax/modread
          scv-gt
          scv-gt/private/syntax-util
-         compiler/compile-file
          gtp-util
          basedir)
 
@@ -50,12 +48,8 @@
 (define out-port (open-output-string))
 (define out
   (with-handlers ([exn:fail? (λ (x) (list 'error (exn->string x)))])
-    (parameterize ([current-output-port out-port]
-                   [current-namespace (make-base-namespace)])
-      (with-module-reading-parameterization
-        (λ ()
-          (compile-file (path->complete-path (string->path main)))))
-      (optimize targets #:show-blames #t #:trust-zos #t))
+    (parameterize ([current-output-port out-port])
+      (optimize targets #:show-blames #t #:ignore-fakes #t))
     (define input-port (open-input-string (get-output-string out-port)))
     (read input-port)))
 

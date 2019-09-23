@@ -5,7 +5,7 @@
 (provide contract-opt)
 
 (require racket/require
-         (multi-in racket (contract list set function pretty))
+         (multi-in racket (contract list set function pretty math))
          (multi-in scv-gt/private (configure
                                    contract-extract
                                    contract-inject
@@ -108,7 +108,10 @@
             (define-values (h _)
               (bfs g blame-id))
             (define blame-ids
-              (hash-keys h))
+              (filter-map
+               (λ (p)
+                 (and (not (infinite? (cdr p))) (car p)))
+               (hash->list h)))
             (set-union! blameable (apply mutable-set blame-ids)))))))
   (when (not (empty? cannot-find))
     (displayln long-line)
