@@ -2,26 +2,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define BENCHMARKS
-  '("sieve"
-    #;"fsm"
-    "morsecode"
-    #;"zombie"
-    #;"lnm"
-    #;"suffixtree"
-    #;"kcfa"
-    #;"snake"
-    #;"tetris"))
-
-(define CUTOFF 0)
-(define ITERATIONS 1)
-(define NUM-SAMPLES 2)
-(define SAMPLE-FACTOR 1)
-(define BENCHMARK-DIR
-  (vector-ref (current-command-line-arguments) 0))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (require (for-syntax racket/base)
          racket/runtime-path
          racket/vector
@@ -29,8 +9,11 @@
          racket/path
          racket/file
          basedir
+         "config.rkt"
          "private/report.rkt")
 
+(define benchmark-root-dir
+  (vector-ref (current-command-line-arguments) 0))
 (define blame-box (box '()))
 (define default-bin-dir "/usr/bin")
 (define gtp-dir
@@ -40,6 +23,8 @@
   (build-path "measurements" "scv"))
 (define-runtime-path baseline-measurements-dir
   (build-path "measurements" "baseline"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; String Boolean -> Vector
 ;; Returns vector of correct command line arguments for gtp-measure
@@ -102,7 +87,7 @@
 (for ([benchmark     (in-list BENCHMARKS)]
       [benchmark-idx (in-naturals 1)])
   (define benchmark-dir
-    (build-path BENCHMARK-DIR benchmark))
+    (build-path benchmark-root-dir benchmark))
   (define gtp-measure-benchmark-dir
     (build-path gtp-dir (number->string benchmark-idx)))
   (define config-rktd
