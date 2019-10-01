@@ -11,7 +11,8 @@
     "suffixtree"
     "kcfa"
     "snake"
-    "tetris"))
+    "tetris"
+    "gregor"))
 
 (define CUTOFF 10)
 (define ITERATIONS 10)
