@@ -13,8 +13,8 @@
          racket/vector
          basedir
          "config.rkt"
-         "private/plots.rkt"
-         "private/tables.rkt")
+         "private/individual.rkt"
+         "private/collective.rkt")
 
 (define time-regexp
   #px"cpu time: (\\d+) real time: (\\d+) gc time: (\\d+)")
@@ -87,9 +87,9 @@
       (benchmark->samples benchmark #f))
     (define-values (baseline baseline*)
       (benchmark->samples benchmark #t))
-    (for ([fun (in-list plot-functions)])
+    (for ([fun (in-list individual-functions)])
       (fun benchmark samples baseline samples* baseline*))
     (values samples baseline)))
 
-(for ([fun (in-list table-functions)])
+(for ([fun (in-list collective-functions)])
   (fun BENCHMARKS samples baselines))

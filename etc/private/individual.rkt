@@ -1,6 +1,6 @@
 #lang racket/base
 
-(provide plot-functions)
+(provide individual-functions)
 
 (require (for-syntax racket/base)
          racket/runtime-path
@@ -52,7 +52,7 @@
     (build-path figures-dir (format "~a-scatterplot.png" benchmark)))
   (save-pict scatterplot-path scatterplot-pict))
 
-(define plot-functions
+(define individual-functions
   (list overhead
         samples
         exact

@@ -11,7 +11,7 @@
          gtp-plot/util
          plot)
 
-(provide table-functions)
+(provide collective-functions)
 
 (define-runtime-path figures-dir
   (build-path ".." "measurements" "figures"))
@@ -83,6 +83,6 @@
   (/ ((deliverable k) sample)
      (count-configurations sample (const #t))))
 
-(define table-functions
+(define collective-functions
   (list summary-statistics
         slowdown-plot))
