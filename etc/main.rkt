@@ -107,10 +107,6 @@
   ;; Setup
   (set-box! blame-box '())
   (gtp-measure (gtp-setup-argv benchmark-dir #t))
-  (with-output-to-file typed-in
-    (λ () (displayln (benchmark->typed-bitstring benchmark-dir))))
-  (with-output-to-file untyped-in
-    (λ () (displayln (benchmark->untyped-bitstring benchmark-dir))))
 
   ;; Run (SCV)
   (gtp-measure resume-argv)
@@ -124,6 +120,13 @@
                                benchmark-idx
                                gtp-measure-benchmark-dir
                                (reverse (unbox blame-box)))))
+
+  ;; Add and run typed and untyped inputs (SCV)
+  (with-output-to-file typed-in
+    (λ () (displayln (benchmark->typed-bitstring benchmark-dir))))
+  (with-output-to-file untyped-in
+    (λ () (displayln (benchmark->untyped-bitstring benchmark-dir))))
+  (gtp-measure resume-argv)
 
   ;; Collect measurements (SCV)
   (for ([path (in-directory gtp-measure-benchmark-dir)]

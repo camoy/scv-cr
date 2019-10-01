@@ -11,7 +11,7 @@
 
 (define (benchmark->blame-report name idx dir blames)
   (display (data->html (out->data name idx dir)
-                       (drop-right blames 2))))
+                       blames)))
 
 (define (data->html data blames)
   (define heading
