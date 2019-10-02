@@ -140,11 +140,9 @@
   ;; Modify bin for baseline
   (define config-hash
     (read (open-input-file config-rktd)))
-  (define baseline-argv
-    (vector->list (gtp-setup-argv benchmark-dir #f)))
   (with-output-to-file config-rktd
     #:exists 'replace
-    (λ () (write (hash-set config-hash 'argv baseline-argv))))
+    (λ () (write (hash-set config-hash 'bin "/usr/bin"))))
 
   ;; Run (baseline)
   (gtp-measure resume-argv)
