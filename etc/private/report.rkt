@@ -30,7 +30,7 @@
                     (txexpr* 'td '() (string-join (map ->string blame)
                                                   "\n"))))
          data
-         blames))
+         (take blames (length data))))
   (define tbl
     (txexpr 'table '() (cons heading rows)))
   (xexpr->html (within-body tbl)))

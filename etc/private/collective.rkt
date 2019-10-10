@@ -53,7 +53,7 @@
                 (convert (max-overhead sample))
                 (convert (mean-overhead sample)))))))))
 
-(define SLOWDOWN-X-MAX 2)
+(define SLOWDOWN-X-MAX 6)
 (define SLOWDOWN-GRANULARITY 0.1)
 (line-width 3)
 
