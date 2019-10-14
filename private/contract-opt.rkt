@@ -13,6 +13,7 @@
                                    syntax-util))
          graph
          syntax/parse
+         syntax/strip-context
          soft-contract/main)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,9 +44,13 @@
                                       target
                                       (contract-inject target raw-stx datum #t)))
             raw-stx))
-      #;(pretty-print (syntax->datum stx))
+      #;(pretty-print
+       (syntax->datum
+        ((if datum typed-replace-require/opaque untyped-replace-require/opaque)
+         stx)))
       (syntax-compile target stx)
-      stx))
+      ((if datum typed-replace-require/opaque untyped-replace-require/opaque)
+       stx)))
   (if (verify-off)
       (values stxs stxs)
       (values stxs
@@ -155,4 +160,80 @@
 ;; print blames
 (define (print-blames blames)
   (when (show-blames)
-    (write blames)))
+    (pretty-print blames)))
+
+;; Syntax -> Syntax
+;; take untyped syntax and replace require/opaque forms with corresponding
+;; SCV define with #:opaque
+(define (untyped-replace-require/opaque stx)
+  (define opaque-requires '())
+  (define stx*
+    (let go ([stx stx])
+      (syntax-parse stx
+        #:datum-literals (require/opaque)
+        [(require/opaque m x:opaque-clause ...)
+         (set! opaque-requires
+               (cons
+                (replace-context
+                 stx
+                 #'(begin (require soft-contract/fake-contract) x.opaque-def ...))
+                opaque-requires))
+         (datum->syntax stx '(void))]
+        [(f args ...)
+         (datum->syntax
+          stx
+          (map go (syntax->list #'(f args ...))))]
+        ;; Catch-all case
+        [other #'other])))
+  (syntax-parse stx*
+    [(mod name lang (mb x ...))
+     #`(mod name lang (mb #,@opaque-requires x ...))]))
+
+;; Syntax -> Syntax
+;; take typed syntax and replace require/opaque forms with corresponding
+;; SCV define with #:opaque
+(define (typed-replace-require/opaque stx)
+  (define opaque-requires '())
+  (define stx*
+    (let go ([stx stx])
+      (syntax-parse stx
+        #:datum-literals (require/opaque)
+        [(require/opaque m x:rt-clause ...)
+         (set! opaque-requires
+               (cons
+                (replace-context
+                 stx
+                 #'(begin (require soft-contract/fake-contract) x.opaque-def ...))
+                opaque-requires))
+         (datum->syntax stx '(void))]
+        [(f args ...)
+         (datum->syntax
+          stx
+          (map go (syntax->list #'(f args ...))))]
+        ;; Catch-all case
+        [other #'other])))
+  (syntax-parse stx*
+    [(mod name lang (mb x ...))
+     #`(mod name lang (mb #,@opaque-requires x ...))]))
+
+(define-syntax-class opaque-clause
+  #:attributes (opaque-def)
+  (pattern n:id
+           #:with opaque-def #'(define n #:opaque))
+  (pattern [(~datum #:struct) sn:struct-name (f:id ...)]
+           #:with opaque-def (if (syntax-e #'sn.super)
+                                 #'(struct sn.name sn.super (f ...) #:transparent)
+                                 #'(struct sn.name (f ...) #:transparent)))
+  (pattern [(~datum #:opaque) _ pred:id]
+           #:with opaque-def #'(define pred #:opaque)))
+
+(define-syntax-class rt-clause
+  #:attributes (opaque-def)
+  (pattern [n:id _]
+           #:with opaque-def #'(define n #:opaque))
+  (pattern [(~datum #:struct) sn:struct-name ([f:id : t] ...)]
+           #:with opaque-def (if (syntax-e #'sn.super)
+                                 #'(struct sn.name sn.super ([f : t] ...) #:transparent)
+                                 #'(struct sn.name ([f : t] ...) #:transparent)))
+  (pattern [(~datum #:opaque) _ pred:id]
+           #:with opaque-def #'(define pred #:opaque)))

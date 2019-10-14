@@ -5,4 +5,8 @@
                   require/typed))
 
 (provide (rename-out [require/typed/provide require/typed/provide/opaque]
-                     [require/typed require/typed/opaque]))
+                     [require/typed require/typed/opaque])
+         require/opaque)
+
+(define-syntax-rule (require/opaque m x ...)
+  (require m))

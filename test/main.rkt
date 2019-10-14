@@ -120,9 +120,19 @@
                      "opaque/adapter.rkt")))
 
   (test-case
-    "opaque_require"
+    "opaque require"
     (test-optimize "opaque_require/main.rkt"
                    '("opaque_require/main.rkt")))
+
+  (test-case
+    "untyped opaque require"
+    (test-optimize "untyped_opaque_require/main.rkt"
+                   '("untyped_opaque_require/main.rkt")))
+
+  (test-case
+    "typed opaque require"
+    (test-optimize "typed_opaque_require/main.rkt"
+                   '("typed_opaque_require/main.rkt")))
 
   (test-benchmark "sieve")
   (test-benchmark "morsecode"))
