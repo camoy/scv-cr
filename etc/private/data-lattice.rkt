@@ -18,8 +18,11 @@
     [file->performance-lattice
      (-> path-string? pict?)]
     [make-performance-lattice
-     (-> (and/c (vectorof (cons/c number? number?))
-                power-of-two-length?)
+     (->* ((and/c (vectorof (cons/c number? number?))
+                  power-of-two-length?)
+           (and/c (vectorof (cons/c number? number?))
+                  power-of-two-length?))
+          (#:just-one (one-of/c #f 'scv 'baseline))
          pict?)]))
 
 (define-syntax-rule (define/provide nm x* ...)
@@ -33,10 +36,14 @@
 (define/provide *LATTICE-BOX-WIDTH* (make-parameter 16))
 (define/provide *LATTICE-CONFIG-MARGIN* (make-parameter 10))
 (define/provide *LATTICE-LEVEL-MARGIN* (make-parameter 20))
-(define/provide *LATTICE-FONT-SIZE* (make-parameter 24))
+(define/provide *LATTICE-FONT-SIZE* (make-parameter 16))
 (define/provide *LATTICE-TRUNCATE-DECIMALS?* (make-parameter #f))
 (define/provide *LATTICE-LINE-WIDTH* (make-parameter 1))
 (define/provide *LATTICE-LINE-ALPHA* (make-parameter 0.4))
+(define/provide *LATTICE-RED-THRESHOLD* (make-parameter 3))
+(define/provide *LATTICE-GREEN-THRESHOLD* (make-parameter 1.25))
+(define/provide *LATTICE-RED-COLOR* (make-parameter "Pink"))
+(define/provide *LATTICE-GREEN-COLOR* (make-parameter "Pale Green"))
 
 (module+ test (require rackunit))
 
@@ -51,7 +58,7 @@
   (check-true (power-of-two-length? (vector 1 2 3 4)))
   (check-false (power-of-two-length? (vector 1 2 3))))
 
-(define (make-performance-lattice data-vec)
+(define (make-performance-lattice data-vec baseline-vec #:just-one [jo #f])
   (define total-bits (two-expt (vector-length data-vec)))
   (define pict-vec (make-vector (vector-length data-vec) #f))
   (define level-picts
@@ -63,7 +70,10 @@
          (define num (string->number (bit-vector->string bv) 2))
          (define pict (make-point bv
                                   (vector-ref data-vec num)
-                                  (vector-ref data-vec 0)))
+                                  (vector-ref data-vec 0)
+                                  (vector-ref baseline-vec num)
+                                  (vector-ref baseline-vec 0)
+                                  #:just-one jo))
          (vector-set! pict-vec num pict)
          pict))))
   (define no-lines-yet (apply vc-append (*LATTICE-LEVEL-MARGIN*) level-picts))
@@ -77,12 +87,53 @@
     [else (append (map (lambda (r) (cons #f r)) (select (sub1 i) (sub1 L)))
                   (map (lambda (r) (cons #t r)) (select i (sub1 L))))]))
 
+(define (with-bg pict color [margin 1])
+  (define-values (w h)
+    (values (+ (pict-width pict) (* 2 margin))
+            (+ (pict-height pict) (* 2 margin))))
+  (cc-superimpose
+   (filled-rounded-rectangle w h #:color color #:draw-border? #f)
+   pict))
+
+(define (mean->string x)
+  (~a
+   (if (and (*LATTICE-TRUNCATE-DECIMALS?*) (<= 1 x))
+       (number->string (round x))
+       (~r x #:precision 1))
+   "x"))
+
+(define (subtext scv baseline #:just-one [jo #f])
+  (define-values (scv-str baseline-str)
+    (values (mean->string scv)
+            (mean->string baseline)))
+  (define style "Liberation Serif")
+  (define (color x)
+    (cond
+      [(<= x (*LATTICE-GREEN-THRESHOLD*)) (*LATTICE-GREEN-COLOR*)]
+      [(>= x (*LATTICE-RED-THRESHOLD*)) (*LATTICE-RED-COLOR*)]
+      [else "White"]))
+  (define-values (scv-pict baseline-pict)
+    (values (with-bg
+              (text scv-str null (*LATTICE-FONT-SIZE*))
+              (color scv))
+            (with-bg
+              (text baseline-str null (*LATTICE-FONT-SIZE*))
+              (color baseline))))
+  (cond
+    [(eq? jo 'scv) scv-pict]
+    [(eq? jo 'baseline) baseline-pict]
+    [else (hc-append scv-pict
+                     (text " " null (*LATTICE-FONT-SIZE*))
+                     baseline-pict)]))
+
 ;; constructs a pict for a point in the lattice, using the initial
 ;; configuration to normalize (for coloring)
-(define (make-point bv data init-data)
+(define (make-point bv data init-data baseline-data baseline-init-data
+                    #:just-one [jo #f])
   (define normalized-mean (/ (car data) (car init-data)))
+  (define normalized-baseline-mean (/ (car baseline-data)
+                                      (car baseline-init-data)))
   (define normalized-stdev (/ (cdr data) (car init-data)))
-  (define style "Liberation Serif")
   (define box-pict
     (apply hc-append
            (*LATTICE-BOX-SEP*)
@@ -91,14 +142,11 @@
                              #:color (if bit "black" "white")
                              #:border-width (*LATTICE-BORDER-WIDTH*)
                              #:border-color "black"))))
-  (define mean-str
-    (if (and (*LATTICE-TRUNCATE-DECIMALS?*) (<= 1 normalized-mean))
-      (number->string (round normalized-mean))
-      (~r normalized-mean #:precision 1)))
   (vc-append (blank 1 (*LATTICE-BOX-TOP-MARGIN*))
              box-pict
              (blank 1 (*LATTICE-BOX-BOT-MARGIN*))
-             (text (~a mean-str "x") style (*LATTICE-FONT-SIZE*))))
+             (subtext normalized-mean normalized-baseline-mean
+                      #:just-one jo)))
 
 ;; adds lines between elements in levels
 (define (add-all-lines base vec bits)

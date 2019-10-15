@@ -64,20 +64,14 @@
     (cons (mean runtimes)
           (stddev runtimes))))
 
-(define (lattice-scv benchmark samples baseline _ __)
+(define ((make-lattice jo format-name) benchmark samples baseline _ __)
   ;; lattices
   (define lattice-pict
-    (make-performance-lattice (average-results samples)))
+    (make-performance-lattice (average-results samples)
+                              (average-results baseline)
+                              #:just-one jo))
   (define lattice-path
-    (build-path figures-dir (format "~a-scv-lattice.png" benchmark)))
-  (save-pict lattice-path lattice-pict))
-
-(define (lattice-baseline benchmark samples baseline _ __)
-  ;; lattices
-  (define lattice-pict
-    (make-performance-lattice (average-results baseline)))
-  (define lattice-path
-    (build-path figures-dir (format "~a-baseline-lattice.png" benchmark)))
+    (build-path figures-dir (format format-name benchmark)))
   (save-pict lattice-path lattice-pict))
 
 (define individual-functions
@@ -85,5 +79,6 @@
         #;samples
         exact
         scatterplot
-        lattice-scv
-        lattice-baseline))
+        (make-lattice 'scv "~a-scv-lattice.png")
+        (make-lattice 'baseline "~a-baseline-lattice.png")
+        (make-lattice #f "~a-lattice.png")))
