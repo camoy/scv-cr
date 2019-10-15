@@ -139,7 +139,7 @@
     (read (open-input-file config-rktd)))
   (with-output-to-file config-rktd
     #:exists 'replace
-    (λ () (write (hash-set config-hash 'bin "/usr/bin"))))
+    (λ () (write (hash-set config-hash 'bin DEFAULT-BIN-DIR))))
 
   ;; Move original Typed Racket directory into place and back
   (define-values (tmp-dir mod-dir orig-dir)
