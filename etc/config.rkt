@@ -7,11 +7,13 @@
     "fsm"
     "morsecode"
     "zombie"
+    "zordoz"
     "lnm"
     "suffixtree"
     "kcfa"
     "snake"
     "tetris"
+    "synth"
     "gregor"))
 
 (define CUTOFF 10)
