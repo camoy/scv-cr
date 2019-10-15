@@ -37,8 +37,12 @@
 ;; sorts list of modules such that dependencies occur earlier in the list
 (define (sort-by-dependency targets)
   (define (clean-deps dependencies)
-    (filter-map (λ (x) (and (member x targets)
-                            (path->symbol x)))
+    (filter-map (λ (x)
+                  (define x* (if (path-string? x)
+                                 (simplify-path x)
+                                 x))
+                  (and (member x* targets)
+                       (path->symbol x*)))
                 dependencies))
   (define target->deps
     (for/list ([target targets])
