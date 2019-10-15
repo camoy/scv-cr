@@ -3,6 +3,8 @@
 1. Running `racket main.rkt` will start measuring.
    You need to modify `config.rkt` first.
    * `BENCHMARKS` are which benchmarks you will be running.
+   * `DEFAULT-BIN-DIR` is the directory containing the
+     `racket` and `raco` binaries.
    * `BENCHMARK-ROOT-DIR` is an absolute path string
      to the directory with benchmarks in it.
    * `MODIFIED-TR-DIR` is a directory with the `scv-gt` fork
