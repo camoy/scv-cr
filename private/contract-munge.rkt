@@ -32,7 +32,11 @@
                        letrec
                        c->
                        c->*
-                       typed-racket-hash/c)
+                       typed-racket-hash/c
+                       mutable-vector/c
+                       immutable-vector/c
+                       mutable-vectorof/c
+                       immutable-vectorof/c)
     ;; Convert lifted identifiers
     [lifted
      #:when (and (identifier? #'lifted)
@@ -47,6 +51,12 @@
 
     ;; TR hash
     [typed-racket-hash/c #'hash/c]
+
+    ;; TR vectors
+    [(mutable-vector/c x ...) #'(vector/c x ...)]
+    [(immutable-vector/c x ...) #'(vector/c x ...)]
+    [(mutable-vectorof/c x) #'(vector/c x)]
+    [(immutable-vectorof/c x) #'(vector/c x)]
 
     ;; Inline simple-result->, cannot require (SCV)
     [(simple-result-> ran arity)
