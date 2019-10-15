@@ -13,7 +13,6 @@
          "private/report.rkt")
 
 (define blame-box (box '()))
-(define default-bin-dir "/usr/bin")
 (define gtp-dir
   (writable-data-dir #:program "gtp-measure"))
 (define-runtime-path scv-bin-dir "bin")
@@ -35,7 +34,7 @@
             "--setup" (path->string benchmark-dir)))
   (if scv?
       (vector-append (vector "--bin" (path->string scv-bin-dir)) base-argv)
-      (vector-append (vector "--bin" default-bin-dir) base-argv)))
+      (vector-append (vector "--bin" DEFAULT-BIN-DIR) base-argv)))
 
 ;; Vector ->
 ;; Run gtp-measure with argv as command line arguments

@@ -16,6 +16,7 @@
     "synth"
     "gregor"))
 
+(define DEFAULT-BIN-DIR "/usr/bin")
 (define BENCHMARK-ROOT-DIR "/home/camoy/wrk/gtp-benchmarks/benchmarks")
 (define MODIFIED-TR-DIR "/home/camoy/wrk/typed-racket")
 (define ORIGINAL-TR-DIR "/home/camoy/wrk/original-typed-racket")
