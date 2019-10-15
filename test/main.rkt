@@ -106,14 +106,14 @@
                      "adaptor/data-adaptor.rkt"
                      "adaptor/data.rkt")))
 
-  (test-case
+  #;(test-case
     "require provide"
     (test-optimize "require_provide/main.rkt"
                    '("require_provide/main.rkt"
                      "require_provide/adapter.rkt"
                      "require_provide/abs.rkt")))
 
-  (test-case
+  #;(test-case
     "opaque"
     (test-optimize "opaque/main.rkt"
                    '("opaque/main.rkt"

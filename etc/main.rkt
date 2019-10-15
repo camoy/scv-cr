@@ -12,8 +12,6 @@
          "config.rkt"
          "private/report.rkt")
 
-(define benchmark-root-dir
-  (vector-ref (current-command-line-arguments) 0))
 (define blame-box (box '()))
 (define default-bin-dir "/usr/bin")
 (define gtp-dir
@@ -87,7 +85,7 @@
 (for ([benchmark     (in-list BENCHMARKS)]
       [benchmark-idx (in-naturals 1)])
   (define benchmark-dir
-    (build-path benchmark-root-dir benchmark))
+    (build-path BENCHMARK-ROOT-DIR benchmark))
   (define gtp-measure-benchmark-dir
     (build-path gtp-dir (number->string benchmark-idx)))
   (define config-rktd
@@ -144,8 +142,28 @@
     #:exists 'replace
     (λ () (write (hash-set config-hash 'bin "/usr/bin"))))
 
-  ;; Run (baseline)
-  (gtp-measure resume-argv)
+  ;; Move original Typed Racket directory into place and back
+  (define-values (tmp-dir mod-dir orig-dir)
+    (values
+     (simplify-path (build-path MODIFIED-TR-DIR ".." "hopefully_fresh_name"))
+     (string->path MODIFIED-TR-DIR)
+     (string->path ORIGINAL-TR-DIR)))
+
+  (dynamic-wind
+    ;; Place regular TR
+    (λ ()
+      (rename-file-or-directory mod-dir tmp-dir)
+      (rename-file-or-directory orig-dir mod-dir))
+
+    ;; Run (baseline)
+    (λ ()
+      (gtp-measure resume-argv))
+
+    ;; Place modified TR
+    (λ ()
+      (rename-file-or-directory mod-dir orig-dir)
+      (rename-file-or-directory tmp-dir mod-dir)
+      ))
 
   ;; Collect measurements (baseline)
   (make-directory* baseline-measurements-dir)

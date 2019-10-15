@@ -16,6 +16,10 @@
     "synth"
     "gregor"))
 
+(define BENCHMARK-ROOT-DIR "/home/camoy/wrk/gtp-benchmarks/benchmarks")
+(define MODIFIED-TR-DIR "/home/camoy/wrk/typed-racket")
+(define ORIGINAL-TR-DIR "/home/camoy/wrk/original-typed-racket")
+
 (define CUTOFF 10)
 (define ITERATIONS 10)
 (define NUM-SAMPLES 10)

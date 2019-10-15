@@ -157,10 +157,10 @@
   (not (set-member? blameable (syntax-e v))))
 
 ;; [List-of Blame] -> Void
-;; print blames
+;; print blames (we don't pretty print easier report collection)
 (define (print-blames blames)
   (when (show-blames)
-    (pretty-print blames)))
+    (write blames)))
 
 ;; Syntax -> Syntax
 ;; take untyped syntax and replace require/opaque forms with corresponding
