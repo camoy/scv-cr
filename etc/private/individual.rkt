@@ -74,7 +74,7 @@
     (build-path figures-dir (format format-name benchmark)))
   (save-pict lattice-path lattice-pict))
 
-(define individual-functions
+(define individual-functions '()
   (list overhead
         #;samples
         exact
