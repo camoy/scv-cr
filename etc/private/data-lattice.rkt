@@ -145,7 +145,7 @@
   (vc-append (blank 1 (*LATTICE-BOX-TOP-MARGIN*))
              box-pict
              (blank 1 (*LATTICE-BOX-BOT-MARGIN*))
-             (subtext normalized-mean normalized-baseline-mean
+             (subtext normalized-baseline-mean normalized-mean
                       #:just-one jo)))
 
 ;; adds lines between elements in levels

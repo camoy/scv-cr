@@ -21,6 +21,7 @@
 (*OVERHEAD-MAX* 10)
 (*POINT-SIZE* 18)
 (*FONT-SIZE* 24)
+(*POINT-COLOR* 3)
 
 (define-runtime-path figures-dir
   (build-path ".." "measurements" "figures"))
@@ -74,7 +75,7 @@
     (build-path figures-dir (format format-name benchmark)))
   (save-pict lattice-path lattice-pict))
 
-(define individual-functions '()
+(define individual-functions
   (list overhead
         #;samples
         exact
