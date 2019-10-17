@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# racket $1
-
-# We need this absolutely bizarre hack to make sure that the optimized bytecode
-# is actually run on the experimental machine. Nothing else I tried worked
-# except this. No problems on my local machine, just the BiBiFi VM.
-racket -e '(dynamic-require (make-resolved-module-path (string->path "'$1'")) #f)'

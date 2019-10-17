@@ -15,7 +15,8 @@
 (define blame-box (box '()))
 (define gtp-dir
   (writable-data-dir #:program "gtp-measure"))
-(define-runtime-path scv-bin-dir "bin")
+(define-runtime-path scv-bin-dir "bin_scv")
+(define-runtime-path baseline-bin-dir "bin_baseline")
 (define-runtime-path scv-measurements-dir
   (build-path "measurements" "scv"))
 (define-runtime-path baseline-measurements-dir
@@ -139,7 +140,7 @@
     (read (open-input-file config-rktd)))
   (with-output-to-file config-rktd
     #:exists 'replace
-    (λ () (write (hash-set config-hash 'bin DEFAULT-BIN-DIR))))
+    (λ () (write (hash-set config-hash 'bin (path->string baseline-bin-dir)))))
 
   ;; Move original Typed Racket directory into place and back
   (define-values (tmp-dir mod-dir orig-dir)

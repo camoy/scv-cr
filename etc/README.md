@@ -19,5 +19,5 @@
    `export DISPLAY=:0` in your `~/.profile` to fix
    GTK initialization problems if you're running on a server
    without GTK.
-5. `nohup` is allows it to run over `ssh` without
-   stopping.
+5. `nohup 2>&1 racket main.rkt &` is allows it to run over
+   `ssh` without stopping and logs errors as well.
