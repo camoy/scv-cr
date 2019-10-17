@@ -1,6 +1,3 @@
 #!/bin/bash
 
-# racket $1
-
-# We need this absolutely bizarre hack for just the BiBiFi VM.
-racket -e '(dynamic-require (make-resolved-module-path (string->path "'$1'")) #f)'
+racket $1

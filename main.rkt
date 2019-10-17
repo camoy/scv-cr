@@ -97,6 +97,7 @@
             (compile-file target))))))
 
   ;; extract data
+  #;(pretty-print (sort-by-dependency targets**))
   (define ctc-data
     (map (pipeline targets**) targets**))
   (define t/d-hash
@@ -105,7 +106,6 @@
   ;; verify
   (define sorted-targets
     (sort-by-dependency targets**))
-  #;(displayln sorted-targets)
   (define sorted-data
     (map (λ (t) (hash-ref t/d-hash t)) sorted-targets))
   (define-values (stxs-unopt stxs-opt)
