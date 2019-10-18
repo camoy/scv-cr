@@ -26,16 +26,14 @@
 
 ;; String Boolean -> Vector
 ;; Returns vector of correct command line arguments for gtp-measure
-(define (gtp-setup-argv benchmark-dir scv?)
+(define (gtp-setup-argv benchmark-dir)
   (define base-argv
     (vector "-c" (number->string CUTOFF)
             "-i" (number->string ITERATIONS)
             "-S" (number->string SAMPLE-FACTOR)
             "-R" (number->string NUM-SAMPLES)
             "--setup" (path->string benchmark-dir)))
-  (if scv?
-      (vector-append (vector "--bin" (path->string scv-bin-dir)) base-argv)
-      (vector-append (vector "--bin" DEFAULT-BIN-DIR) base-argv)))
+  (vector-append (vector "--bin" (path->string scv-bin-dir)) base-argv))
 
 ;; Vector ->
 ;; Run gtp-measure with argv as command line arguments
@@ -104,7 +102,7 @@
 
   ;; Setup
   (set-box! blame-box '())
-  (gtp-measure (gtp-setup-argv benchmark-dir #t))
+  (gtp-measure (gtp-setup-argv benchmark-dir))
 
   ;; Run (SCV)
   (gtp-measure resume-argv)
