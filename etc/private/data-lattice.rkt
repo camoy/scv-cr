@@ -122,9 +122,9 @@
   (cond
     [(eq? jo 'scv) scv-pict]
     [(eq? jo 'baseline) baseline-pict]
-    [else (hc-append scv-pict
+    [else (hc-append baseline-pict
                      (text " " null (*LATTICE-FONT-SIZE*))
-                     baseline-pict)]))
+                     scv-pict)]))
 
 ;; constructs a pict for a point in the lattice, using the initial
 ;; configuration to normalize (for coloring)
@@ -145,7 +145,7 @@
   (vc-append (blank 1 (*LATTICE-BOX-TOP-MARGIN*))
              box-pict
              (blank 1 (*LATTICE-BOX-BOT-MARGIN*))
-             (subtext normalized-baseline-mean normalized-mean
+             (subtext normalized-mean normalized-baseline-mean
                       #:just-one jo)))
 
 ;; adds lines between elements in levels

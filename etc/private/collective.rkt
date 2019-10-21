@@ -117,7 +117,7 @@
       (plot-pict
        (list (make-lines sample-points SCV-LABEL)
              (make-lines baseline-points BASELINE-LABEL 1))
-       #:title "Slowdown over Entire Benchmark"
+       #:title "Slowdown over Entire Benchmark Suite"
        #:legend-anchor 'bottom-right
        #:width 450
        #:height 450

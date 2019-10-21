@@ -26,7 +26,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (runtime->number runtime)
-  (string->number (second (cdr (regexp-match time-regexp runtime)))))
+  (define regexp-result
+    (regexp-match time-regexp runtime))
+  (if regexp-result
+      (string->number (second (cdr regexp-result)))
+      (error (format "bad runtime ~a" runtime))))
 
 (define (out->sample-list out-path)
   (with-input-from-file out-path
