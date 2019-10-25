@@ -7,6 +7,7 @@
          racket/function
          racket/path
          racket/file
+         racket/list
          "data-lattice.rkt"
          gtp-plot/performance-info
          gtp-plot/util
@@ -69,27 +70,27 @@
                 (max-overhead sample)
                 (mean-overhead sample))))))))
 
-(define SLOWDOWN-X-MAX 6)
+(define SLOWDOWN-X-MAX 10)
 (define SLOWDOWN-GRANULARITY 0.1)
 (line-width 3)
 
 (define (->x-axis pts)
   (map (λ (p) (list (car p) 0)) pts))
 
-(define (make-lines pts label [offset 0])
-  (lines-interval(->x-axis pts)
-                 pts
-                 #:label (symbol->string label)
-                 #:x-min 1
-                 #:x-max SLOWDOWN-X-MAX
-                 #:y-min 0
-                 #:y-max 100
-                 #:alpha (*INTERVAL-ALPHA*)
-                 #:color (+ (*OVERHEAD-LINE-COLOR*) offset)
-                 #:line1-style 'transparent
-                 #:line2-color (+ (*OVERHEAD-LINE-COLOR*) offset)
-                 #:line2-width (*OVERHEAD-LINE-WIDTH*)
-                 #:line2-style 'solid))
+(define (make-lines pts label color)
+  (lines-interval (->x-axis pts)
+                  pts
+                  ;; #:label (symbol->string label)
+                  #:x-min 1
+                  #:x-max SLOWDOWN-X-MAX
+                  #:y-min 0
+                  #:y-max 100
+                  #:alpha 0.5 #;(*INTERVAL-ALPHA*)
+                  #:color color
+                  #:line1-style 'transparent
+                  #:line2-color color
+                  #:line2-width (*OVERHEAD-LINE-WIDTH*)
+                  #:line2-style 'solid))
 
 (define ((ticks-format/units units) ax-min ax-max pre-ticks)
   (for/list ([pt (in-list pre-ticks)])
@@ -110,19 +111,30 @@
     (values (slowdown-points benchmarks samples)
             (slowdown-points benchmarks baselines)))
   (define slowdown-pict
+    (overhead-plot*
+     (list (car baselines) (car samples))
+     (list (make-lines sample-points SCV-LABEL (second COLOR-SCHEME))
+           (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
+     '|Benchmark Suite|))
+     #|
     (parameterize ([plot-x-ticks (ticks (linear-ticks-layout)
                                         (ticks-format/units "x"))]
                    [plot-y-ticks (ticks (linear-ticks-layout)
                                         (ticks-format/units "%"))])
-      (plot-pict
-       (list (make-lines sample-points SCV-LABEL)
-             (make-lines baseline-points BASELINE-LABEL 1))
+      (overhead-plot*
+       (list (make-lines sample-points SCV-LABEL (second COLOR-SCHEME))
+             (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
+       "Slowdown over Entire Benchmark Suite")
+      #;(plot-pict
+       (list (make-lines sample-points SCV-LABEL (second COLOR-SCHEME))
+             (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
        #:title "Slowdown over Entire Benchmark Suite"
        #:legend-anchor 'bottom-right
        #:width 450
        #:height 450
        #:x-label "Deliverability"
        #:y-label "Percent of Benchmark Suite")))
+|#
   (save-pict slowdown-path slowdown-pict))
 
 (define (slowdown-points benchmarks within)

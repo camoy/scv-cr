@@ -7,22 +7,26 @@
          racket/path
          racket/file
          racket/vector
+         racket/draw
          math/statistics
          gtp-plot/configuration-info
          gtp-plot/typed-racket-info
          gtp-plot/plot
          gtp-plot/util
          gtp-plot/performance-info
-         "data-lattice.rkt")
+         "data-lattice.rkt"
+         "../config.rkt")
 
 (*OVERHEAD-PLOT-HEIGHT* 400)
 (*OVERHEAD-PLOT-WIDTH* 800)
 (*OVERHEAD-SHOW-RATIO* #f)
 (*OVERHEAD-MAX* 10)
 (*OVERHEAD-SAMPLES* 100)
-(*POINT-SIZE* 18)
+(*POINT-SIZE* 6)
+(*POINT-ALPHA* 0.5)
+(*AUTO-POINT-ALPHA?* #f)
 (*FONT-SIZE* 24)
-(*POINT-COLOR* 3)
+(*POINT-COLORS* COLOR-SCHEME)
 
 (define-runtime-path figures-dir
   (build-path ".." "measurements" "figures"))
@@ -54,7 +58,8 @@
 
 (define (scatterplot benchmark _ __ samples baseline)
   (define scatterplot-pict
-    (relative-scatterplot baseline samples))
+    (parameterize ([*POINT-SIZE* 10])
+      (relative-scatterplot baseline samples)))
   (define scatterplot-path
     (build-path figures-dir (format "~a-scatterplot.png" benchmark)))
   (save-pict scatterplot-path scatterplot-pict))

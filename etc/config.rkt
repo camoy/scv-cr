@@ -28,3 +28,6 @@
   (string->symbol (format "~a" (version))))
 (define SCV-LABEL
   (string->symbol (format "~a + SCV" (version))))
+
+#;(define COLOR-SCHEME '(3 4))
+(define COLOR-SCHEME '(Indigo Goldenrod))
