@@ -76,16 +76,26 @@
 
 ;; Path Contract-Data L/I-Hash [Set Symbol] -> Void
 ;; erase contract by changing them to any/c
-(define (erase-contracts! target data blameable)
-  (define-values (require-bundle provide-bundle)
+(define (erase-contracts! target data blameable-pair)
+  (define-values (require-bundle provide-bundle blameable partial-hash)
     (values (ctc-data-require data)
-            (ctc-data-provide data)))
+            (ctc-data-provide data)
+            (car blameable-pair)
+            (cdr blameable-pair)))
   (set-ctc-bundle-outs! require-bundle
-                        (map (make-any blameable)
+                        (map (remove-safe-ctcs blameable)
                              (ctc-bundle-outs require-bundle)))
   (set-ctc-bundle-outs! provide-bundle
-                        (map (make-any blameable)
-                             (ctc-bundle-outs provide-bundle))))
+                        (map (remove-safe-ctcs blameable)
+                             (ctc-bundle-outs provide-bundle)))
+  (set-ctc-bundle-defns! require-bundle
+                         (map (make-any partial-hash
+                                        (ctc-bundle-i/c-hash require-bundle))
+                              (ctc-bundle-defns require-bundle)))
+  (set-ctc-bundle-defns! provide-bundle
+                         (map (make-any partial-hash
+                                        (ctc-bundle-i/c-hash provide-bundle))
+                              (ctc-bundle-defns provide-bundle))))
 
 ;; [List-of String] [Hash String L/I-Hash] [Hash String Graph] [List-of Blame]
 ;; -> [Hash String [Set-of Symbol]]
@@ -98,7 +108,9 @@
   (define ((add-to-cannot-find b))
     (set! cannot-find (cons b cannot-find)))
   (for ([target targets])
-    (hash-set! blameable-hash target (mutable-set)))
+    (hash-set! blameable-hash
+               target
+               (cons (mutable-set) (make-hash))))
   (for ([blame blames])
     (let* ([def-site  (third blame)]
            [mod       (first def-site)]
@@ -106,10 +118,15 @@
                             (third def-site))]
            [l/i-hash  (hash-ref m/l/i-hash mod (thunk #f))])
       (when l/i-hash
-        (let* ([g         (hash-ref m/g-hash mod)]
-               [blame-id  (hash-ref l/i-hash l+c (add-to-cannot-find blame))]
-               [blameable (hash-ref blameable-hash mod)])
+        (let* ([g             (hash-ref m/g-hash mod)]
+               [blame-id+stx  (hash-ref l/i-hash l+c (add-to-cannot-find blame))]
+               [blameable     (hash-ref blameable-hash mod)]
+               [blameable-set (car blameable)]
+               [partial-hash  (cdr blameable)]
+               [blame-id      (car blame-id+stx)]
+               [blame-stx     (cdr blame-id+stx)])
           (when (not (void? blame-id))
+            (add-to-partial-hash! partial-hash blame-id blame-stx)
             (define-values (h _)
               (bfs g blame-id))
             (define blame-ids
@@ -117,7 +134,7 @@
                (λ (p)
                  (and (not (infinite? (cdr p))) (car p)))
                (hash->list h)))
-            (set-union! blameable (apply mutable-set blame-ids)))))))
+            (set-union! blameable-set (apply mutable-set blame-ids)))))))
   (when (not (empty? cannot-find))
     (displayln long-line)
     (displayln "Cannot Handle Blame")
@@ -125,10 +142,20 @@
     (pretty-print cannot-find))
   blameable-hash)
 
+(define (add-to-partial-hash! p-hash id blame-stx)
+  (unless (hash-has-key? p-hash id)
+    (hash-set! p-hash id (mutable-set)))
+  (when (hash-ref p-hash id)
+    (cond
+      [(identifier? blame-stx)
+       (set-add! (hash-ref p-hash id) (syntax-e blame-stx))]
+      [else
+       (hash-set! p-hash id #f)])))
+
 ;; [Set Symbol] -> (Syntax -> Syntax)
 ;; given an element in a contract-out specification will change all contracts
 ;; to any/c
-(define ((make-any blameable) stx)
+(define ((remove-safe-ctcs blameable) stx)
   (syntax-parse stx
     #:datum-literals (struct contract-out)
     [(contract-out (struct s ((p c) ...)))
@@ -237,3 +264,26 @@
                                  #'(struct sn.name ([f : t] ...) #:transparent)))
   (pattern [(~datum #:opaque) _ pred:id]
            #:with opaque-def #'(define pred #:opaque)))
+
+
+(define ((make-any partial-hash i/c-hash) stx)
+  (syntax-parse stx
+    #:datum-literals (define)
+    [(define id body)
+     #:when (generated-contract-number (syntax-e #'id))
+     (define partial-erasure-set
+       (hash-ref partial-hash (syntax-e #'id) (λ () #f)))
+     (if partial-erasure-set
+         #`(define id
+             #,(let go ([stx #'body])
+                 (syntax-parse stx
+                   [(f x ...)
+                    #`(f #,@(map go (syntax->list #'(x ...))))]
+                   [x
+                    #:when (and (not (set-member? partial-erasure-set
+                                                  (syntax-e #'x)))
+                                (hash-ref-stx i/c-hash #'x))
+                      #'any/c]
+                   [x stx])))
+         stx)]
+    [_ stx]))

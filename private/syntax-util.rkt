@@ -205,11 +205,11 @@
                              (go (syntax-e e) (syntax-e e-norm)))
                            (go (syntax-e e) (syntax-e e-norm)))])
          (when (or within (parent-ctc))
+           (define parent
+             (syntax-e (lifted->l (datum->syntax #f (or within (parent-ctc))))))
            (hash-set! l/i-hash
                       (cons (syntax-line e-norm) (syntax-column e-norm))
-                      (syntax-e (lifted->l (datum->syntax #f
-                                                          (or within
-                                                              (parent-ctc)))))))
+                      (cons parent e)))
          (datum->syntax e e* (syntax-srcloc e-norm) e))]
       [(pair? e)
        (define ce (cdr e))
