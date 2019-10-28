@@ -30,10 +30,15 @@
                     (txexpr* 'td '() (string-join (map ->string blame)
                                                   "\n"))))
          data
-         (take blames (length data))))
+         (clamp blames (length data))))
   (define tbl
     (txexpr 'table '() (cons heading rows)))
   (xexpr->html (within-body tbl)))
+
+(define (clamp xs n)
+  (if (< (length xs) n)
+      xs
+      (take xs n)))
 
 (define (out->data name idx dir)
   (define prefix-length
