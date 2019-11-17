@@ -1,9 +1,6 @@
 (module moment typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
-             (lib "racket/base.rkt")
-             (lib "racket/contract/base.rkt")
              (lib "typed-racket/types/numeric-predicates.rkt")
              (submod "gregor-structs.rkt" #%type-decl "..")
              (submod "tzinfo-adapter.rkt" #%type-decl ".."))
@@ -36,7 +33,7 @@
     (define g75 (lambda (x) (equal? x '11)))
     (define g76 (lambda (x) (equal? x '12)))
     (define g77 (or/c g65 g66 g67 g68 g69 g70 g71 g72 g73 g74 g75 g76))
-    (define g78 t:exact-rational?)
+    (define g78 exact-rational?)
     (define g79 (or/c g78))
     (define g80 (or/c g50))
     (define g81 '#t)
@@ -199,21 +196,21 @@
     (: UTC String)
     (define UTC "Etc/UTC")
     (provide moment->iso8601 moment->iso8601/tzid)
-    (provide (contract-out (moment=? generated-contract45))
-             (contract-out (timezone-coerce generated-contract48))
-             (contract-out (timezone-adjust generated-contract47))
-             (contract-out (moment-in-utc generated-contract42))
-             (contract-out (moment-add-nanoseconds generated-contract41))
-             (contract-out (posix->moment generated-contract46))
-             (contract-out (moment->posix generated-contract37))
-             (contract-out (moment->jd generated-contract36))
-             (contract-out (moment->tzid generated-contract39))
-             (contract-out (moment->timezone generated-contract38))
-             (contract-out (moment->utc-offset generated-contract40))
-             (contract-out (moment->datetime/local generated-contract35))
-             (contract-out (datetime+tz->moment generated-contract33))
-             (contract-out (moment generated-contract34))
-             (contract-out (current-timezone generated-contract32))
-             (contract-out (UTC generated-contract31))
-             (contract-out (moment<=? generated-contract43))
-             (contract-out (moment<? generated-contract44)))))
+    (provide datetime+tz->moment
+             moment
+             current-timezone
+             UTC
+             moment<=?
+             moment<?
+             moment=?
+             timezone-coerce
+             timezone-adjust
+             moment-in-utc
+             moment-add-nanoseconds
+             posix->moment
+             moment->posix
+             moment->jd
+             moment->tzid
+             moment->timezone
+             moment->utc-offset
+             moment->datetime/local)))

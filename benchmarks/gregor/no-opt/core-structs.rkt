@@ -58,5 +58,5 @@
      ((h : Integer) (m : Integer) (s : Integer) (n : Integer))
      #:transparent)
     (provide)
-    (provide (contract-out (struct HMSN ((h g23) (m g23) (s g23) (n g23))))
-             (contract-out (struct YMD ((y g34) (m g47) (d g34)))))))
+    (provide (contract-out (struct YMD ((y g34) (m g47) (d g34))))
+             (contract-out (struct HMSN ((h g23) (m g23) (s g23) (n g23)))))))

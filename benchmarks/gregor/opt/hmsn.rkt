@@ -1,10 +1,10 @@
 (module hmsn typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract/base.rkt")
-             (lib "racket/base.rkt")
              (lib "racket/contract.rkt")
-             (submod "core-structs.rkt" #%type-decl ".."))
+             (lib "racket/base.rkt")
+             (submod "core-structs.rkt" #%type-decl "..")
+             (lib "racket/contract/base.rkt"))
     (define g26 exact-nonnegative-integer?)
     (define g27 (or/c g26))
     (define g28 (lambda (x) (HMSN? x)))
@@ -57,12 +57,12 @@
              (ns (- ns (* s NS/SECOND))))
         (HMSN h m s ns)))
     (provide)
-    (provide (contract-out (NS/HOUR generated-contract19))
-             (contract-out (NS/MINUTE generated-contract22))
-             (contract-out (NS/SECOND generated-contract23))
-             (contract-out (NS/MILLI generated-contract21))
-             (contract-out (NS/MICRO generated-contract20))
-             (contract-out (day-ns->hmsn generated-contract24))
-             (contract-out (hmsn->day-ns generated-contract25))
-             (contract-out (MILLI/DAY generated-contract17))
-             (contract-out (NS/DAY generated-contract18)))))
+    (provide NS/SECOND
+             NS/MILLI
+             NS/MICRO
+             day-ns->hmsn
+             hmsn->day-ns
+             MILLI/DAY
+             NS/DAY
+             NS/HOUR
+             NS/MINUTE)))

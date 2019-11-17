@@ -1,47 +1,61 @@
 (module time typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
-             (lib "racket/base.rkt")
-             (lib "racket/contract/base.rkt")
              (submod "gregor-structs.rkt" #%type-decl "..")
              (submod "core-structs.rkt" #%type-decl ".."))
-    (define g31 exact-nonnegative-integer?)
-    (define g32 (or/c g31))
-    (define g33 (lambda (x) (Time? x)))
-    (define g34 exact-integer?)
-    (define g35 (or/c g34))
-    (define g36 (lambda (x) (HMSN? x)))
-    (define g37 string?)
-    (define g38 '#t)
-    (define g39 '#f)
-    (define g40 (or/c g38 g39))
-    (define generated-contract23 (-> g32 (values g33)))
-    (define generated-contract24
+    (define g38 exact-nonnegative-integer?)
+    (define g39 (or/c g38))
+    (define g40 (lambda (x) (Time? x)))
+    (define g41 exact-integer?)
+    (define g42 (or/c g41))
+    (define g43 (lambda (x) (HMSN? x)))
+    (define g44 string?)
+    (define g45 '#t)
+    (define g46 '#f)
+    (define g47 (or/c g45 g46))
+    (define generated-contract25 (-> g39 (values g40)))
+    (define generated-contract26
       (case->
-       (-> g35 (values g33))
-       (-> g35 g35 (values g33))
-       (-> g35 g35 g35 (values g33))
-       (-> g35 g35 g35 g35 (values g33))))
-    (define generated-contract25 (-> g33 (values g36)))
-    (define generated-contract26 (-> g33 (values g37)))
-    (define generated-contract27 (-> g33 (values g32)))
-    (define generated-contract28 (-> g33 g33 (values g40)))
-    (define generated-contract29 (-> g33 g33 (values g40)))
-    (define generated-contract30 (-> g33 g33 (values g40)))
+       (-> g42 (values g40))
+       (-> g42 g42 (values g40))
+       (-> g42 g42 g42 (values g40))
+       (-> g42 g42 g42 g42 (values g40))))
+    (define generated-contract27 (-> g40 (values g43)))
+    (define generated-contract28 (-> g40 (values g44)))
+    (define generated-contract29 (-> g40 (values g39)))
+    (define generated-contract30 (-> g40 g40 (values g47)))
+    (define generated-contract31 (-> g40 g40 (values g47)))
+    (define generated-contract32 (-> g40 g40 (values g47)))
     (module require/contracts racket/base
-      (require soft-contract/fake-contract)
-      (provide))
-    (require (prefix-in -: (only-in 'require/contracts))
-             (except-in 'require/contracts))
-    (define-values () (values))
+      (require soft-contract/fake-contract
+               "fake-format.rkt"
+               (lib "typed-racket/types/numeric-predicates.rkt"))
+      (define g33 exact-rational?)
+      (define g34 (or/c g33))
+      (define g35 exact-nonnegative-integer?)
+      (define g36 (or/c g35))
+      (define g37 string?)
+      (define l/1 (-> g34 g36 g37 (values g37)))
+      (define l/3 (-> g34 g36 (values g37)))
+      (provide l/3
+               g33
+               g34
+               g35
+               g36
+               g37
+               l/1
+               (contract-out (~r* l/3))
+               (contract-out (~r l/1))))
+    (require (prefix-in -: (only-in 'require/contracts ~r ~r*))
+             (except-in 'require/contracts ~r ~r*))
+    (define-values (~r ~r*) (values -:~r -:~r*))
     (void)
     (require require-typed-check
-             "format-adapter.rkt"
              "core-adapter.rkt"
              "gregor-adapter.rkt"
              racket/match)
     (begin (require "hmsn.rkt") (void))
+    (begin (void) (void))
     (: time-equal-proc (-> Time Time Boolean))
     (define (time-equal-proc x y) (= (Time-ns x) (Time-ns y)))
     (: time-hash-proc (-> Time (-> Natural Integer) Integer))
@@ -76,11 +90,11 @@
     (: time<? (-> Time Time Boolean))
     (define (time<? t1 t2) (< (time->ns t1) (time->ns t2)))
     (provide)
-    (provide (contract-out (time<=? generated-contract28))
-             (contract-out (time<? generated-contract29))
-             (contract-out (time=? generated-contract30))
-             (contract-out (time->iso8601 generated-contract26))
-             (contract-out (day-ns->time generated-contract23))
-             (contract-out (time->ns generated-contract27))
-             (contract-out (time->hmsn generated-contract25))
-             (contract-out (make-time generated-contract24)))))
+    (provide time->iso8601
+             day-ns->time
+             time->ns
+             time->hmsn
+             make-time
+             time<=?
+             time<?
+             time=?)))

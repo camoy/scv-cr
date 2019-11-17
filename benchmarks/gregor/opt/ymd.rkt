@@ -1,9 +1,9 @@
 (module ymd typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract/base.rkt")
-             (lib "racket/contract.rkt")
              (lib "racket/base.rkt")
+             (lib "racket/contract.rkt")
+             (lib "racket/contract/base.rkt")
              (submod "core-structs.rkt" #%type-decl "..")
              (lib "typed-racket/types/numeric-predicates.rkt"))
     (define g62 exact-nonnegative-integer?)
@@ -239,14 +239,14 @@
     (define CUMULATIVE-MONTH-DAYS/LEAP
       (vector 0 31 60 91 121 152 182 213 244 274 305 335))
     (provide)
-    (provide (contract-out (ymd-add-years generated-contract61))
-             (contract-out (ymd->quarter generated-contract58))
-             (contract-out (ymd->yday generated-contract59))
-             (contract-out (jdn->iso-wday generated-contract53))
-             (contract-out (jdn->wday generated-contract54))
-             (contract-out (jdn->ymd generated-contract55))
-             (contract-out (ymd->jdn generated-contract57))
-             (contract-out (iso-weeks-in-year generated-contract52))
-             (contract-out (days-in-month generated-contract51))
-             (contract-out (leap-year? generated-contract56))
-             (contract-out (ymd-add-months generated-contract60)))))
+    (provide ymd-add-years
+             ymd->quarter
+             ymd->yday
+             jdn->iso-wday
+             jdn->wday
+             jdn->ymd
+             ymd->jdn
+             iso-weeks-in-year
+             days-in-month
+             leap-year?
+             ymd-add-months)))

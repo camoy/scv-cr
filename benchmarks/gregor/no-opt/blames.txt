@@ -1,0 +1,91 @@
+(("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/date.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/date.rkt" 59 54)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/date.rkt" 59 54)
+  (|{(arity-includes/c 3)}|)
+  (|{●procedure?_(¬/c (arity-includes/c 3))}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt" 54 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt" 54 30)
+  (|{(arity-includes/c 3)}|)
+  (|{●procedure?_(¬/c (arity-includes/c 3))}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 117 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 117 30)
+  (|{(arity-includes/c 2)}|)
+  (|{●procedure?_(¬/c (arity-includes/c 2))}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/date.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/date.rkt" 59 54)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/date.rkt" 59 54)
+  (|{procedure?}|)
+  (|{●(¬/c procedure?)}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 118 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 118 30)
+  (|{(arity-includes/c 0)}|)
+  (|{●procedure?_(¬/c (arity-includes/c 0))}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt" 54 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt" 54 30)
+  (|{procedure?}|)
+  (|{●(¬/c procedure?)}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/moment.rkt"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/moment.rkt" 218 28)
+  ("/usr/share/racket/collects/racket/private/kw.rkt" 1168 25)
+  (|{#f}|)
+  (\{●exact-integer?_\(¬/c\ exact-integer?\)\|#f\}))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt" 53 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt" 53 30)
+  (|{procedure?}|)
+  (|{●(¬/c procedure?)}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 116 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 116 30)
+  (|{procedure?}|)
+  (|{●(¬/c procedure?)}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 117 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 117 30)
+  (|{procedure?}|)
+  (|{●(¬/c procedure?)}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/moment-base.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/moment-base.rkt" 31 54)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/moment-base.rkt" 31 54)
+  (|{(arity-includes/c 3)}|)
+  (|{●procedure?_(¬/c (arity-includes/c 3))}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt" 53 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/time.rkt" 53 30)
+  (|{(arity-includes/c 2)}|)
+  (|{●procedure?_(¬/c (arity-includes/c 2))}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt:require/contracts"
+  ("/usr/share/racket/collects/racket/private/kw.rkt" 1168 25)
+  ("/usr/share/racket/collects/racket/private/kw.rkt" 1168 25)
+  (|{#f}|)
+  (|{●(¬/c string?)_(¬/c exact-integer?)}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/moment-base.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/moment-base.rkt" 31 54)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/moment-base.rkt" 31 54)
+  (|{procedure?}|)
+  (|{●(¬/c procedure?)}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 116 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 116 30)
+  (|{(arity-includes/c 2)}|)
+  (|{●procedure?_(¬/c (arity-includes/c 2))}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/datetime.rkt"
+  ("/usr/share/racket/collects/racket/private/kw.rkt" 1168 25)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/gregor-structs.rkt" 77 22)
+  (|{exact-rational?}|)
+  (|{●real?}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt:require/contracts"
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 118 30)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 118 30)
+  (|{procedure?}|)
+  (|{●(¬/c procedure?)}|))
+ ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt:require/contracts"
+  ("/usr/share/racket/collects/racket/private/kw.rkt" 1168 25)
+  ("/home/camoy/wrk/gtp-benchmarks/benchmarks/gregor/ty/tzinfo-adapter.rkt" 67 40)
+  (|{(λ (x₃) (tzoffset? x₃))}|)
+  (|{●}|))
+)

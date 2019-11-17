@@ -1,9 +1,6 @@
 (module tzinfo-adapter typed/racket/base/no-check
    (#%module-begin
-    (require soft-contract/fake-contract
-             (lib "racket/base.rkt")
-             (lib "racket/contract.rkt")
-             (lib "racket/contract/base.rkt"))
+    (require soft-contract/fake-contract)
     (define g62 struct-type?)
     (define g63 (λ (_) #f))
     (define g64 any/c)
@@ -36,10 +33,8 @@
     (define generated-contract42 (-> g77 (values g71)))
     (module require/contracts racket/base
       (require soft-contract/fake-contract
-               (lib "typed-racket/types/numeric-predicates.rkt")
-               (lib "racket/contract.rkt")
-               (lib "racket/base.rkt")
-               (lib "racket/contract/base.rkt"))
+               "../base/tzinfo/main.rkt"
+               (lib "typed-racket/types/numeric-predicates.rkt"))
       (define g43 exact-integer?)
       (define g44 string?)
       (define g45 '#f)
@@ -57,7 +52,7 @@
       (define g57 (-> any/c any/c g56))
       (define g58 (-> any/c g49))
       (define g59 (or/c g56 g50 g49))
-      (define g60 t:exact-rational?)
+      (define g60 exact-rational?)
       (define g61 (or/c g60))
       (define l/1 (-> (values g46)))
       (define l/119 g57)
@@ -73,14 +68,8 @@
       (define l/80 (-> g49 (values g52)))
       (define l/82 (-> g49 (values g54)))
       (define l/84 g55)
-      (begin
-        (define system-tzid #:opaque)
-        (struct tzgap (starts-at offset-before offset-after) #:transparent)
-        (struct tzoffset (utc-seconds dst? abbreviation) #:transparent)
-        (struct tzoverlap (offset-before offset-after) #:transparent)
-        (define local-seconds->tzoffset #:opaque)
-        (define utc-seconds->tzoffset #:opaque))
-      (provide g61
+      (provide g60
+               g61
                l/130
                g56
                g57
@@ -94,16 +83,16 @@
                g49
                g50
                l/37
-               g43
-               g44
-               g45
-               g46
-               l/1
                g59
                l/126
                g55
                l/84
                l/43
+               g43
+               g44
+               g45
+               g46
+               l/1
                l/123
                l/82
                g51
@@ -112,55 +101,44 @@
                l/121
                l/80
                l/39
-               g60
-               (contract-out (system-tzid l/1))
                (contract-out (local-seconds->tzoffset l/126))
                (contract-out (utc-seconds->tzoffset l/130))
-               (contract-out
-                (struct
-                 tzgap
-                 ((starts-at g48) (offset-before g49) (offset-after g49))))
-               (contract-out
-                (struct
-                 tzoffset
-                 ((utc-seconds g52) (dst? g54) (abbreviation g44))))
-               (contract-out
-                (struct
-                 tzoverlap
-                 ((offset-before any/c) (offset-after any/c))))))
+               (contract-out (system-tzid l/1))
+               (struct-out tzgap)
+               (struct-out tzoffset)
+               (struct-out tzoverlap)))
     (require (prefix-in
               -:
               (only-in
                'require/contracts
+               system-tzid
                utc-seconds->tzoffset
                local-seconds->tzoffset
-               system-tzid
                tzoverlap?
                tzoffset?
                tzgap?))
              (except-in
               'require/contracts
+              system-tzid
               utc-seconds->tzoffset
               local-seconds->tzoffset
-              system-tzid
               tzoverlap?
               tzoffset?
               tzgap?))
     (define-values
-     (utc-seconds->tzoffset
+     (system-tzid
+      utc-seconds->tzoffset
       local-seconds->tzoffset
-      system-tzid
       tzoverlap?
       tzoffset?
       tzgap?)
      (values
+      -:system-tzid
       -:utc-seconds->tzoffset
       -:local-seconds->tzoffset
-      -:system-tzid
       -:tzoverlap?
       -:tzoffset?
       -:tzgap?))
-    (require scv-gt/opaque)
     (begin
       (void)
       (provide system-tzid

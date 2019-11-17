@@ -1,0 +1,65 @@
+(module hmsn typed/racket/base/no-check
+   (#%module-begin
+    (require soft-contract/fake-contract
+             (submod "core-structs.rkt" #%type-decl ".."))
+    (define g26 exact-nonnegative-integer?)
+    (define g27 (or/c g26))
+    (define g28 (lambda (x) (HMSN? x)))
+    (define generated-contract17 g27)
+    (define generated-contract18 g27)
+    (define generated-contract19 g27)
+    (define generated-contract20 g27)
+    (define generated-contract21 g27)
+    (define generated-contract22 g27)
+    (define generated-contract23 g27)
+    (define generated-contract24 (-> g27 (values g28)))
+    (define generated-contract25 (-> g28 (values g27)))
+    (module require/contracts racket/base
+      (require soft-contract/fake-contract)
+      (provide))
+    (require (prefix-in -: (only-in 'require/contracts))
+             (except-in 'require/contracts))
+    (define-values () (values))
+    (void)
+    (require racket/match "core-adapter.rkt")
+    (: NS/SECOND Natural)
+    (define NS/SECOND 1000000000)
+    (: NS/MILLI Natural)
+    (define NS/MILLI 1000000)
+    (: NS/MICRO Natural)
+    (define NS/MICRO 1000)
+    (: NS/MINUTE Natural)
+    (define NS/MINUTE (* NS/SECOND 60))
+    (: NS/HOUR Natural)
+    (define NS/HOUR (* NS/MINUTE 60))
+    (: NS/DAY Natural)
+    (define NS/DAY (* 86400 NS/SECOND))
+    (: MILLI/DAY Natural)
+    (define MILLI/DAY 86400000)
+    (: DAYS/NS Exact-Rational)
+    (define DAYS/NS (/ 1 NS/DAY))
+    (: hmsn->day-ns (-> HMSN Natural))
+    (define (hmsn->day-ns hmsn)
+      (match-define (HMSN h m s n) hmsn)
+      (define r (+ (* NS/HOUR h) (* NS/MINUTE m) (* NS/SECOND s) n))
+      (unless (index? r) (error "nope"))
+      r)
+    (: day-ns->hmsn (-> Natural HMSN))
+    (define (day-ns->hmsn ns)
+      (let* ((h (quotient ns NS/HOUR))
+             (ns (- ns (* h NS/HOUR)))
+             (m (quotient ns NS/MINUTE))
+             (ns (- ns (* m NS/MINUTE)))
+             (s (quotient ns NS/SECOND))
+             (ns (- ns (* s NS/SECOND))))
+        (HMSN h m s ns)))
+    (provide)
+    (provide NS/SECOND
+             NS/MILLI
+             NS/MICRO
+             day-ns->hmsn
+             hmsn->day-ns
+             MILLI/DAY
+             NS/DAY
+             NS/HOUR
+             NS/MINUTE)))

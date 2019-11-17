@@ -1,10 +1,10 @@
 (module datetime typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
              (lib "racket/base.rkt")
-             (submod "gregor-structs.rkt" #%type-decl "..")
              (lib "racket/contract/base.rkt")
+             (lib "racket/contract.rkt")
+             (submod "gregor-structs.rkt" #%type-decl "..")
              (lib "typed-racket/types/numeric-predicates.rkt"))
     (define g26 (lambda (x) (Date? x)))
     (define g27 (lambda (x) (Time? x)))
@@ -158,17 +158,17 @@
     (define (datetime-add-seconds dt n)
       (datetime-add-nanoseconds dt (* n NS/SECOND)))
     (provide)
-    (provide (contract-out (datetime<=? generated-contract21))
-             (contract-out (datetime<? generated-contract22))
-             (contract-out (datetime=? generated-contract23))
-             (contract-out (datetime-add-seconds generated-contract20))
-             (contract-out (datetime-add-nanoseconds generated-contract19))
-             (contract-out (datetime->iso8601 generated-contract15))
-             (contract-out (posix->datetime generated-contract25))
-             (contract-out (jd->datetime generated-contract24))
-             (contract-out (date+time->datetime generated-contract12))
-             (contract-out (datetime->posix generated-contract17))
-             (contract-out (datetime->jd generated-contract16))
-             (contract-out (datetime->time generated-contract18))
-             (contract-out (datetime->date generated-contract14))
-             (contract-out (datetime generated-contract13)))))
+    (provide datetime<=?
+             datetime<?
+             datetime=?
+             datetime-add-seconds
+             datetime-add-nanoseconds
+             datetime->iso8601
+             posix->datetime
+             jd->datetime
+             date+time->datetime
+             datetime->posix
+             datetime->jd
+             datetime->time
+             datetime->date
+             datetime)))

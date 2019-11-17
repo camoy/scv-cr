@@ -1,12 +1,9 @@
 (module clock typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract/base.rkt")
-             (lib "racket/base.rkt")
-             (lib "racket/contract.rkt")
              (submod "gregor-structs.rkt" #%type-decl "..")
              (lib "typed-racket/types/numeric-predicates.rkt"))
-    (define g25 t:exact-rational?)
+    (define g25 exact-rational?)
     (define g26 (or/c g25))
     (define g27 (-> (values g26)))
     (define g28 (box/c g27))
@@ -79,13 +76,13 @@
     (: current-clock (Boxof (-> Exact-Rational)))
     (define current-clock (box current-posix-seconds))
     (provide)
-    (provide (contract-out (current-time/utc generated-contract18))
-             (contract-out (today/utc generated-contract24))
-             (contract-out (now/utc generated-contract22))
-             (contract-out (now/moment/utc generated-contract21))
-             (contract-out (current-time generated-contract17))
-             (contract-out (today generated-contract23))
-             (contract-out (now generated-contract19))
-             (contract-out (now/moment generated-contract20))
-             (contract-out (current-posix-seconds generated-contract16))
-             (contract-out (current-clock generated-contract15)))))
+    (provide current-time/utc
+             today/utc
+             now/utc
+             now/moment/utc
+             current-time
+             today
+             now
+             now/moment
+             current-posix-seconds
+             current-clock)))
