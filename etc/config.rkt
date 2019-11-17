@@ -1,5 +1,8 @@
 #lang racket/base
 
+(require racket/class
+         racket/draw)
+
 (provide (all-defined-out))
 
 (define BENCHMARKS
@@ -25,9 +28,14 @@
 (define NUM-SAMPLES 10)
 (define SAMPLE-FACTOR 10)
 (define BASELINE-LABEL
-  (string->symbol (format "~a" (version))))
+  (string->symbol "Typed Racket"))
 (define SCV-LABEL
-  (string->symbol (format "~a + SCV" (version))))
+  (string->symbol "Typed Racket + SCV-CR"))
+(define PLOT-LABEL-SIZE 22)
+
+(define COLOR-SCHEME
+  (list (make-object color% 94 60 153)
+        (make-object color% 230 97 1)))
 
 #;(define COLOR-SCHEME '(3 4))
-(define COLOR-SCHEME '(Indigo Goldenrod))
+#;(define COLOR-SCHEME '(Indigo Goldenrod))

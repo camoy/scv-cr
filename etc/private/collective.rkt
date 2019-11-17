@@ -2,20 +2,30 @@
 
 (require (for-syntax racket/base)
          racket/format
+         racket/pretty
          racket/string
          racket/runtime-path
          racket/function
          racket/path
          racket/file
          racket/list
+         "individual.rkt"
          "data-lattice.rkt"
          gtp-plot/performance-info
+         gtp-plot/sample-info
          gtp-plot/util
          gtp-plot/plot
          plot
+         pict
+         ppict
          "../config.rkt")
 
 (provide collective-functions)
+(*OVERHEAD-PLOT-HEIGHT* 300)
+(*OVERHEAD-PLOT-WIDTH* 800)
+(*OVERHEAD-SHOW-RATIO* #f)
+(*OVERHEAD-MAX* 10)
+(*FONT-SIZE* PLOT-LABEL-SIZE)
 
 (define-runtime-path figures-dir
   (build-path ".." "measurements" "figures"))
@@ -34,6 +44,17 @@
            x*]))
       x))
 
+(define (max-overhead* pi)
+  (overhead pi (fold/mean-runtime pi max #:init #f)))
+
+(define (mean-overhead* pi)
+  (define 1/N
+    (/ 1 (* (sample-info->sample-size pi)
+            (sample-info->num-samples pi))))
+  (define (avg acc v)
+    (+ acc (* 1/N v)))
+  (overhead pi (fold/mean-runtime pi avg #:init (λ (v) (* 1/N v)))))
+
 (define (summary-statistics-template results)
   (define results*
     (string-join (map (λ (x)
@@ -42,12 +63,12 @@
                  "\\\\"))
   @~a{\begin{tabular}{ | c | c c | c c | }
   \hline
-  & \multicolumn{2}{|c|}{Racket}
-  & \multicolumn{2}{|c|}{Racket with SCV} \\
+  & \multicolumn{2}{|c|}{Racket Overhead}
+  & \multicolumn{2}{|c|}{\tool Overhead} \\
   \hline
   Benchmark
-  & Max Overhead & Mean Overhead
-  & Max Overhead & Mean Overhead \\
+  & \hspace{0.65em}Max\hspace{0.65em} & Mean
+  & \hspace{0.65em}Max\hspace{0.65em} & Mean \\
   \hline
   @results* \\
   \hline
@@ -64,11 +85,11 @@
         (for/list ([benchmark benchmarks]
                    [sample samples]
                    [baseline baselines])
-          (list benchmark
-                (max-overhead baseline)
-                (mean-overhead baseline)
-                (max-overhead sample)
-                (mean-overhead sample))))))))
+          (list (format "\\textsc{~a}" benchmark)
+                (max-overhead* baseline)
+                (mean-overhead* baseline)
+                (max-overhead* sample)
+                (mean-overhead* sample))))))))
 
 (define SLOWDOWN-X-MAX 10)
 (define SLOWDOWN-GRANULARITY 0.1)
@@ -106,16 +127,19 @@
 
 (define (slowdown-plot benchmarks samples baselines)
   (define slowdown-path
-    (build-path figures-dir "slowdown.png"))
-  (define-values (sample-points baseline-points)
+    (build-path figures-dir "slowdown"))
+  (define-values (sample-points baseline-points configs)
     (values (slowdown-points benchmarks samples)
-            (slowdown-points benchmarks baselines)))
+            (slowdown-points benchmarks baselines)
+            (all-configs samples)))
   (define slowdown-pict
+    (parameterize ([*OVERHEAD-LABEL?* #t])
     (overhead-plot*
      (list (car baselines) (car samples))
      (list (make-lines sample-points SCV-LABEL (second COLOR-SCHEME))
            (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
-     '|Benchmark Suite|))
+     '||
+     configs)))
      #|
     (parameterize ([plot-x-ticks (ticks (linear-ticks-layout)
                                         (ticks-format/units "x"))]
@@ -135,7 +159,7 @@
        #:x-label "Deliverability"
        #:y-label "Percent of Benchmark Suite")))
 |#
-  (save-pict slowdown-path slowdown-pict))
+  (save-pict* slowdown-path slowdown-pict))
 
 (define (slowdown-points benchmarks within)
   (for/list ([x (in-range 1
@@ -146,10 +170,25 @@
              (for/sum ([sample within])
                (percent-k-deliverable x sample))))))
 
+(define (all-configs samples)
+  (for/sum ([s samples])
+    (count-configurations s (const #t))))
+
 (define (percent-k-deliverable k sample)
   (/ ((deliverable k) sample)
      (count-configurations sample (const #t))))
 
+(define (keys _1 _2 _3)
+  (for ([c COLOR-SCHEME]
+        [i (in-naturals)])
+    (save-pict*
+     (build-path figures-dir (format "key~a" i))
+     (ppict-do
+      (blank 20)
+      #:go (coord 1/2 1/2 'cc)
+      (filled-rounded-rectangle 15 15 #:color c #:draw-border? #f)))))
+
 (define collective-functions
   (list summary-statistics
-        slowdown-plot))
+        slowdown-plot
+        keys))

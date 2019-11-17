@@ -100,7 +100,7 @@
    (if (and (*LATTICE-TRUNCATE-DECIMALS?*) (<= 1 x))
        (number->string (round x))
        (~r x #:precision 1))
-   "x"))
+   "×"))
 
 (define (subtext scv baseline #:just-one [jo #f])
   (define-values (scv-str baseline-str)

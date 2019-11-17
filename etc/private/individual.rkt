@@ -1,6 +1,7 @@
 #lang racket/base
 
-(provide individual-functions)
+(provide individual-functions
+         save-pict*)
 
 (require (for-syntax racket/base)
          racket/runtime-path
@@ -8,16 +9,19 @@
          racket/file
          racket/vector
          racket/draw
+         racket/class
+         pict
          math/statistics
          gtp-plot/configuration-info
          gtp-plot/typed-racket-info
+         gtp-plot/sample-info
          gtp-plot/plot
          gtp-plot/util
          gtp-plot/performance-info
          "data-lattice.rkt"
          "../config.rkt")
 
-(*OVERHEAD-PLOT-HEIGHT* 400)
+(*OVERHEAD-PLOT-HEIGHT* 250)
 (*OVERHEAD-PLOT-WIDTH* 800)
 (*OVERHEAD-SHOW-RATIO* #f)
 (*OVERHEAD-MAX* 10)
@@ -25,7 +29,7 @@
 (*POINT-SIZE* 6)
 (*POINT-ALPHA* 0.5)
 (*AUTO-POINT-ALPHA?* #f)
-(*FONT-SIZE* 24)
+(*FONT-SIZE* PLOT-LABEL-SIZE)
 (*POINT-COLORS* COLOR-SCHEME)
 
 (define-runtime-path figures-dir
@@ -33,36 +37,59 @@
 
 (make-directory* figures-dir)
 
+(define ps-setup
+  (new ps-setup%))
+
+(send ps-setup set-margin 0 0)
+(send ps-setup set-scaling 1 1)
+
+(define (save-pict* path pict)
+  (parameterize ([current-ps-setup ps-setup])
+    (define dc
+      (new post-script-dc%
+           [interactive #f]
+           [parent #f]
+           [use-paper-bbox #f]
+           [as-eps #t]
+           [width  (pict-width pict)]
+           [height (pict-height pict)]
+           [output (format "~a.ps" path)]))
+    (send dc start-doc "Rendering")
+    (send dc start-page)
+    (draw-pict pict dc 0 0)
+    (send dc end-page)
+    (send dc end-doc)))
+
 (define (overhead benchmark samples baseline _ __)
   (define overhead-pict
     (overhead-plot (list baseline samples)
                    (string->symbol benchmark)))
   (define overhead-path
-    (build-path figures-dir (format "~a-overhead.png" benchmark)))
-  (save-pict overhead-path overhead-pict))
+    (build-path figures-dir (format "~a-overhead" benchmark)))
+  (save-pict* overhead-path overhead-pict))
 
 (define (samples benchmark _ __ samples baseline)
   (define samples-pict
     (samples-plot samples))
   (define samples-path
-    (build-path figures-dir (format "~a-samples.png" benchmark)))
-  (save-pict samples-path samples-pict))
+    (build-path figures-dir (format "~a-samples" benchmark)))
+  (save-pict* samples-path samples-pict))
 
 (define (exact benchmark samples baseline _ __)
   (define exact-pict
     (exact-runtime-plot (list baseline samples)
                         (string->symbol benchmark)))
   (define exact-path
-    (build-path figures-dir (format "~a-exact.png" benchmark)))
-  (save-pict exact-path exact-pict))
+    (build-path figures-dir (format "~a-exact" benchmark)))
+  (save-pict* exact-path exact-pict))
 
 (define (scatterplot benchmark _ __ samples baseline)
   (define scatterplot-pict
     (parameterize ([*POINT-SIZE* 10])
       (relative-scatterplot baseline samples)))
   (define scatterplot-path
-    (build-path figures-dir (format "~a-scatterplot.png" benchmark)))
-  (save-pict scatterplot-path scatterplot-pict))
+    (build-path figures-dir (format "~a-scatterplot" benchmark)))
+  (save-pict* scatterplot-path scatterplot-pict))
 
 (define (average-results samples)
   (for/vector ([config (in-configurations samples)])
@@ -72,20 +99,23 @@
           (stddev runtimes))))
 
 (define ((make-lattice jo format-name) benchmark samples baseline _ __)
-  ;; lattices
-  (define lattice-pict
-    (make-performance-lattice (average-results samples)
-                              (average-results baseline)
-                              #:just-one jo))
-  (define lattice-path
-    (build-path figures-dir (format format-name benchmark)))
-  (save-pict lattice-path lattice-pict))
+  (define height
+    (performance-info->num-units (car (sample-info->performance-info* samples))))
+  (when (<= height 6)
+    ;; lattices
+    (define lattice-pict
+      (make-performance-lattice (average-results samples)
+                                (average-results baseline)
+                                #:just-one jo))
+    (define lattice-path
+      (build-path figures-dir (format format-name benchmark)))
+    (save-pict* lattice-path lattice-pict)))
 
 (define individual-functions
   (list overhead
         #;samples
         exact
         scatterplot
-        (make-lattice 'scv "~a-scv-lattice.png")
-        (make-lattice 'baseline "~a-baseline-lattice.png")
-        (make-lattice #f "~a-lattice.png")))
+        (make-lattice 'scv "~a-scv-lattice")
+        (make-lattice 'baseline "~a-baseline-lattice")
+        (make-lattice #f "~a-lattice")))

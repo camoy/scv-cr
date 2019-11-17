@@ -20,25 +20,19 @@
              (txexpr* 'th '() "Performance")
              (txexpr* 'th '() "Blame")))
   (define rows
-    (map (λ (r blame)
-           (define-values (config perf)
-             (values (first r) (second r)))
-           (txexpr* 'tr
-                    (list (list 'bgcolor (get-color blame)))
-                    (txexpr* 'td '() config)
-                    (txexpr* 'td '() (string-join perf "\n"))
-                    (txexpr* 'td '() (string-join (map ->string blame)
-                                                  "\n"))))
-         data
-         (clamp blames (length data))))
+    (for/list ([r data]
+               [blame blames])
+      (define-values (config perf)
+        (values (first r) (second r)))
+      (txexpr* 'tr
+               (list (list 'bgcolor (get-color blame)))
+               (txexpr* 'td '() config)
+               (txexpr* 'td '() (string-join perf "\n"))
+               (txexpr* 'td '() (string-join (map ->string blame)
+                                             "\n")))))
   (define tbl
     (txexpr 'table '() (cons heading rows)))
   (xexpr->html (within-body tbl)))
-
-(define (clamp xs n)
-  (if (< (length xs) n)
-      xs
-      (take xs n)))
 
 (define (out->data name idx dir)
   (define prefix-length
