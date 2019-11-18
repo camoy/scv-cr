@@ -164,12 +164,7 @@
              #'(struct-out s)
              #`(struct-out #,(car (syntax-e #'s))))
          #`(contract-out
-            (struct s #,(map (λ (p c)
-                               (if (safe-identifier? blameable c)
-                                   #`(#,p any/c)
-                                   #`(#,p #,c)))
-                             (syntax->list #'(p ...))
-                             (syntax->list #'(c ...))))))]
+            (struct s ((p c) ...))))]
     [(contract-out (k v))
      #:when (safe-identifier? blameable #'k)
      #'k]
