@@ -7,7 +7,7 @@
 (require racket/function
          racket/contract
          racket/list
-         scv-gt/private/syntax-util
+         scv-cr/private/syntax-util
          syntax/parse)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

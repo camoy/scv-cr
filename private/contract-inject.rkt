@@ -8,7 +8,7 @@
  racket/require
  (multi-in racket (syntax function set path list))
  (multi-in syntax (parse modresolve))
- (multi-in scv-gt private (contract-extract
+ (multi-in scv-cr private (contract-extract
                            configure
                            syntax-util)))
 

@@ -8,7 +8,7 @@
          (multi-in racket (list set syntax string function math))
          mischief/dict
          syntax/parse
-         scv-gt/private/syntax-util)
+         scv-cr/private/syntax-util)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

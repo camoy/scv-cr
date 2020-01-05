@@ -9,8 +9,8 @@
          racket/string
          racket/tcp
          racket/list
-         scv-gt
-         scv-gt/private/syntax-util
+         scv-cr
+         scv-cr/private/syntax-util
          gtp-util
          basedir)
 

@@ -8,7 +8,7 @@
     (require require-typed-check
              (only-in racket/string string-split string-join string-trim)
              racket/match)
-    (require "zo-string.rkt" "zo-transition.rkt" "zo-find.rkt" scv-gt/opaque)
+    (require "zo-string.rkt" "zo-transition.rkt" "zo-find.rkt" scv-cr/opaque)
     (void)
     (define DEBUG #f)
     (define VERSION 1.0)

@@ -1,6 +1,6 @@
 #lang typed/racket/base
 
-(require scv-gt/opaque)
+(require scv-cr/opaque)
 
 (require/typed/opaque "abs.rkt"
   [absz (-> Real Number)]

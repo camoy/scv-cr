@@ -2268,7 +2268,7 @@
      Spec
      (Rec Spec (Pair String (Listof (Pair String (-> (U Spec String)))))))
     (void)
-    (require scv-gt/opaque)
+    (require scv-cr/opaque)
     (begin
       (void)
       (provide (struct-out zo)

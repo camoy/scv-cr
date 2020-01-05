@@ -9,7 +9,7 @@
 
 (require racket/require
          (multi-in racket (list string syntax))
-         (multi-in scv-gt/private (contract-munge struct-extract syntax-util))
+         (multi-in scv-cr/private (contract-munge struct-extract syntax-util))
          syntax/parse
          graph)
 

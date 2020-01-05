@@ -30,7 +30,7 @@
     (require require-typed-check
              racket/match
              "gregor-adapter.rkt"
-             #;scv-gt/opaque)
+             #;scv-cr/opaque)
     (begin (require "datetime.rkt") (void))
     (begin (void) (void))
     (: moment->iso8601/tzid (-> Moment String))

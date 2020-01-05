@@ -1,6 +1,6 @@
 #lang typed/racket/base
 
-(require scv-gt/opaque)
+(require scv-cr/opaque)
 (require/opaque "abs.rkt"
   [absz (-> Real Number)]
   [#:struct my-box ([x : Real])])

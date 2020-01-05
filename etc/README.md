@@ -7,7 +7,7 @@
      `racket` and `raco` binaries.
    * `BENCHMARK-ROOT-DIR` is an absolute path string
      to the directory with benchmarks in it.
-   * `MODIFIED-TR-DIR` is a directory with the `scv-gt` fork
+   * `MODIFIED-TR-DIR` is a directory with the `scv-cr` fork
      of Typed Racket.
    * `ORIGINAL-TR-DIR` is a directory with the normal version
      of Typed Racket.

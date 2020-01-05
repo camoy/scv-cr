@@ -6,7 +6,7 @@
 
 (require racket/require
          (multi-in racket (contract list set function pretty math))
-         (multi-in scv-gt/private (configure
+         (multi-in scv-cr/private (configure
                                    contract-extract
                                    contract-inject
                                    syntax-compile

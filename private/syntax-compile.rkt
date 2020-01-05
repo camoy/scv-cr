@@ -8,7 +8,7 @@
 
 (require racket/require
          compiler/compilation-path
-         scv-gt/private/proxy-resolver
+         scv-cr/private/proxy-resolver
          (multi-in mischief (dict sort))
          (multi-in racket (file function list))
          (multi-in syntax (modcode modcollapse)))
@@ -76,8 +76,8 @@
 
 (module+ test
   (require rackunit
-           scv-gt/private/syntax-util
-           scv-gt/private/test-util)
+           scv-cr/private/syntax-util
+           scv-cr/private/test-util)
 
   (test-case
     "syntax-compile"

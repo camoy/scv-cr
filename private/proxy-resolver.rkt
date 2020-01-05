@@ -6,7 +6,7 @@
          compile/dir
          in-dir)
 
-(require scv-gt/private/configure
+(require scv-cr/private/configure
          syntax/location
          racket/path)
 

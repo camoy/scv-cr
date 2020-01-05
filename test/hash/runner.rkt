@@ -2,9 +2,9 @@
 
 (require racket/rerequire
          racket/function
-         scv-gt
-         scv-gt/private/syntax-util
-         scv-gt/private/proxy-resolver)
+         scv-cr
+         scv-cr/private/syntax-util
+         scv-cr/private/proxy-resolver)
 
 (define (test-optimize main targets)
   (optimize targets

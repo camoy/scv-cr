@@ -8,7 +8,7 @@
              (lib "typed-racket/types/numeric-predicates.rkt"))
     (define g8 (and/c byte? positive?))
     (define g9 (or/c g8))
-    (define g10 (and/c t:index? positive?))
+    (define g10 (and/c index? positive?))
     (define g11 (or/c g10))
     (define g12 (lambda (x) (world? x)))
     (define generated-contract3 g9)

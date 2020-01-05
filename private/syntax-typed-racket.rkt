@@ -21,7 +21,7 @@
 
 (module+ test
   (require rackunit
-           scv-gt/private/test-util)
+           scv-cr/private/test-util)
 
   (test-case
     "syntax-property-self*"

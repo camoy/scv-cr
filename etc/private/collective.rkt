@@ -9,7 +9,7 @@
          racket/path
          racket/file
          racket/list
-         "individual.rkt"
+         "util.rkt"
          "data-lattice.rkt"
          gtp-plot/performance-info
          gtp-plot/sample-info
@@ -18,14 +18,10 @@
          plot
          pict
          ppict
-         "../config.rkt")
+         "../config.rkt"
+         "diagram.rkt")
 
 (provide collective-functions)
-(*OVERHEAD-PLOT-HEIGHT* 300)
-(*OVERHEAD-PLOT-WIDTH* 800)
-(*OVERHEAD-SHOW-RATIO* #f)
-(*OVERHEAD-MAX* 10)
-(*FONT-SIZE* PLOT-LABEL-SIZE)
 
 (define-runtime-path figures-dir
   (build-path ".." "measurements" "figures"))
@@ -126,20 +122,39 @@
     (rnd n)))
 
 (define (slowdown-plot benchmarks samples baselines)
+  (define slowdown-path0
+    (build-path figures-dir "slowdown-only-baseline"))
   (define slowdown-path
     (build-path figures-dir "slowdown"))
   (define-values (sample-points baseline-points configs)
     (values (slowdown-points benchmarks samples)
             (slowdown-points benchmarks baselines)
             (all-configs samples)))
-  (define slowdown-pict
-    (parameterize ([*OVERHEAD-LABEL?* #t])
+  (define slowdown-pict0
+    (parameterize ([*OVERHEAD-LABEL?* #t]
+                   [*OVERHEAD-PLOT-HEIGHT* 300]
+                   [*OVERHEAD-PLOT-WIDTH* 800]
+                   [*OVERHEAD-SHOW-RATIO* #f]
+                   [*OVERHEAD-MAX* 10]
+                   [*FONT-SIZE* PLOT-LABEL-SIZE])
     (overhead-plot*
-     (list (car baselines) (car samples))
-     (list (make-lines sample-points SCV-LABEL (second COLOR-SCHEME))
-           (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
+     (list (car baselines))
+     (list (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
      '||
      configs)))
+  (define slowdown-pict
+    (parameterize ([*OVERHEAD-LABEL?* #t]
+                   [*OVERHEAD-PLOT-HEIGHT* 300]
+                   [*OVERHEAD-PLOT-WIDTH* 800]
+                   [*OVERHEAD-SHOW-RATIO* #f]
+                   [*OVERHEAD-MAX* 10]
+                   [*FONT-SIZE* PLOT-LABEL-SIZE])
+      (overhead-plot*
+       (list (car baselines) (car samples))
+       (list (make-lines sample-points SCV-LABEL (second COLOR-SCHEME))
+             (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
+       '||
+       configs)))
      #|
     (parameterize ([plot-x-ticks (ticks (linear-ticks-layout)
                                         (ticks-format/units "x"))]
@@ -158,7 +173,8 @@
        #:height 450
        #:x-label "Deliverability"
        #:y-label "Percent of Benchmark Suite")))
-|#
+  |#
+  (save-pict* slowdown-path0 slowdown-pict0)
   (save-pict* slowdown-path slowdown-pict))
 
 (define (slowdown-points benchmarks within)
@@ -179,7 +195,7 @@
      (count-configurations sample (const #t))))
 
 (define (keys _1 _2 _3)
-  (for ([c COLOR-SCHEME]
+  (for ([c (append COLOR-SCHEME (list "blue" "bisque" "lavender"))]
         [i (in-naturals)])
     (save-pict*
      (build-path figures-dir (format "key~a" i))
@@ -191,4 +207,5 @@
 (define collective-functions
   (list summary-statistics
         slowdown-plot
-        keys))
+        keys
+        diagrams))

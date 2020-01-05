@@ -9,7 +9,7 @@
                            pretty
                            path
                            string))
-         (multi-in scv-gt
+         (multi-in scv-cr
                    private
                    (proxy-resolver
                     configure
@@ -140,7 +140,7 @@
 
 (define (parse argv)
   (command-line
-   #:program "scv-gt"
+   #:program "scv-cr"
    #:argv argv
    #:once-each
    [("-s" "--show-contracts") "dump modules with contracts"

@@ -18,8 +18,10 @@
          gtp-plot/plot
          gtp-plot/util
          gtp-plot/performance-info
+         "util.rkt"
          "data-lattice.rkt"
          "../config.rkt")
+
 
 (*OVERHEAD-PLOT-HEIGHT* 250)
 (*OVERHEAD-PLOT-WIDTH* 800)
@@ -37,36 +39,19 @@
 
 (make-directory* figures-dir)
 
-(define ps-setup
-  (new ps-setup%))
-
-(send ps-setup set-margin 0 0)
-(send ps-setup set-scaling 1 1)
-
-(define (save-pict* path pict)
-  (parameterize ([current-ps-setup ps-setup])
-    (define dc
-      (new post-script-dc%
-           [interactive #f]
-           [parent #f]
-           [use-paper-bbox #f]
-           [as-eps #t]
-           [width  (pict-width pict)]
-           [height (pict-height pict)]
-           [output (format "~a.ps" path)]))
-    (send dc start-doc "Rendering")
-    (send dc start-page)
-    (draw-pict pict dc 0 0)
-    (send dc end-page)
-    (send dc end-doc)))
-
 (define (overhead benchmark samples baseline _ __)
   (define overhead-pict
     (overhead-plot (list baseline samples)
                    (string->symbol benchmark)))
   (define overhead-path
     (build-path figures-dir (format "~a-overhead" benchmark)))
-  (save-pict* overhead-path overhead-pict))
+  (save-pict* overhead-path overhead-pict)
+  (define overhead0-pict
+    (overhead-plot (list baseline)
+                   (string->symbol benchmark)))
+  (define overhead0-path
+    (build-path figures-dir (format "~a-overhead-only-baseline" benchmark)))
+  (save-pict* overhead0-path overhead0-pict))
 
 (define (samples benchmark _ __ samples baseline)
   (define samples-pict
@@ -81,7 +66,13 @@
                         (string->symbol benchmark)))
   (define exact-path
     (build-path figures-dir (format "~a-exact" benchmark)))
-  (save-pict* exact-path exact-pict))
+  (save-pict* exact-path exact-pict)
+  (define exact0-pict
+    (exact-runtime-plot (list baseline)
+                        (string->symbol benchmark)))
+  (define exact0-path
+    (build-path figures-dir (format "~a-exact-only-baseline" benchmark)))
+  (save-pict* exact0-path exact0-pict))
 
 (define (scatterplot benchmark _ __ samples baseline)
   (define scatterplot-pict
@@ -115,7 +106,7 @@
   (list overhead
         #;samples
         exact
-        scatterplot
+        #;scatterplot
         (make-lattice 'scv "~a-scv-lattice")
         (make-lattice 'baseline "~a-baseline-lattice")
         (make-lattice #f "~a-lattice")))

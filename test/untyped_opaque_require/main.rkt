@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require scv-gt/opaque)
+(require scv-cr/opaque)
 (require/opaque "abs.rkt"
   absz
   [#:struct my-box (x)])

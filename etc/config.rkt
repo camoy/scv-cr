@@ -25,7 +25,7 @@
 
 (define CUTOFF 10)
 (define ITERATIONS 10)
-(define NUM-SAMPLES 10)
+(define NUM-SAMPLES 4)
 (define SAMPLE-FACTOR 10)
 (define BASELINE-LABEL
   (string->symbol "Typed Racket"))

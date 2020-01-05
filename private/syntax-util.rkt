@@ -297,8 +297,8 @@
 
 (module+ test
   (require rackunit
-           scv-gt/private/syntax-typed-racket
-           scv-gt/private/test-util)
+           scv-cr/private/syntax-typed-racket
+           scv-cr/private/test-util)
 
   (test-case
     "syntax-property-values*"

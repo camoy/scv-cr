@@ -145,7 +145,7 @@
       -:tzoverlap?
       -:tzoffset?
       -:tzgap?))
-    (require scv-gt/opaque)
+    (require scv-cr/opaque)
     (begin
       (void)
       (provide system-tzid

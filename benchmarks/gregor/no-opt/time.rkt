@@ -57,7 +57,7 @@
     (define-values (~r ~r*) (values -:~r -:~r*))
     (void)
     (require require-typed-check
-             scv-gt/opaque
+             scv-cr/opaque
              "core-adapter.rkt"
              "gregor-adapter.rkt"
              racket/match)

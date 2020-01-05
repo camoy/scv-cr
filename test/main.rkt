@@ -5,8 +5,8 @@
    racket/require
    rackunit
    (multi-in racket (function list path rerequire))
-   scv-gt
-   (multi-in scv-gt private (syntax-util proxy-resolver)))
+   scv-cr
+   (multi-in scv-cr private (syntax-util proxy-resolver)))
 
   ;; Module-Path -> Void
   ;; checks to make sure running optimization on the modules does not yield
