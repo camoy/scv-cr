@@ -35,6 +35,9 @@
                [raw-stx raw-stxs]
                [datum   data])
       (define l/i-hash (make-hash))
+      (define raw-stx*
+        ((if datum typed-replace-require/opaque untyped-replace-require/opaque)
+         raw-stx))
       (define stx
         (if datum
             (begin
@@ -42,15 +45,14 @@
               (hash-set! m/g-hash target* (ctc-data-graph datum))
               (syntax-replace-srcloc! l/i-hash
                                       target
-                                      (contract-inject target raw-stx datum #t)))
-            raw-stx))
+                                      (contract-inject target raw-stx* datum #t)))
+            raw-stx*))
       #;(pretty-print
-       (syntax->datum
-        ((if datum typed-replace-require/opaque untyped-replace-require/opaque)
-         stx)))
+         (syntax->datum
+          ((if datum typed-replace-require/opaque untyped-replace-require/opaque)
+           stx)))
       (syntax-compile target stx)
-      ((if datum typed-replace-require/opaque untyped-replace-require/opaque)
-       stx)))
+      stx))
   (if (verify-off)
       (values stxs stxs)
       (values stxs
