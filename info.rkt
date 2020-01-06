@@ -7,7 +7,8 @@
                "gtp-measure"
                "gtp-plot"
                "graph"
-               "txexpr"))
+               "txexpr"
+               "html-parsing"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/scv-cr.scrbl" ())))
 (define pkg-desc "Typed Racket optimization with SCV")
