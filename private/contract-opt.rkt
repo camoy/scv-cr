@@ -46,7 +46,9 @@
               (syntax-replace-srcloc! l/i-hash
                                       target
                                       (contract-inject target raw-stx* datum #t)))
-            raw-stx*))
+            (begin
+              (hash-set! m/l/i-hash target* l/i-hash)
+              (syntax-replace-srcloc! l/i-hash target raw-stx*))))
       #;(pretty-print
          (syntax->datum
           ((if datum typed-replace-require/opaque untyped-replace-require/opaque)
@@ -58,11 +60,12 @@
       (values stxs
               (let* ([blames         (verify-modules targets* stxs)]
                      [_              (print-blames blames)]
+                     [blames*        (filter-typed-blame targets data blames)]
                      [blameable-hash (and (not (keep-contracts))
                                           (make-blameable-hash targets*
                                                                m/l/i-hash
                                                                m/g-hash
-                                                               blames))])
+                                                               blames*))])
                 (for/list ([target  targets]
                            [target* targets*]
                            [raw-stx raw-stxs]
@@ -75,6 +78,24 @@
                                             (hash-ref blameable-hash target*)))
                         (contract-inject target raw-stx datum #f))
                       raw-stx))))))
+
+;; [List-of Path] [List-of Syntax] [List-of Blame] -> [List-of Blame]
+;; Returns only the blames on untyped modules (not typed modules which are safe
+;; by soundness). We should also blame typed modules when the blame occurs
+;; in the require/contracts submodule.
+(define (filter-typed-blame targets data blames)
+  (define is-typed?
+    (let ([typed-hash (make-hash (map cons targets data))])
+      (λ (x)
+        (hash-ref typed-hash x))))
+  (filter
+   (λ (blame)
+     (define violator (first blame))
+     (define submodule-violated?
+       (regexp-match #rx":require/contracts" violator))
+     (or submodule-violated?
+         (not (is-typed? (string->path violator)))))
+   blames))
 
 ;; Path Contract-Data L/I-Hash [Set Symbol] -> Void
 ;; erase contract by changing them to any/c
