@@ -1,6 +1,8 @@
 # Measuring
 
-1. Running `racket main.rkt` will start measuring.
+1. Clone [this fork's](https://github.com/camoy/typed-racket)
+   `scv-cr-baseline` branch.
+2. Running `racket main.rkt` will start measuring.
    You need to modify `config.rkt` first.
    * `BENCHMARKS` are which benchmarks you will be running.
    * `DEFAULT-BIN-DIR` is the directory containing the
@@ -9,15 +11,15 @@
      to the directory with benchmarks in it.
    * `MODIFIED-TR-DIR` is a directory with the `scv-cr` fork
      of Typed Racket.
-   * `ORIGINAL-TR-DIR` is a directory with the normal version
+   * `ORIGINAL-TR-DIR` is a directory with the `scv-cr-baseline` fork
      of Typed Racket.
-2. Data collected during the process will be placed in
+3. Data collected during the process will be placed in
    in a `measurements/` directory.
-3. Generate the figures with `racket figures.rkt`.
-4. You may have to run
+4. Generate the figures with `racket figures.rkt`.
+5. You may have to run
    `Xvfb -shmem -screen 0 1280x1024x24` and
    `export DISPLAY=:0` in your `~/.profile` to fix
    GTK initialization problems if you're running on a server
    without GTK.
-5. `nohup 2>&1 racket main.rkt &` is allows it to run over
+6. `nohup 2>&1 racket main.rkt &` is allows it to run over
    `ssh` without stopping and logs errors as well.
