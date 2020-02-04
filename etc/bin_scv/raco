@@ -46,20 +46,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define out-port (open-output-string))
-(define out
+(define (get-out)
   (with-handlers ([exn:fail? (λ (x) (list 'error (exn->string x)))])
     (parameterize ([current-output-port out-port])
-      (optimize targets #:show-blames #t #:ignore-fakes #t))
-    (define input-port (open-input-string (get-output-string out-port)))
-    (read input-port)))
+      (optimize targets #:show-blames #t #:ignore-fakes #t))))
+
+(define-values (out* _ total-time __)
+  (time-apply get-out '()))
+
+(define out (car out*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-values (tcp-in tcp-out)
   (tcp-connect "localhost" port))
 
-(if (or (null? out) (pair? out))
-    (write out tcp-out)
+(if (list? out)
+    (write (cons total-time out) tcp-out)
     (write (list 'unexpected (list (format "~a" out))) tcp-out))
 
 (close-input-port tcp-in)

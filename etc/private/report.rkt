@@ -13,21 +13,26 @@
   (display (data->html (out->data name idx dir)
                        blames)))
 
-(define (data->html data blames)
+(define (data->html data infos)
   (define heading
     (txexpr* 'tr '()
              (txexpr* 'th '() "Configuration")
              (txexpr* 'th '() "Performance")
+             (txexpr* 'th '() "Compile Time")
+             (txexpr* 'th '() "SCV Time")
              (txexpr* 'th '() "Blame")))
   (define rows
     (for/list ([r data]
-               [blame blames])
+               [info infos])
+      (match-define (list compile-time scv-time blame) info)
       (define-values (config perf)
         (values (first r) (second r)))
       (txexpr* 'tr
                (list (list 'bgcolor (get-color blame)))
                (txexpr* 'td '() config)
                (txexpr* 'td '() (string-join perf "\n"))
+               (txexpr* 'td '() (format "~a\n" compile-time))
+               (txexpr* 'td '() (format "~a\n" scv-time))
                (txexpr* 'td '() (string-join (map ->string blame)
                                              "\n")))))
   (define tbl

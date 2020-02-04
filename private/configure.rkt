@@ -32,3 +32,6 @@
           (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)))
+
+(define stat-blames (box #f))
+(define stat-scv-time (box #f))

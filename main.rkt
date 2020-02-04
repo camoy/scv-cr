@@ -26,7 +26,8 @@
 (module+ main
   (let* ([argv    (current-command-line-arguments)]
          [targets (parse argv)])
-    (optimize targets)))
+    (optimize targets)
+    (void)))
 
 ;;
 ;; runner
@@ -54,7 +55,7 @@
              (fake-prefixed? target)))
           targets))
 
-;; [List-of Module-Path] -> Void
+;; [List-of Module-Path] -> Stat-Info
 ;; optimizes target modules, see documentation for the purpose of
 ;; the flags
 (define (optimize targets
@@ -133,7 +134,7 @@
       (let ([fakes (without-fakes targets* #t)])
         (syntax-compile-all fakes (map syntax-fetch fakes)))))
 
-  (void))
+  (list (unbox stat-scv-time) (unbox stat-blames)))
 
 ;;
 ;; parsing

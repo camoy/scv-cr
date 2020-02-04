@@ -58,26 +58,30 @@
   (if (verify-off)
       (values stxs stxs)
       (values stxs
-              (let* ([blames         (verify-modules targets* stxs)]
-                     [_              (print-blames blames)]
-                     [blames*        (filter-typed-blame targets data blames)]
-                     [blameable-hash (and (not (keep-contracts))
-                                          (make-blameable-hash targets*
-                                                               m/l/i-hash
-                                                               m/g-hash
-                                                               blames*))])
-                (for/list ([target  targets]
-                           [target* targets*]
-                           [raw-stx raw-stxs]
-                           [datum   data])
-                  (if datum
-                      (begin
-                        (when (not (keep-contracts))
-                          (erase-contracts! target
-                                            datum
-                                            (hash-ref blameable-hash target*)))
-                        (contract-inject target raw-stx datum #f))
-                      raw-stx))))))
+              (let-values ([(list-of-blames _ scv-time __)
+                            (time-apply verify-modules (list targets* stxs))])
+                (set-box! stat-scv-time scv-time)
+                (let* ([blames         (first list-of-blames)]
+                       [_              (print-blames blames)]
+                       [blames*        (filter-typed-blame targets data blames)]
+                       [blameable-hash (and (not (keep-contracts))
+                                            (make-blameable-hash targets*
+                                                                 m/l/i-hash
+                                                                 m/g-hash
+                                                                 blames*))])
+                  (set-box! stat-blames blames)
+                  (for/list ([target  targets]
+                             [target* targets*]
+                             [raw-stx raw-stxs]
+                             [datum   data])
+                    (if datum
+                        (begin
+                          (when (not (keep-contracts))
+                            (erase-contracts! target
+                                              datum
+                                              (hash-ref blameable-hash target*)))
+                          (contract-inject target raw-stx datum #f))
+                        raw-stx)))))))
 
 ;; [List-of Path] [List-of Syntax] [List-of Blame] -> [List-of Blame]
 ;; Returns only the blames on untyped modules (not typed modules which are safe
@@ -207,7 +211,7 @@
 ;; print blames (we don't pretty print easier report collection)
 (define (print-blames blames)
   (when (show-blames)
-    (write blames)))
+    (pretty-print blames)))
 
 ;; Syntax -> Syntax
 ;; take untyped syntax and replace require/opaque forms with corresponding
