@@ -2,7 +2,7 @@
 @require[@for-label[racket/base]]
 
 @title[#:tag "top"]{SCV CR}
-@author[(author+email "Cameron Moy" "camoy@cs.umd.edu")]
+@author{Cameron Moy}
 @defmodule[scv-cr]
 
 Soft contract verification for gradually-typed programs.
@@ -49,6 +49,11 @@ command-line flags:
 }
 
 @item{
+  @exec{-l} or @exec{--blame-typed} --- turns off the optimization
+  where blame on a typed module is ignored.
+}
+
+@item{
   @exec{-o} or @exec{--overwrite} --- overwrite original
   source files with the a version with optimized contracts.
 }
@@ -82,6 +87,7 @@ command-line flags:
                    [#:show-optimized show-optimized #f boolean?]
                    [#:show-blames show-blames #f boolean?]
                    [#:ignore-check ignore-check #f boolean?]
+                   [#:blame-typed blame-typed #f boolean?]
                    [#:overwrite overwrite #f boolean?]
                    [#:compiler-off compiler-off #f boolean?]
                    [#:verify-off verify-off #f boolean?]

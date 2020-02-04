@@ -15,12 +15,14 @@
                 show-optimized
                 show-blames
                 ignore-check
+                blame-typed
                 overwrite
                 compiler-off
                 verify-off
                 ignore-fakes
                 trust-zos)
   (values (make-parameter #f)
+          (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)
           (make-parameter #f)

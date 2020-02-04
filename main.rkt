@@ -28,7 +28,6 @@
          [targets (parse argv)])
     (optimize targets)))
 
-
 ;;
 ;; runner
 ;;
@@ -64,6 +63,7 @@
                   #:show-optimized [p (show-optimized)]
                   #:show-blames [b (show-blames)]
                   #:ignore-check [i (ignore-check)]
+                  #:blame-typed [l (blame-typed)]
                   #:overwrite [o (overwrite)]
                   #:compiler-off [c (compiler-off)]
                   #:verify-off [v (verify-off)]
@@ -75,6 +75,7 @@
   (show-optimized p)
   (show-blames b)
   (ignore-check i)
+  (blame-typed l)
   (overwrite o)
   (compiler-off c)
   (verify-off v)
@@ -153,6 +154,8 @@
                               (show-blames #t)]
    [("-i" "--ignore-check")   "ignore require-typed/check"
                               (ignore-check #t)]
+   [("-l" "--blame-typed")    "don't filter out blame on typed modules"
+                              (blame-typed #t)]
    [("-o" "--overwrite")      "overwrite source files"
                               (overwrite #t)]
    [("-c" "--compiler-off")   "don't compile zo files"

@@ -88,14 +88,16 @@
     (let ([typed-hash (make-hash (map cons targets data))])
       (λ (x)
         (hash-ref typed-hash x))))
-  (filter
-   (λ (blame)
-     (define violator (first blame))
-     (define submodule-violated?
-       (regexp-match #rx":require/contracts" violator))
-     (or submodule-violated?
-         (not (is-typed? (string->path violator)))))
-   blames))
+  (if (blame-typed)
+      blames
+      (filter
+       (λ (blame)
+         (define violator (first blame))
+         (define submodule-violated?
+           (regexp-match #rx":require/contracts" violator))
+         (or submodule-violated?
+             (not (is-typed? (string->path violator)))))
+       blames)))
 
 ;; Path Contract-Data L/I-Hash [Set Symbol] -> Void
 ;; erase contract by changing them to any/c
