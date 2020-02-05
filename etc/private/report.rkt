@@ -7,7 +7,8 @@
          racket/string
          racket/path
          racket/port
-         racket/match)
+         racket/match
+         racket/function)
 
 (define (benchmark->blame-report name idx dir blames)
   (display (data->html (out->data name idx dir)
@@ -15,26 +16,31 @@
 
 (define (data->html data infos)
   (define heading
-    (txexpr* 'tr '()
-             (txexpr* 'th '() "Configuration")
-             (txexpr* 'th '() "Performance")
-             (txexpr* 'th '() "Compile Time")
-             (txexpr* 'th '() "SCV Time")
-             (txexpr* 'th '() "Blame")))
+    `(tr
+      (th "Configuration")
+      (th "Performance")
+      (th "SCV-CR: expand")
+      (th "SCV-CR: compile")
+      (th "SCV-CR: SCV")
+      (th "SCV-CR: Total")
+      (th "SCV-CR: GC Stats")
+      (th "Blames")))
   (define rows
     (for/list ([r data]
                [info infos])
-      (match-define (list compile-time scv-time blame) info)
       (define-values (config perf)
         (values (first r) (second r)))
-      (txexpr* 'tr
-               (list (list 'bgcolor (get-color blame)))
-               (txexpr* 'td '() config)
-               (txexpr* 'td '() (string-join perf "\n"))
-               (txexpr* 'td '() (format "~a\n" compile-time))
-               (txexpr* 'td '() (format "~a\n" scv-time))
-               (txexpr* 'td '() (string-join (map ->string blame)
-                                             "\n")))))
+      (define blame (hash-ref info 'blames))
+      `(tr
+        ((bgcolor ,(get-color blame)))
+        (td ,config)
+        (td ,(string-join perf "\n"))
+        (td ,(format "~a" (hash-ref info 'expand (const 0))))
+        (td ,(format "~a" (hash-ref info 'compile (const 0))))
+        (td ,(format "~a" (hash-ref info 'verify-modules (const 0))))
+        (td ,(format "~a" (hash-ref info 'total (const 0))))
+        (td (code (pre ,(format "~a" (hash-ref info 'gc (const 0))))))
+        (td (code (pre ,(string-join (map ->string blame) "\n")))))))
   (define tbl
     (txexpr 'table '() (cons heading rows)))
   (xexpr->html (within-body tbl)))

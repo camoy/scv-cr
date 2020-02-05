@@ -58,15 +58,13 @@
   (if (verify-off)
       (values stxs stxs)
       (values stxs
-              (let-values ([(list-of-blames _ scv-time __)
-                            (time-apply verify-modules (list targets* stxs))])
-                (set-box! stat-scv-time scv-time)
-                (let* ([blames         (first list-of-blames)]
-                       [_              (print-blames blames)]
-                       [blames*        (filter-typed-blame targets data blames)]
-                       [blameable-hash (and (not (keep-contracts))
-                                            (make-blameable-hash targets*
-                                                                 m/l/i-hash
+              (let* ([blames
+                      (stat-time 'verify-modules (verify-modules targets* stxs))]
+                     [_              (print-blames blames)]
+                     [blames*        (filter-typed-blame targets data blames)]
+                     [blameable-hash (and (not (keep-contracts))
+                                          (make-blameable-hash targets*
+                                                               m/l/i-hash
                                                                  m/g-hash
                                                                  blames*))])
                   (set-box! stat-blames blames)
@@ -81,7 +79,7 @@
                                               datum
                                               (hash-ref blameable-hash target*)))
                           (contract-inject target raw-stx datum #f))
-                        raw-stx)))))))
+                        raw-stx))))))
 
 ;; [List-of Path] [List-of Syntax] [List-of Blame] -> [List-of Blame]
 ;; Returns only the blames on untyped modules (not typed modules which are safe

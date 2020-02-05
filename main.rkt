@@ -96,7 +96,7 @@
       (with-module-reading-parameterization
         (λ ()
           (for ([target (in-list targets*)])
-            (compile-file target))))))
+            (stat-time 'compile (compile-file target)))))))
 
   ;; extract data
   #;(pretty-print (sort-by-dependency targets**))
@@ -134,7 +134,8 @@
       (let ([fakes (without-fakes targets* #t)])
         (syntax-compile-all fakes (map syntax-fetch fakes)))))
 
-  (list (unbox stat-scv-time) (unbox stat-blames)))
+  (hash-set! stat-times 'blames (unbox stat-blames))
+  stat-times)
 
 ;;
 ;; parsing

@@ -23,17 +23,19 @@
 ;; Syntax Module-Path -> Syntax
 ;; expands module with base namespace in the directory of the given path
 (define (expand/base+dir stx target)
-  (in-dir target
-    (parameterize ([current-namespace (make-base-namespace)]
-                   [current-module-name-resolver (get-module-name-resolver)])
-      (expand stx))))
+  (stat-time 'expand
+    (in-dir target
+      (parameterize ([current-namespace (make-base-namespace)]
+                     [current-module-name-resolver (get-module-name-resolver)])
+        (expand stx)))))
 
 ;; Syntax Module-Path -> Syntax
 ;; compiles module in the directory of the given path
 (define (compile/dir stx target)
-  (in-dir target
-    (parameterize ([current-namespace (make-base-namespace)])
-      (compile stx))))
+  (stat-time 'compile
+    (in-dir target
+      (parameterize ([current-namespace (make-base-namespace)])
+        (compile stx)))))
 
 ;; evaluates with current directory from the parent of the target
 (define-syntax-rule (in-dir target forms ...)

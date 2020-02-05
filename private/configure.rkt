@@ -34,4 +34,12 @@
           (make-parameter #f)))
 
 (define stat-blames (box #f))
-(define stat-scv-time (box #f))
+(define stat-times (make-hash))
+
+(define-syntax-rule (stat-time ?key ?x ...)
+  (let ([body (λ () ?x ...)])
+    (define-values (r _ t __)
+      (time-apply body '()))
+    (define old (hash-ref! stat-times ?key (λ () 0)))
+    (hash-set! stat-times ?key (+ old t))
+    (apply values r)))

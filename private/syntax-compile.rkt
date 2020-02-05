@@ -7,6 +7,7 @@
          sort-by-dependency)
 
 (require racket/require
+         "configure.rkt"
          compiler/compilation-path
          scv-cr/private/proxy-resolver
          (multi-in mischief (dict sort))
