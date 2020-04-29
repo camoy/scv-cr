@@ -1,9 +1,6 @@
 (module zo-string typed/racket/base/no-check
    (#%module-begin
     (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
-             (lib "racket/base.rkt")
-             (lib "racket/contract/base.rkt")
              (submod "typed-zo-structs.rkt" #%type-decl ".."))
     (define g367 (lambda (x) (zo? x)))
     (define g371 string?)
@@ -31,10 +28,7 @@
     (define generated-contract359
       (case-> (-> g367 (values g371)) (-> g367 g375 (values g371))))
     (module require/contracts racket/base
-      (require soft-contract/fake-contract
-               (lib "racket/base.rkt")
-               (lib "racket/contract.rkt")
-               (lib "racket/contract/base.rkt"))
+      (require soft-contract/fake-contract)
       (define g360 '#f)
       (define g361 (lambda (x) (srcloc? x)))
       (define g362 (or/c g360 g361))

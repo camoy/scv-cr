@@ -1,11 +1,8 @@
 (module typed-zo-structs typed/racket/no-check
    (#%module-begin
-    (require soft-contract/fake-contract
-             (lib "racket/contract.rkt")
-             (lib "racket/base.rkt")
-             (lib "racket/contract/base.rkt")
-             (lib "typed-racket/types/numeric-predicates.rkt")
-             (lib "racket/set.rkt"))
+    (require racket/contract
+             racket/set
+             (lib "typed-racket/types/numeric-predicates.rkt"))
     (define g1023 struct-type?)
     (define g1024 (λ (_) #f))
     (define g1025 any/c)
@@ -542,12 +539,9 @@
     (define generated-contract717 (-> g1238 (values g1247)))
     (define generated-contract718 g1030)
     (module require/contracts racket/base
-      (require soft-contract/fake-contract
-               (lib "racket/base.rkt")
-               (lib "racket/contract/base.rkt")
-               (lib "racket/contract.rkt")
-               (lib "typed-racket/types/numeric-predicates.rkt")
-               (lib "racket/set.rkt"))
+      (require racket/contract
+               racket/set
+               (lib "typed-racket/types/numeric-predicates.rkt"))
       (define g719 (lambda (x) (zo? x)))
       (define g720 (-> g719))
       (define g721 exact-nonnegative-integer?)
@@ -2268,7 +2262,6 @@
      Spec
      (Rec Spec (Pair String (Listof (Pair String (-> (U Spec String)))))))
     (void)
-    (require scv-cr/opaque)
     (begin
       (void)
       (provide (struct-out zo)
